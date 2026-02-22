@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Cyber Academy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --accent: #a855f7; /* Насыщенный фиолетовый */
+            --bg: #09090b;
+            --card-bg: rgba(24, 24, 27, 0.8);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(168, 85, 247, 0.15) 0%, transparent 25%),
+                radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.1) 0%, transparent 25%);
+            color: #fafafa;
+            min-height: 100dvh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .step-active {
+            border: 1px solid var(--accent);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+        }
+
+        .step-locked {
+            opacity: 0.4;
+            filter: grayscale(0.8);
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 */
+            height: 0;
+            overflow: hidden;
+            border-radius: 16px;
+            background: #000;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Кастомный скролл */
+        ::-webkit-scrollbar { width: 0px; }
+    </style>
+</head>
+<body class="p-4 pb-20">
+
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8 pt-4">
+        <div>
+            <h1 id="academy-name" class="text-2xl font-extrabold tracking-tight" onclick="handleAdminTrigger()">Cyber Academy</h1>
+            <div class="flex items-center gap-2 mt-1">
+                <div class="h-1.5 w-24 bg-zinc-800 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-purple-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <span id="progress-text" class="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">0% Пройдено</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="admin-btn" onclick="openAdmin()" class="hidden w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center transition-all">
+                <i data-lucide="settings" class="text-zinc-400 w-6 h-6"></i>
+            </button>
+            <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                <i data-lucide="zap" class="text-purple-500 w-6 h-6"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Модули -->
+    <div id="modules-container" class="space-y-4">
+        <!-- Сюда рендерятся модули -->
+    </div>
+
+    <!-- Модалка доступа (Пин-код) -->
+    <div id="access-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto flex items-center justify-center">
+        <div class="p-6 w-full max-w-md flex flex-col">
+            <div class="glass-card p-6 space-y-6 relative">
+                <button onclick="closeAccessModal()" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-purple-500/10 rounded-2xl mx-auto flex items-center justify-center mb-4 border border-purple-500/20">
+                        <i data-lucide="lock" class="w-8 h-8 text-purple-400"></i>
+                    </div>
+                    <h2 class="text-xl font-bold mb-2">Доступ закрыт</h2>
+                    <p class="text-zinc-400 text-sm">Введите код доступа, который вы получили после оплаты курса.</p>
+                </div>
+                <div class="space-y-4">
+                    <input type="text" id="access-code-input" placeholder="Введите код..." class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center tracking-widest text-lg font-mono outline-none focus:border-purple-500 transition-all">
+                    <button onclick="checkAccessCode()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm">
+                        Отправить код
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Деталка урока (Modal) -->
+    <div id="lesson-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
+        <div class="p-6 min-h-screen flex flex-col">
+            <button onclick="closeLesson()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад к программе
+            </button>
+
+            <div class="glass-card p-4 mb-6">
+                <div class="video-container mb-4">
+                    <!-- Заглушка для видео, меняется динамически -->
+                    <iframe id="lesson-video" src="" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
+                <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
+                    В этом уроке мы изучим основы работы с нейросетями и разберем первые шаги.
+                </p>
+                <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full bg-zinc-800 hover:bg-zinc-700 text-sm font-bold py-3 rounded-xl mb-4 transition-all">
+                    <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i> Скачать материалы
+                </a>
+                <div class="flex items-center gap-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl">
+                    <i data-lucide="alert-circle" class="text-purple-500 w-5 h-5"></i>
+                    <div>
+                        <p class="text-[10px] text-purple-300 font-bold uppercase">Дедлайн сдачи:</p>
+                        <p id="lesson-deadline-timer" class="text-sm font-mono font-bold">00:00:00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-auto space-y-4">
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на домашку</label>
+                    <input type="url" id="hw-input" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
+                </div>
+                <button onclick="submitHomework()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm">
+                    Сдать работу
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Админка (Modal) -->
+    <div id="admin-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
+        <div class="p-6 min-h-screen flex flex-col">
+            <button onclick="closeAdmin()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад в академию
+            </button>
+            <h2 class="text-2xl font-bold mb-6 text-purple-400">Панель управления</h2>
+            
+            <div class="glass-card p-5 space-y-6">
+                <!-- 1. Изменение заголовка -->
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Название академии</label>
+                    <input type="text" id="admin-academy-name" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
+                </div>
+
+                <!-- 1.5 Изменение секретного кода -->
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Секретный код для 1 урока</label>
+                    <input type="text" id="admin-secret-code" placeholder="Например: VIP2026" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
+                </div>
+
+                <!-- 2. Структура меню (редактирование модулей) -->
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Модули (Уроки)</label>
+                    <div id="admin-modules-list" class="space-y-3">
+                        <!-- Сюда рендерятся инпуты модулей -->
+                    </div>
+                </div>
+
+                <!-- 3. Добавление новых модулей -->
+                <button onclick="adminAddModule()" class="w-full py-4 rounded-2xl font-bold uppercase tracking-widest text-sm border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-all">
+                    + Добавить модуль
+                </button>
+
+                <!-- Кнопка сохранения -->
+                <button onclick="saveAdminChanges()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm mt-4">
+                    Сохранить изменения
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Редактирование конкретного модуля (Modal) -->
+    <div id="admin-module-edit-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
+        <div class="p-6 min-h-screen flex flex-col">
+            <button onclick="closeAdminModuleEdit()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад
+            </button>
+            <h2 class="text-2xl font-bold mb-6 text-purple-400">Настройки урока</h2>
+            
+            <div class="glass-card p-5 space-y-5">
+                <input type="hidden" id="edit-mod-idx">
+                
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Заголовок</label>
+                    <input type="text" id="edit-mod-title" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Подзаголовок / Описание</label>
+                    <textarea id="edit-mod-desc" rows="3" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all"></textarea>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube и др.)</label>
+                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                    <div class="video-container mt-2">
+                        <iframe id="edit-mod-video-preview" src="" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (PDF/Материалы)</label>
+                    <input type="url" id="edit-mod-pdf" placeholder="https://диск..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Дедлайн сдачи</label>
+                    <input type="datetime-local" id="edit-mod-deadline" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
+                </div>
+
+                <button onclick="saveAdminModuleEdit()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm mt-4">
+                    Сохранить урок
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Моковые данные для примера (потом они будут лежать в твоей базе)
+        const academyData = {
+            name: "Нейросети: Мастер",
+            secretCode: "VIP2026", // Секретный код доступа по умолчанию
+            modules: [
+                { id: 1, title: "Основы генерации", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "" },
+                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "" },
+                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "" },
+                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "" }
+            ]
+        };
+
+        let currentLevel = 1;
+        let isAccessGranted = false; // Флаг доступа
+
+        function init() {
+            document.getElementById('academy-name').innerText = academyData.name;
+            renderModules();
+            lucide.createIcons();
+        }
+
+        function renderModules() {
+            const container = document.getElementById('modules-container');
+            container.innerHTML = '';
+            
+            const progress = ((currentLevel - 1) / academyData.modules.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('progress-text').innerText = `${Math.round(progress)}% Пройдено`;
+
+            academyData.modules.forEach((mod, idx) => {
+                const isLocked = (idx + 1) > currentLevel;
+                const isDone = (idx + 1) < currentLevel;
+                const isActive = (idx + 1) === currentLevel;
+
+                container.innerHTML += `
+                    <div class="glass-card p-5 flex items-center justify-between ${isActive ? 'step-active' : ''} ${isLocked ? 'step-locked' : ''}" 
+                         onclick="${!isLocked ? `openLesson(${idx})` : ''}">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl ${isDone ? 'bg-emerald-500/10' : 'bg-zinc-800'} flex items-center justify-center text-sm font-bold">
+                                ${isDone ? '<i data-lucide="check" class="text-emerald-500 w-5 h-5"></i>' : idx + 1}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm">${mod.title}</h3>
+                                <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">
+                                    ${isLocked ? 'Доступ закрыт' : 'Нажми, чтобы войти'}
+                                </p>
+                            </div>
+                        </div>
+                        ${isActive ? '<div class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>' : ''}
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        // --- ЛОГИКА ДОСТУПА И ОТКРЫТИЯ УРОКА ---
+        function checkAccessCode() {
+            const inputCode = document.getElementById('access-code-input').value.trim();
+            if (inputCode === academyData.secretCode) {
+                isAccessGranted = true;
+                closeAccessModal();
+                openLesson(0); // Пропускаем внутрь первого урока
+            } else {
+                alert('Неверный код доступа!');
+            }
+        }
+
+        function closeAccessModal() {
+            document.getElementById('access-modal').classList.add('hidden');
+        }
+
+        function openLesson(idx) {
+            // Проверяем, если это первый урок, код установлен, но доступ еще не получен
+            if (idx === 0 && academyData.secretCode && academyData.secretCode.trim() !== '' && !isAccessGranted) {
+                document.getElementById('access-code-input').value = '';
+                document.getElementById('access-modal').classList.remove('hidden');
+                return;
+            }
+
+            const mod = academyData.modules[idx];
+            document.getElementById('lesson-title').innerText = mod.title;
+            document.getElementById('lesson-desc').innerText = mod.desc;
+            document.getElementById('lesson-video').src = mod.video || '';
+            
+            const pdfBtn = document.getElementById('lesson-pdf-btn');
+            if (mod.pdfUrl) {
+                pdfBtn.href = mod.pdfUrl;
+                pdfBtn.classList.remove('hidden');
+            } else {
+                pdfBtn.classList.add('hidden');
+            }
+
+            const d = new Date(mod.deadline);
+            document.getElementById('lesson-deadline-timer').innerText = !isNaN(d) ? d.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : "Не установлен";
+
+            document.getElementById('lesson-modal').classList.remove('hidden');
+            // Здесь можно запустить таймер дедлайна как в твоем коде
+        }
+
+        function closeLesson() {
+            document.getElementById('lesson-modal').classList.add('hidden');
+            document.getElementById('lesson-video').src = '';
+        }
+
+        function submitHomework() {
+            const hwInput = document.getElementById('hw-input').value.trim();
+            const urlPattern = /^(https?:\/\/)/i;
+            if (!urlPattern.test(hwInput)) {
+                alert('Ошибка! Можно вводить только ссылки (строка должна начинаться с http:// или https://)');
+                return;
+            }
+
+            // Тут твоя логика отправки в Telegram
+            alert('Заинька, работа отправлена! Ты молодец!');
+            currentLevel++;
+            document.getElementById('hw-input').value = '';
+            closeLesson();
+            renderModules();
+        }
+
+        // --- СЕКРЕТНАЯ АДМИНКА ---
+        let tapCount = 0;
+        let tapTimer = null;
+
+        function handleAdminTrigger() {
+            tapCount++;
+            if (tapCount === 1) {
+                // Если кликнули первый раз, даем 1.5 секунды на еще 4 клика
+                tapTimer = setTimeout(() => { tapCount = 0; }, 1500); 
+            }
+            if (tapCount >= 5) {
+                clearTimeout(tapTimer);
+                tapCount = 0;
+                const adminBtn = document.getElementById('admin-btn');
+                adminBtn.classList.remove('hidden');
+                lucide.createIcons(); // Рисуем иконку шестеренки
+            }
+        }
+
+        function openAdmin() {
+            document.getElementById('admin-academy-name').value = academyData.name;
+            document.getElementById('admin-secret-code').value = academyData.secretCode || '';
+            renderAdminModules();
+            document.getElementById('admin-modal').classList.remove('hidden');
+        }
+
+        function renderAdminModules() {
+            const list = document.getElementById('admin-modules-list');
+            list.innerHTML = '';
+            academyData.modules.forEach((mod, idx) => {
+                list.innerHTML += `
+                    <div onclick="openAdminModuleEdit(${idx})" class="flex items-center gap-3 bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50 cursor-pointer hover:border-purple-500 transition-all">
+                        <span class="text-zinc-500 text-sm font-bold w-4">${idx + 1}.</span>
+                        <span class="flex-1 text-sm truncate">${mod.title}</span>
+                        <i data-lucide="edit-3" class="w-4 h-4 text-zinc-400"></i>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function adminAddModule() {
+            const newId = academyData.modules.length > 0 ? academyData.modules[academyData.modules.length - 1].id + 1 : 1;
+            academyData.modules.push({
+                id: newId,
+                title: "Новый модуль",
+                video: "",
+                desc: "Описание модуля...",
+                deadline: "2026-12-31T23:59",
+                pdfUrl: ""
+            });
+            renderAdminModules();
+        }
+
+        function saveAdminChanges() {
+            // 1. Сохраняем заголовок
+            const newName = document.getElementById('admin-academy-name').value;
+            if (newName) {
+                academyData.name = newName;
+                document.getElementById('academy-name').innerText = newName;
+            }
+
+            // Сохраняем код
+            academyData.secretCode = document.getElementById('admin-secret-code').value.trim();
+
+            // Перерисовываем интерфейс и закрываем админку
+            renderModules();
+            closeAdmin();
+        }
+
+        function closeAdmin() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        // --- ЛОГИКА РЕДАКТИРОВАНИЯ КОНКРЕТНОГО МОДУЛЯ ---
+        function openAdminModuleEdit(idx) {
+            const mod = academyData.modules[idx];
+            document.getElementById('edit-mod-idx').value = idx;
+            document.getElementById('edit-mod-title').value = mod.title || '';
+            document.getElementById('edit-mod-desc').value = mod.desc || '';
+            document.getElementById('edit-mod-video').value = mod.video || '';
+            document.getElementById('edit-mod-pdf').value = mod.pdfUrl || '';
+            document.getElementById('edit-mod-deadline').value = mod.deadline || '';
+            
+            updateAdminVideoPreview();
+            
+            document.getElementById('admin-modal').classList.add('hidden');
+            document.getElementById('admin-module-edit-modal').classList.remove('hidden');
+        }
+
+        function updateAdminVideoPreview() {
+            const videoUrl = document.getElementById('edit-mod-video').value;
+            document.getElementById('edit-mod-video-preview').src = videoUrl;
+        }
+
+        function saveAdminModuleEdit() {
+            const idx = document.getElementById('edit-mod-idx').value;
+            const mod = academyData.modules[idx];
+            
+            mod.title = document.getElementById('edit-mod-title').value;
+            mod.desc = document.getElementById('edit-mod-desc').value;
+            mod.video = document.getElementById('edit-mod-video').value;
+            mod.pdfUrl = document.getElementById('edit-mod-pdf').value;
+            mod.deadline = document.getElementById('edit-mod-deadline').value;
+
+            closeAdminModuleEdit();
+        }
+
+        function closeAdminModuleEdit() {
+            document.getElementById('admin-module-edit-modal').classList.add('hidden');
+            document.getElementById('admin-modal').classList.remove('hidden');
+            document.getElementById('edit-mod-video-preview').src = '';
+            renderAdminModules();
+        }
+
+        init();
+    </script>
+</body>
+</html>
