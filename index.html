@@ -73,7 +73,10 @@
     <!-- Header -->
     <header class="flex justify-between items-center mb-8 pt-4">
         <div>
-            <h1 id="academy-name" class="text-2xl font-extrabold tracking-tight" onclick="handleAdminTrigger()">Cyber Academy</h1>
+            <div class="flex items-center gap-2">
+                <h1 id="academy-name" class="text-2xl font-extrabold tracking-tight" onclick="handleAdminTrigger()">Cyber Academy</h1>
+                <div id="cloud-indicator" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-colors duration-500" title="Нет связи с облаком"></div>
+            </div>
             <div class="flex items-center gap-2 mt-1">
                 <div class="h-1.5 w-24 bg-zinc-800 rounded-full overflow-hidden">
                     <div id="progress-bar" class="h-full bg-purple-500 transition-all duration-500" style="width: 0%"></div>
@@ -194,6 +197,14 @@
                     + Добавить модуль
                 </button>
 
+                <!-- 4. Пользователи -->
+                <div class="space-y-2 pt-4 border-t border-zinc-800">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Студенты (активировали код)</label>
+                    <div id="admin-users-list" class="space-y-3">
+                        <div class="text-sm text-zinc-500">Загрузка...</div>
+                    </div>
+                </div>
+
                 <!-- Кнопка сохранения -->
                 <button onclick="saveAdminChanges()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm mt-4">
                     Сохранить изменения
@@ -224,7 +235,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube и др.)</label>
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast)</label>
                     <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     <div class="video-container mt-2">
                         <iframe id="edit-mod-video-preview" src="" frameborder="0" allowfullscreen></iframe>
@@ -309,6 +320,21 @@
             const inputCode = document.getElementById('access-code-input').value.trim();
             if (inputCode === academyData.secretCode) {
                 isAccessGranted = true;
+                
+                // Сохраняем пользователя и его прогресс в облако
+                if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
+                    const uid = window.auth.currentUser.uid;
+                    const nickname = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 
+                                     window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 
+                                     "Студент " + uid.substring(0, 4);
+                    
+                    window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                        nickname: nickname,
+                        progress: currentLevel,
+                        activatedAt: new Date().toISOString()
+                    }, { merge: true });
+                }
+
                 closeAccessModal();
                 openLesson(0); // Пропускаем внутрь первого урока
             } else {
@@ -364,6 +390,15 @@
             // Тут твоя логика отправки в Telegram
             alert('Заинька, работа отправлена! Ты молодец!');
             currentLevel++;
+
+            // Обновляем прогресс в облаке
+            if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
+                const uid = window.auth.currentUser.uid;
+                window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                    progress: currentLevel
+                }, { merge: true });
+            }
+
             document.getElementById('hw-input').value = '';
             closeLesson();
             renderModules();
@@ -392,6 +427,7 @@
             document.getElementById('admin-academy-name').value = academyData.name;
             document.getElementById('admin-secret-code').value = academyData.secretCode || '';
             renderAdminModules();
+            if (window.loadAdminUsers) window.loadAdminUsers();
             document.getElementById('admin-modal').classList.remove('hidden');
         }
 
@@ -440,10 +476,20 @@
         }
 
         function closeAdmin() {
+            if (window.adminUsersUnsubscribe) window.adminUsersUnsubscribe();
             document.getElementById('admin-modal').classList.add('hidden');
         }
 
         // --- ЛОГИКА РЕДАКТИРОВАНИЯ КОНКРЕТНОГО МОДУЛЯ ---
+        // Форматирование ссылок для Berrycast
+        function formatVideoUrl(url) {
+            if (!url) return '';
+            if (url.includes('berrycast.com/conversations/') && !url.includes('/embed')) {
+                return url.replace(/\/$/, '') + '/embed';
+            }
+            return url;
+        }
+
         function openAdminModuleEdit(idx) {
             const mod = academyData.modules[idx];
             document.getElementById('edit-mod-idx').value = idx;
@@ -460,7 +506,7 @@
         }
 
         function updateAdminVideoPreview() {
-            const videoUrl = document.getElementById('edit-mod-video').value;
+            const videoUrl = formatVideoUrl(document.getElementById('edit-mod-video').value);
             document.getElementById('edit-mod-video-preview').src = videoUrl;
         }
 
@@ -470,7 +516,7 @@
             
             mod.title = document.getElementById('edit-mod-title').value;
             mod.desc = document.getElementById('edit-mod-desc').value;
-            mod.video = document.getElementById('edit-mod-video').value;
+            mod.video = formatVideoUrl(document.getElementById('edit-mod-video').value);
             mod.pdfUrl = document.getElementById('edit-mod-pdf').value;
             mod.deadline = document.getElementById('edit-mod-deadline').value;
 
@@ -483,6 +529,62 @@
             document.getElementById('edit-mod-video-preview').src = '';
             renderAdminModules();
         }
+
+        // Функции для админ-панели (пользователи)
+        window.loadAdminUsers = function() {
+            const list = document.getElementById('admin-users-list');
+            if (!window.db || !window.query || !window.collection || !window.onSnapshot) {
+                list.innerHTML = '<div class="text-sm text-red-500">Нет связи с БД</div>';
+                return;
+            }
+            list.innerHTML = '<div class="text-sm text-zinc-500">Загрузка...</div>';
+            
+            const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users'));
+            window.adminUsersUnsubscribe = window.onSnapshot(q, (snapshot) => {
+                list.innerHTML = '';
+                if (snapshot.empty) {
+                    list.innerHTML = '<div class="text-sm text-zinc-500">Пока никто не активировал код</div>';
+                    return;
+                }
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    list.innerHTML += `
+                        <div class="flex items-center justify-between bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50">
+                            <div>
+                                <p class="text-sm font-bold text-white">${data.nickname || 'Неизвестный'}</p>
+                                <p class="text-[10px] text-zinc-400">Пройдено модулей: ${data.progress ? data.progress - 1 : 0}</p>
+                            </div>
+                            <button onclick="resetUserProgress('${docSnap.id}')" class="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-all">
+                                Сбросить
+                            </button>
+                        </div>
+                    `;
+                });
+            }, (error) => {
+                console.error("Ошибка загрузки юзеров", error);
+                list.innerHTML = '<div class="text-sm text-red-500">Ошибка загрузки</div>';
+            });
+        };
+
+        window.resetUserProgress = async function(uid) {
+            if (confirm("Точно сбросить прогресс этому студенту?")) {
+                try {
+                    await window.updateDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                        progress: 1
+                    });
+                    
+                    // Если сбрасываем свой же прогресс
+                    if (window.auth && window.auth.currentUser && window.auth.currentUser.uid === uid) {
+                        currentLevel = 1;
+                        renderModules();
+                    }
+                    alert("Прогресс сброшен!");
+                } catch(e) {
+                    console.error("Ошибка при сбросе", e);
+                    alert("Произошла ошибка при сбросе");
+                }
+            }
+        };
 
         init();
     </script>
@@ -569,9 +671,21 @@
             await signInAnonymously(auth);
             
             onAuthStateChanged(auth, (user) => {
+                const indicator = document.getElementById('cloud-indicator');
                 if (user) {
                     currentUser = user;
                     console.log("Зай, мы в системе! ID пользователя:", user.uid);
+                    if (indicator) {
+                        indicator.classList.remove('bg-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+                        indicator.classList.add('bg-emerald-500', 'shadow-[0_0_8px_rgba(16,185,129,0.8)]');
+                        indicator.title = "Связь с облаком установлена";
+                    }
+                } else {
+                    if (indicator) {
+                        indicator.classList.remove('bg-emerald-500', 'shadow-[0_0_8px_rgba(16,185,129,0.8)]');
+                        indicator.classList.add('bg-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+                        indicator.title = "Нет связи с облаком";
+                    }
                 }
             });
         } catch (error) {
@@ -593,6 +707,12 @@
     window.db = db;
     window.auth = auth;
     window.appId = appId;
+    window.doc = doc;
+    window.setDoc = setDoc;
+    window.updateDoc = updateDoc;
+    window.collection = collection;
+    window.query = query;
+    window.onSnapshot = onSnapshot;
 </script>
 </body>
 </html>
