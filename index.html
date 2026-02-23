@@ -6,18 +6,19 @@
     <title>Cyber Academy</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Удалили Google Font: Apple стиль использует системные шрифты устройства -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
         :root {
             --accent: #a855f7;
             --bg: #09090b;
-            --card-bg: rgba(24, 24, 27, 0.8);
+            --card-bg: rgba(24, 24, 27, 0.6); /* Чуть прозрачнее для эффекта стекла */
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+            letter-spacing: 0.015em; /* Изящный отступ между буквами */
             background-color: var(--bg);
             background-image: 
                 radial-gradient(circle at 0% 0%, rgba(168, 85, 247, 0.15) 0%, transparent 25%),
@@ -59,15 +60,33 @@
             top: 0; left: 0; width: 100%; height: 100%;
         }
 
+        /* Apple Style: Полустеклянные кнопки */
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent), #7c3aed);
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Изящные шрифты для заголовков, чтобы не сливались */
+        h1, h2, h3, .tracking-tight {
+            letter-spacing: 0.03em !important;
+            font-weight: 600;
         }
 
         ::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
-<body class="p-4 pb-20">
+<body class="p-4 pb-20" oncontextmenu="return false;">
 
     <header class="flex justify-between items-center mb-8 pt-4">
         <div>
@@ -124,8 +143,9 @@
             </button>
 
             <div class="glass-card p-4 mb-6">
-                <div class="video-container mb-4">
-                    <iframe id="lesson-video" src="" frameborder="0" allowfullscreen></iframe>
+                <div class="video-container mb-4" oncontextmenu="return false;" ondragstart="return false;">
+                    <!-- sandbox без allow-popups блокирует переход на ресурс -->
+                    <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin" allowfullscreen></iframe>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -145,82 +165,10 @@
 
             <div class="mt-auto space-y-4">
                 <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на домашку</label>
-                    <input type="url" id="hw-input" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
-                </div>
-                <button onclick="submitHomework()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm">
-                    Сдать работу
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="admin-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
-        <div class="p-6 min-h-screen flex flex-col">
-            <button onclick="closeAdmin()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
-                <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад в академию
-            </button>
-            <h2 class="text-2xl font-bold mb-6 text-purple-400">Панель управления</h2>
-            
-            <div class="glass-card p-5 space-y-6">
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Название академии</label>
-                    <input type="text" id="admin-academy-name" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Секретный код для 1 урока</label>
-                    <input type="text" id="admin-secret-code" placeholder="Например: VIP2026" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Модули (Уроки)</label>
-                    <div id="admin-modules-list" class="space-y-3"></div>
-                </div>
-
-                <button onclick="adminAddModule()" class="w-full py-4 rounded-2xl font-bold uppercase tracking-widest text-sm border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-all">
-                    + Добавить модуль
-                </button>
-
-                <div class="space-y-2 pt-4 border-t border-zinc-800">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Студенты (активировали код)</label>
-                    <div id="admin-users-list" class="space-y-3">
-                        <div class="text-sm text-zinc-500">Загрузка...</div>
-                    </div>
-                </div>
-
-                <button onclick="saveAdminChanges()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm mt-4">
-                    Сохранить изменения
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="admin-module-edit-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
-        <div class="p-6 min-h-screen flex flex-col">
-            <button onclick="closeAdminModuleEdit()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
-                <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад
-            </button>
-            <h2 class="text-2xl font-bold mb-6 text-purple-400">Настройки урока</h2>
-            
-            <div class="glass-card p-5 space-y-5">
-                <input type="hidden" id="edit-mod-idx">
-                
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Заголовок</label>
-                    <input type="text" id="edit-mod-title" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Подзаголовок / Описание</label>
-                    <textarea id="edit-mod-desc" rows="3" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all"></textarea>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast)</label>
-                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast, Яндекс Диск)</label>
+                    <input type="url" id="edit-mod-video" placeholder="https://... или код <iframe> с Яндекс Диска" oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     <div class="video-container mt-2">
-                        <iframe id="edit-mod-video-preview" src="" frameborder="0" allowfullscreen></iframe>
+                        <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin" allowfullscreen></iframe>
                     </div>
                 </div>
 
@@ -461,13 +409,19 @@
             if (!url) return '';
             let formattedUrl = url.trim();
             
+            // Если вставили код <iframe> (например, из Яндекс Диска)
+            if (formattedUrl.includes('<iframe') && formattedUrl.includes('src=')) {
+                const match = formattedUrl.match(/src=["'](.*?)["']/);
+                if (match) return match[1];
+            }
+            
             if (formattedUrl.includes('youtube.com/watch?v=')) {
                 const videoId = formattedUrl.split('v=')[1].split('&')[0];
-                return `https://www.youtube.com/embed/${videoId}`;
+                return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0`;
             }
             if (formattedUrl.includes('youtu.be/')) {
                 const videoId = formattedUrl.split('youtu.be/')[1].split('?')[0];
-                return `https://www.youtube.com/embed/${videoId}`;
+                return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0`;
             }
             
             if (formattedUrl.includes('rutube.ru/video/')) {
