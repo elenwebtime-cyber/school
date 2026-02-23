@@ -11,7 +11,7 @@
     
     <style>
         :root {
-            --accent: #a855f7; /* Насыщенный фиолетовый */
+            --accent: #a855f7;
             --bg: #09090b;
             --card-bg: rgba(24, 24, 27, 0.8);
         }
@@ -47,7 +47,7 @@
 
         .video-container {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 */
+            padding-bottom: 56.25%;
             height: 0;
             overflow: hidden;
             border-radius: 16px;
@@ -64,13 +64,11 @@
             box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
         }
 
-        /* Кастомный скролл */
         ::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
 <body class="p-4 pb-20">
 
-    <!-- Header -->
     <header class="flex justify-between items-center mb-8 pt-4">
         <div>
             <div class="flex items-center gap-2">
@@ -94,12 +92,8 @@
         </div>
     </header>
 
-    <!-- Модули -->
-    <div id="modules-container" class="space-y-4">
-        <!-- Сюда рендерятся модули -->
-    </div>
+    <div id="modules-container" class="space-y-4"></div>
 
-    <!-- Модалка доступа (Пин-код) -->
     <div id="access-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto flex items-center justify-center">
         <div class="p-6 w-full max-w-md flex flex-col">
             <div class="glass-card p-6 space-y-6 relative">
@@ -123,7 +117,6 @@
         </div>
     </div>
 
-    <!-- Деталка урока (Modal) -->
     <div id="lesson-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
         <div class="p-6 min-h-screen flex flex-col">
             <button onclick="closeLesson()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
@@ -132,7 +125,6 @@
 
             <div class="glass-card p-4 mb-6">
                 <div class="video-container mb-4">
-                    <!-- Заглушка для видео, меняется динамически -->
                     <iframe id="lesson-video" src="" frameborder="0" allowfullscreen></iframe>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
@@ -163,7 +155,6 @@
         </div>
     </div>
 
-    <!-- Админка (Modal) -->
     <div id="admin-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
         <div class="p-6 min-h-screen flex flex-col">
             <button onclick="closeAdmin()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
@@ -172,32 +163,25 @@
             <h2 class="text-2xl font-bold mb-6 text-purple-400">Панель управления</h2>
             
             <div class="glass-card p-5 space-y-6">
-                <!-- 1. Изменение заголовка -->
                 <div class="space-y-2">
                     <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Название академии</label>
                     <input type="text" id="admin-academy-name" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
                 </div>
 
-                <!-- 1.5 Изменение секретного кода -->
                 <div class="space-y-2">
                     <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Секретный код для 1 урока</label>
                     <input type="text" id="admin-secret-code" placeholder="Например: VIP2026" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
                 </div>
 
-                <!-- 2. Структура меню (редактирование модулей) -->
                 <div class="space-y-2">
                     <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Модули (Уроки)</label>
-                    <div id="admin-modules-list" class="space-y-3">
-                        <!-- Сюда рендерятся инпуты модулей -->
-                    </div>
+                    <div id="admin-modules-list" class="space-y-3"></div>
                 </div>
 
-                <!-- 3. Добавление новых модулей -->
                 <button onclick="adminAddModule()" class="w-full py-4 rounded-2xl font-bold uppercase tracking-widest text-sm border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-all">
                     + Добавить модуль
                 </button>
 
-                <!-- 4. Пользователи -->
                 <div class="space-y-2 pt-4 border-t border-zinc-800">
                     <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Студенты (активировали код)</label>
                     <div id="admin-users-list" class="space-y-3">
@@ -205,7 +189,6 @@
                     </div>
                 </div>
 
-                <!-- Кнопка сохранения -->
                 <button onclick="saveAdminChanges()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm mt-4">
                     Сохранить изменения
                 </button>
@@ -213,7 +196,6 @@
         </div>
     </div>
 
-    <!-- Редактирование конкретного модуля (Modal) -->
     <div id="admin-module-edit-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
         <div class="p-6 min-h-screen flex flex-col">
             <button onclick="closeAdminModuleEdit()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
@@ -260,12 +242,11 @@
     </div>
 
     <script>
-        // Моковые данные для примера (потом они будут лежать в твоей базе)
         const academyData = {
             name: "Нейросети: Мастер",
-            secretCode: "VIP2026", // Секретный код доступа по умолчанию
+            secretCode: "VIP2026",
             modules: [
-                { id: 1, title: "Основы генерации", video: "https://www.youtube.com/embed/dQw4w9WgXcQ", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "" },
+                { id: 1, title: "Основы генерации", video: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "" },
                 { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "" },
                 { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "" },
                 { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "" }
@@ -273,7 +254,8 @@
         };
 
         let currentLevel = 1;
-        let isAccessGranted = false; // Флаг доступа
+        let isAccessGranted = localStorage.getItem('academy_access_granted') === 'true';
+        let currentViewedLesson = 0;
 
         function init() {
             document.getElementById('academy-name').innerText = academyData.name;
@@ -315,13 +297,12 @@
             lucide.createIcons();
         }
 
-        // --- ЛОГИКА ДОСТУПА И ОТКРЫТИЯ УРОКА ---
         function checkAccessCode() {
             const inputCode = document.getElementById('access-code-input').value.trim();
             if (inputCode === academyData.secretCode) {
                 isAccessGranted = true;
+                localStorage.setItem('academy_access_granted', 'true');
                 
-                // Сохраняем пользователя и его прогресс в облако
                 if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
                     const uid = window.auth.currentUser.uid;
                     const nickname = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 
@@ -336,7 +317,7 @@
                 }
 
                 closeAccessModal();
-                openLesson(0); // Пропускаем внутрь первого урока
+                openLesson(0);
             } else {
                 alert('Неверный код доступа!');
             }
@@ -347,17 +328,18 @@
         }
 
         function openLesson(idx) {
-            // Проверяем, если это первый урок, код установлен, но доступ еще не получен
             if (idx === 0 && academyData.secretCode && academyData.secretCode.trim() !== '' && !isAccessGranted) {
                 document.getElementById('access-code-input').value = '';
                 document.getElementById('access-modal').classList.remove('hidden');
                 return;
             }
 
+            currentViewedLesson = idx;
+            
             const mod = academyData.modules[idx];
             document.getElementById('lesson-title').innerText = mod.title;
             document.getElementById('lesson-desc').innerText = mod.desc;
-            document.getElementById('lesson-video').src = mod.video || '';
+            document.getElementById('lesson-video').src = formatVideoUrl(mod.video) || '';
             
             const pdfBtn = document.getElementById('lesson-pdf-btn');
             if (mod.pdfUrl) {
@@ -371,7 +353,6 @@
             document.getElementById('lesson-deadline-timer').innerText = !isNaN(d) ? d.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : "Не установлен";
 
             document.getElementById('lesson-modal').classList.remove('hidden');
-            // Здесь можно запустить таймер дедлайна как в твоем коде
         }
 
         function closeLesson() {
@@ -387,16 +368,17 @@
                 return;
             }
 
-            // Тут твоя логика отправки в Telegram
             alert('Заинька, работа отправлена! Ты молодец!');
-            currentLevel++;
+            
+            if (currentViewedLesson + 1 === currentLevel) {
+                currentLevel++;
 
-            // Обновляем прогресс в облаке
-            if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
-                const uid = window.auth.currentUser.uid;
-                window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
-                    progress: currentLevel
-                }, { merge: true });
+                if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
+                    const uid = window.auth.currentUser.uid;
+                    window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                        progress: currentLevel
+                    }, { merge: true });
+                }
             }
 
             document.getElementById('hw-input').value = '';
@@ -404,14 +386,12 @@
             renderModules();
         }
 
-        // --- СЕКРЕТНАЯ АДМИНКА ---
         let tapCount = 0;
         let tapTimer = null;
 
         function handleAdminTrigger() {
             tapCount++;
             if (tapCount === 1) {
-                // Если кликнули первый раз, даем 1.5 секунды на еще 4 клика
                 tapTimer = setTimeout(() => { tapCount = 0; }, 1500); 
             }
             if (tapCount >= 5) {
@@ -419,7 +399,7 @@
                 tapCount = 0;
                 const adminBtn = document.getElementById('admin-btn');
                 adminBtn.classList.remove('hidden');
-                lucide.createIcons(); // Рисуем иконку шестеренки
+                lucide.createIcons();
             }
         }
 
@@ -460,17 +440,14 @@
         }
 
         function saveAdminChanges() {
-            // 1. Сохраняем заголовок
             const newName = document.getElementById('admin-academy-name').value;
             if (newName) {
                 academyData.name = newName;
                 document.getElementById('academy-name').innerText = newName;
             }
 
-            // Сохраняем код
             academyData.secretCode = document.getElementById('admin-secret-code').value.trim();
 
-            // Перерисовываем интерфейс и закрываем админку
             renderModules();
             closeAdmin();
         }
@@ -480,14 +457,29 @@
             document.getElementById('admin-modal').classList.add('hidden');
         }
 
-        // --- ЛОГИКА РЕДАКТИРОВАНИЯ КОНКРЕТНОГО МОДУЛЯ ---
-        // Форматирование ссылок для Berrycast
         function formatVideoUrl(url) {
             if (!url) return '';
-            if (url.includes('berrycast.com/conversations/') && !url.includes('/embed')) {
-                return url.replace(/\/$/, '') + '/embed';
+            let formattedUrl = url.trim();
+            
+            if (formattedUrl.includes('youtube.com/watch?v=')) {
+                const videoId = formattedUrl.split('v=')[1].split('&')[0];
+                return `https://www.youtube.com/embed/${videoId}`;
             }
-            return url;
+            if (formattedUrl.includes('youtu.be/')) {
+                const videoId = formattedUrl.split('youtu.be/')[1].split('?')[0];
+                return `https://www.youtube.com/embed/${videoId}`;
+            }
+            
+            if (formattedUrl.includes('rutube.ru/video/')) {
+                const videoId = formattedUrl.split('rutube.ru/video/')[1].replace(/\//g, '');
+                return `https://rutube.ru/play/embed/${videoId}/`;
+            }
+
+            if (formattedUrl.includes('berrycast.com/conversations/') && !formattedUrl.includes('/embed')) {
+                return formattedUrl.replace(/\/$/, '') + '/embed';
+            }
+            
+            return formattedUrl;
         }
 
         function openAdminModuleEdit(idx) {
@@ -530,7 +522,6 @@
             renderAdminModules();
         }
 
-        // Функции для админ-панели (пользователи)
         window.loadAdminUsers = function() {
             const list = document.getElementById('admin-users-list');
             if (!window.db || !window.query || !window.collection || !window.onSnapshot) {
@@ -573,7 +564,6 @@
                         progress: 1
                     });
                     
-                    // Если сбрасываем свой же прогресс
                     if (window.auth && window.auth.currentUser && window.auth.currentUser.uid === uid) {
                         currentLevel = 1;
                         renderModules();
@@ -588,7 +578,6 @@
 
         init();
     </script>
-<!-- Вставляй это в начало своего <script type="module"> -->
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -600,9 +589,7 @@
         onSnapshot, 
         collection, 
         query, 
-        addDoc, 
-        updateDoc, 
-        deleteDoc 
+        updateDoc
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { 
         getAuth, 
@@ -611,38 +598,31 @@
         signInWithCustomToken 
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    // 1. КОНФИГУРАЦИЯ FIREBASE (ЯВНАЯ)
-    // Солнышко, вот сюда прямо копируй свой конфиг из Firebase Console!
     const firebaseConfig = {
-  apiKey: "AIzaSyCfUl6ZUnzhS-kwgHva9xEoct2Br8pfRQ8",
-  authDomain: "school-cc2b9.firebaseapp.com",
-  projectId: "school-cc2b9",
-  storageBucket: "school-cc2b9.firebasestorage.app",
-  messagingSenderId: "404605437857",
-  appId: "1:404605437857:web:c265735350cbed0d492de0"
-};
+        apiKey: "AIzaSyCfUl6ZUnzhS-kwgHva9xEoct2Br8pfRQ8",
+        authDomain: "school-cc2b9.firebaseapp.com",
+        projectId: "school-cc2b9",
+        storageBucket: "school-cc2b9.firebasestorage.app",
+        messagingSenderId: "404605437857",
+        appId: "1:404605437857:web:c265735350cbed0d492de0"
+    };
 
-    const appId = 'my-awesome-school-project'; // Назови как хочешь!
-
-    // 2. НАСТРОЙКИ ТЕЛЕГРАМ БОТА
-    // Получи токен у @BotFather, а chat_id у бота @userinfobot (или подобного)
+    const appId = 'my-awesome-school-project';
     const TG_BOT_TOKEN = "8687065026:AAHBGGGEIVrRngAc9iIH3gq2ggbg7MITl78";
     const TG_CHAT_ID = "758556732";
 
-    // 3. Инициализация Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     let currentUser = null;
 
-    // 4. Функция для отправки сообщений в Телеграм!
-    // Можешь вызывать её откуда угодно в своем проекте: window.sendToTelegram("Привет!")
     window.sendToTelegram = async function(messageText) {
-        if (TG_BOT_TOKEN === "8687065026:AAHBGGGEIVrRngAc9iIH3gq2ggbg7MITl78") {
-            console.warn("Зая, ты забыла вставить токен от Телеграм бота!");
+        if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
+            console.warn("Не задан TG_BOT_TOKEN или TG_CHAT_ID");
             return;
         }
+
         const url = `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`;
         try {
             const response = await fetch(url, {
@@ -654,65 +634,84 @@
                     parse_mode: "HTML"
                 })
             });
-            if (response.ok) {
-                console.log("Сообщение успешно улетело в Телегу! 🚀");
-            } else {
-                console.error("Бот ругается:", await response.text());
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Ошибка отправки в Telegram:", errorText);
             }
         } catch (error) {
-            console.error("Ошибка при отправке в ТГ:", error);
+            console.error("Ошибка отправки в Telegram:", error);
         }
     };
 
-    // 5. Функция входа
-    async function startApp() {
-        try {
-            // Теперь просто заходим анонимно, без всякой магии
-            await signInAnonymously(auth);
-            
-            onAuthStateChanged(auth, (user) => {
-                const indicator = document.getElementById('cloud-indicator');
-                if (user) {
-                    currentUser = user;
-                    console.log("Зай, мы в системе! ID пользователя:", user.uid);
-                    if (indicator) {
-                        indicator.classList.remove('bg-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
-                        indicator.classList.add('bg-emerald-500', 'shadow-[0_0_8px_rgba(16,185,129,0.8)]');
-                        indicator.title = "Связь с облаком установлена";
-                    }
-                } else {
-                    if (indicator) {
-                        indicator.classList.remove('bg-emerald-500', 'shadow-[0_0_8px_rgba(16,185,129,0.8)]');
-                        indicator.classList.add('bg-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
-                        indicator.title = "Нет связи с облаком";
-                    }
-                }
-            });
-        } catch (error) {
-            console.error("Ой, что-то пошло не так со входом:", error);
+    function updateCloudIndicator(connected) {
+        const indicator = document.getElementById('cloud-indicator');
+        if (!indicator) return;
+
+        if (connected) {
+            indicator.classList.remove('bg-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+            indicator.classList.add('bg-emerald-500', 'shadow-[0_0_8px_rgba(16,185,129,0.8)]');
+            indicator.title = "Связь с облаком установлена";
+        } else {
+            indicator.classList.remove('bg-emerald-500', 'shadow-[0_0_8px_rgba(16,185,129,0.8)]');
+            indicator.classList.add('bg-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+            indicator.title = "Нет связи с облаком";
         }
     }
 
-    // 4. Функции для работы с путями (строго по правилам среды)
+    async function startApp() {
+        try {
+            if (window.__initialAuthToken) {
+                await signInWithCustomToken(auth, window.__initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    updateCloudIndicator(true);
+
+                    try {
+                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'activated_users', user.uid);
+                        const docSnap = await getDoc(docRef);
+                        if (docSnap.exists() && docSnap.data().progress) {
+                            window.currentLevel = docSnap.data().progress;
+                            localStorage.setItem('academy_access_granted', 'true');
+                            if (typeof window.renderModules === 'function') window.renderModules();
+                        }
+                    } catch (e) {
+                        console.error("Ошибка при загрузке прогресса", e);
+                    }
+                } else {
+                    updateCloudIndicator(false);
+                }
+            });
+        } catch (error) {
+            console.error("Ошибка авторизации:", error);
+            updateCloudIndicator(false);
+        }
+    }
+
     window.getPublicDataRef = (collectionName) => 
         collection(db, 'artifacts', appId, 'public', 'data', collectionName);
 
     window.getUserDataRef = (collectionName) => 
         collection(db, 'artifacts', appId, 'users', auth.currentUser?.uid, collectionName);
 
-    // Запускаем всё!
-    startApp();
-
-    // Делаем всё глобальным для удобства вайбкодинга
     window.db = db;
     window.auth = auth;
     window.appId = appId;
     window.doc = doc;
     window.setDoc = setDoc;
+    window.getDoc = getDoc;
     window.updateDoc = updateDoc;
     window.collection = collection;
     window.query = query;
     window.onSnapshot = onSnapshot;
+    window.currentUser = currentUser;
+
+    startApp();
 </script>
 </body>
 </html>
