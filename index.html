@@ -144,8 +144,8 @@
 
             <div class="glass-card p-4 mb-6">
                 <div class="video-container mb-4" oncontextmenu="return false;" ondragstart="return false;">
-                    <!-- sandbox без allow-popups блокирует переход на ресурс -->
-                    <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin" allowfullscreen></iframe>
+                    <!-- Удалили sandbox для корректной работы Яндекс Диска и других плееров -->
+                    <iframe id="lesson-video" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -245,7 +245,8 @@
                     <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast, Яндекс Диск)</label>
                     <input type="url" id="edit-mod-video" placeholder="https://... или код <iframe> с Яндекс Диска" oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     <div class="video-container mt-2">
-                        <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin" allowfullscreen></iframe>
+                        <!-- Удалили sandbox для корректной работы Яндекс Диска и других плееров -->
+                        <iframe id="edit-mod-video-preview" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
                     </div>
                 </div>
 
@@ -324,7 +325,7 @@
             lucide.createIcons();
         }
 
-        function checkAccessCode() {
+        async function checkAccessCode() {
             const inputCode = document.getElementById('access-code-input').value.trim();
             if (inputCode === academyData.secretCode) {
                 isAccessGranted = true;
@@ -336,14 +337,27 @@
                                      window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 
                                      "Студент " + uid.substring(0, 4);
                     
-                    window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
+                    
+                    // Сначала получаем документ, чтобы не перезаписать/обнулить прогресс, если он уже есть!
+                    let existingProgress = currentLevel;
+                    try {
+                        const docSnap = await window.getDoc(docRef);
+                        if (docSnap.exists() && docSnap.data().progress) {
+                            existingProgress = Math.max(existingProgress, docSnap.data().progress);
+                            currentLevel = existingProgress;
+                        }
+                    } catch (e) { console.error(e); }
+
+                    window.setDoc(docRef, {
                         nickname: nickname,
-                        progress: currentLevel,
+                        progress: existingProgress,
                         activatedAt: new Date().toISOString()
                     }, { merge: true });
                 }
 
                 closeAccessModal();
+                renderModules(); // Перерисовываем модули с правильным прогрессом
                 openLesson(0);
             } else {
                 alert('Неверный код доступа!');
@@ -393,6 +407,45 @@
             if (!urlPattern.test(hwInput)) {
                 alert('Ошибка! Можно вводить только ссылки (строка должна начинаться с http:// или https://)');
                 return;
+            }
+
+            // --- Отправка данных в Telegram-бот ---
+            if (window.sendToTelegram) {
+                const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+                const firstName = tgUser.first_name || "Неизвестный";
+                const lastName = tgUser.last_name || "";
+                const fullName = `${firstName} ${lastName}`.trim();
+                const username = tgUser.username || "";
+                
+                const loginText = username ? `@${username}` : "Скрыт";
+                const chatLink = username ? `<a href="https://t.me/${username}">ОТКРЫТЬ ЧАТ</a>` : "<i>Нет юзернейма</i>";
+                
+                const mod = academyData.modules[currentViewedLesson];
+                const moduleTitle = mod.title;
+                const hwLink = hwInput;
+                
+                const now = new Date();
+                const deadlineDate = new Date(mod.deadline);
+                let statusText = "Вовремя ✅";
+                
+                if (!isNaN(deadlineDate) && now > deadlineDate) {
+                    statusText = "После дедлайна 🚩";
+                }
+                
+                const submitTime = now.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
+
+                const tgMessage = `
+<b>Ученик:</b> ${fullName}
+<b>Контакт:</b> ${loginText}
+${chatLink}
+
+<b>Модуль:</b> ${moduleTitle}
+<b>Ссылка на ДЗ:</b> <a href="${hwLink}">Перейти к работе</a>
+<b>Статус:</b> ${statusText}
+<b>Время и дата сдачи:</b> ${submitTime}
+                `.trim();
+
+                window.sendToTelegram(tgMessage);
             }
 
             alert('Заинька, работа отправлена! Ты молодец!');
@@ -556,6 +609,11 @@
         }
 
         window.loadAdminUsers = function() {
+            // Предотвращаем задвоение: отписываемся от предыдущего слушателя базы данных
+            if (window.adminUsersUnsubscribe) {
+                window.adminUsersUnsubscribe();
+            }
+
             const list = document.getElementById('admin-users-list');
             if (!window.db || !window.query || !window.collection || !window.onSnapshot) {
                 list.innerHTML = '<div class="text-sm text-red-500">Нет связи с БД</div>';
@@ -578,9 +636,14 @@
                                 <p class="text-sm font-bold text-white">${data.nickname || 'Неизвестный'}</p>
                                 <p class="text-[10px] text-zinc-400">Пройдено модулей: ${data.progress ? data.progress - 1 : 0}</p>
                             </div>
-                            <button onclick="resetUserProgress('${docSnap.id}')" class="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-all">
-                                Сбросить
-                            </button>
+                            <div class="flex gap-2">
+                                <button onclick="resetUserProgress('${docSnap.id}')" class="text-xs bg-zinc-500/10 text-zinc-400 px-3 py-1.5 rounded-lg border border-zinc-500/20 hover:bg-zinc-500/20 transition-all">
+                                    Сбросить
+                                </button>
+                                <button onclick="deleteAdminUser('${docSnap.id}')" class="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-all">
+                                    Удалить
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
@@ -609,6 +672,18 @@
             }
         };
 
+        window.deleteAdminUser = async function(uid) {
+            if (confirm("Точно удалить этого ученика из списка?")) {
+                try {
+                    await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid));
+                    alert("Ученик удален!");
+                } catch(e) {
+                    console.error("Ошибка при удалении", e);
+                    alert("Произошла ошибка при удалении");
+                }
+            }
+        };
+
         init();
     </script>
 
@@ -622,7 +697,8 @@
         onSnapshot, 
         collection, 
         query, 
-        updateDoc
+        updateDoc,
+        deleteDoc
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { 
         getAuth, 
@@ -739,6 +815,7 @@
     window.setDoc = setDoc;
     window.getDoc = getDoc;
     window.updateDoc = updateDoc;
+    window.deleteDoc = deleteDoc;
     window.collection = collection;
     window.query = query;
     window.onSnapshot = onSnapshot;
