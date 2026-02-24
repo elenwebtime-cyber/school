@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Скрипт для виртуального конфетти -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
         :root {
@@ -153,7 +155,7 @@
             <!-- Плашка 1: Видео, Заголовок, Подзаголовок (описание) -->
             <div class="glass-card p-4 mb-4 box-border w-full">
                 <div class="video-container mb-4 relative" oncontextmenu="return false;" ondragstart="return false;">
-                    <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen webkitallowfullscreen mozallowfullscreen class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black"></iframe>
+                    <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black"></iframe>
                     
                     <div class="absolute top-0 left-0 w-[70%] h-[45px] z-10 bg-transparent"></div>
                     <div class="absolute top-0 right-0 w-[100px] h-[45px] z-10 bg-transparent"></div>
@@ -304,7 +306,7 @@
                     <div class="space-y-1.5 box-border w-full">
                         <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Предпросмотр плеера</label>
                         <div class="video-container relative rounded-lg border border-zinc-800 overflow-hidden w-full">
-                            <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen webkitallowfullscreen mozallowfullscreen class="absolute top-0 left-0 w-full h-full bg-black"></iframe>
+                            <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" class="absolute top-0 left-0 w-full h-full bg-black"></iframe>
                             <div class="absolute top-0 right-0 w-[50px] h-[50px] z-10 bg-transparent"></div>
                         </div>
                     </div>
@@ -634,8 +636,18 @@
                     if (days > 0) timeStr += days + " дн. ";
                     timeStr += String(hours).padStart(2, '0') + ":" + String(mins).padStart(2, '0') + ":" + String(secs).padStart(2, '0');
 
+                    // Логика смены цвета таймера
+                    let colorClass = "text-white";
+                    if (diff > 48 * 60 * 60 * 1000) {
+                        colorClass = "text-emerald-400"; // Больше 2 дней - спокойный зеленый
+                    } else if (diff <= 3 * 60 * 60 * 1000) {
+                        colorClass = "text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"; // Осталось 3 часа - красный и пульсирует
+                    } else if (diff <= 24 * 60 * 60 * 1000) {
+                        colorClass = "text-yellow-400"; // Остались сутки - желтый
+                    }
+
                     timerEl.innerText = timeStr;
-                    timerEl.className = "text-lg md:text-xl font-mono tracking-wider font-bold text-white transition-all";
+                    timerEl.className = `text-lg md:text-xl font-mono tracking-wider font-bold ${colorClass} transition-all`;
                     submitBtn.innerText = "ОТПРАВИТЬ РАБОТУ";
                     submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
                 }
@@ -705,7 +717,18 @@ ${chatLink}
             }
 
             if (!isLate) {
-                alert('Отправлено на проверку куратору');
+                // Добавляем дофаминовое конфетти!
+                confetti({
+                    particleCount: 200,
+                    spread: 90,
+                    origin: { y: 0.5 },
+                    zIndex: 99999
+                });
+                
+                // Делаем небольшую задержку, чтобы алерт не перекрыл взрыв конфетти
+                setTimeout(() => {
+                    alert('Отправлено на проверку куратору');
+                }, 300);
             } else {
                 alert('Отправлено с опозданием');
             }
