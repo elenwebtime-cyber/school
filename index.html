@@ -214,17 +214,38 @@
                     <div id="admin-modules-list" class="space-y-2"></div>
                 </div>
 
-                <div class="glass-card p-4 space-y-4">
-                    <h3 class="font-bold text-sm text-purple-400 uppercase tracking-widest">Ученики</h3>
-                    <div id="admin-users-list" class="space-y-2"></div>
+                <!-- Новый блок для перехода к ученикам -->
+                <div class="glass-card p-4 flex justify-between items-center cursor-pointer hover:border-purple-500 transition-all" onclick="openAdminUsers()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                            <i data-lucide="users" class="w-5 h-5 text-purple-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm">Ученики</h3>
+                            <p class="text-[10px] text-zinc-500 uppercase">Управление доступами</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-zinc-500"></i>
                 </div>
             </div>
 
+            <div class="mt-auto pt-6">
             <div class="mt-auto pt-6">
                 <button onclick="saveAdminChanges()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm">
                     Сохранить изменения
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Новое модальное окно для списка учеников -->
+    <div id="admin-users-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
+        <div class="p-6 min-h-screen flex flex-col">
+            <button onclick="closeAdminUsers()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад к админке
+            </button>
+            <h2 class="text-xl font-bold mb-6">Список учеников</h2>
+            <div id="admin-users-list" class="space-y-3"></div>
         </div>
     </div>
 
@@ -279,6 +300,11 @@
     </div>
 
     <script>
+        // Разворачиваем Telegram Mini App на весь экран при запуске
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.expand();
+        }
+
         const academyData = {
             name: "Нейросети: Мастер",
             secretCode: "VIP2026",
@@ -546,7 +572,6 @@ ${chatLink}
             document.getElementById('admin-academy-name').value = academyData.name;
             document.getElementById('admin-secret-code').value = academyData.secretCode || '';
             renderAdminModules();
-            if (window.loadAdminUsers) window.loadAdminUsers();
             document.getElementById('admin-modal').classList.remove('hidden');
         }
 
@@ -596,6 +621,18 @@ ${chatLink}
         function closeAdmin() {
             if (window.adminUsersUnsubscribe) window.adminUsersUnsubscribe();
             document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function openAdminUsers() {
+            document.getElementById('admin-modal').classList.add('hidden');
+            document.getElementById('admin-users-modal').classList.remove('hidden');
+            if (window.loadAdminUsers) window.loadAdminUsers();
+        }
+
+        function closeAdminUsers() {
+            if (window.adminUsersUnsubscribe) window.adminUsersUnsubscribe();
+            document.getElementById('admin-users-modal').classList.add('hidden');
+            document.getElementById('admin-modal').classList.remove('hidden');
         }
 
         function formatVideoUrl(url) {
@@ -703,6 +740,26 @@ ${chatLink}
             renderAdminModules();
         }
 
+        function getPlatformIcon(platform) {
+            if (!platform) return 'help-circle';
+            const p = platform.toLowerCase();
+            if (p.includes('ios') || p.includes('macos') || p.includes('ipad')) return 'apple';
+            if (p.includes('android')) return 'smartphone';
+            if (p.includes('tdesktop') || p.includes('desktop')) return 'monitor';
+            if (p.includes('web')) return 'globe';
+            return 'smartphone';
+        }
+
+        function getPlatformName(platform) {
+            if (!platform) return 'Неизвестно';
+            const p = platform.toLowerCase();
+            if (p.includes('ios')) return 'iOS (iPhone)';
+            if (p.includes('android')) return 'Android';
+            if (p.includes('tdesktop') || p.includes('desktop') || p.includes('macos')) return 'Компьютер';
+            if (p.includes('web')) return 'Браузер';
+            return platform;
+        }
+
         window.loadAdminUsers = function() {
             if (window.adminUsersUnsubscribe) {
                 window.adminUsersUnsubscribe();
@@ -724,32 +781,44 @@ ${chatLink}
                 }
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
+                    const isActivated = data.progress && data.progress > 0;
+                    const statusBadge = isActivated 
+                        ? `<span class="text-[8px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Активен</span>`
+                        : `<span class="text-[8px] bg-zinc-500/20 text-zinc-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Ожидает</span>`;
+
                     list.innerHTML += `
-                        <div class="flex flex-col gap-2 bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-bold text-white">${data.nickname || 'Неизвестный'}</p>
+                        <div class="flex flex-col gap-3 bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center mb-1">
+                                        <p class="text-sm font-bold text-white truncate">${data.nickname || 'Неизвестный'}</p>
+                                        ${statusBadge}
+                                    </div>
                                     <p class="text-[10px] text-zinc-400">Пройдено модулей: ${data.progress ? data.progress - 1 : 0}</p>
+                                    <p class="text-[10px] text-zinc-500 flex items-center gap-1 mt-1">
+                                        <i data-lucide="${getPlatformIcon(data.platform)}" class="w-3 h-3"></i> ${getPlatformName(data.platform)}
+                                    </p>
                                 </div>
-                                <div class="flex gap-2">
-                                    <button onclick="resetUserProgress('${docSnap.id}')" class="text-xs bg-zinc-500/10 text-zinc-400 px-3 py-1.5 rounded-lg border border-zinc-500/20 hover:bg-zinc-500/20 transition-all">
+                                <div class="flex flex-col gap-2 shrink-0">
+                                    <button onclick="resetUserProgress('${docSnap.id}')" class="text-[10px] bg-zinc-500/10 text-zinc-400 px-2 py-1.5 rounded-lg border border-zinc-500/20 hover:bg-zinc-500/20 transition-all text-center">
                                         Сбросить
                                     </button>
-                                    <button onclick="deleteAdminUser('${docSnap.id}')" class="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-all">
+                                    <button onclick="deleteAdminUser('${docSnap.id}')" class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-all text-center">
                                         Удалить
                                     </button>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2 mt-2 pt-2 border-t border-zinc-700/50">
-                                <label class="text-[10px] uppercase text-zinc-500 font-bold">Секретный код:</label>
-                                <input type="text" id="admin-user-code-${docSnap.id}" value="${data.secretCode || ''}" class="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-purple-500 text-white font-mono">
-                                <button onclick="saveUserSecretCode('${docSnap.id}')" class="text-[10px] bg-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 transition-all font-bold">
+                            <div class="flex items-center gap-2 pt-3 border-t border-zinc-700/50">
+                                <label class="text-[10px] uppercase text-zinc-500 font-bold shrink-0">Код:</label>
+                                <input type="text" id="admin-user-code-${docSnap.id}" value="${data.secretCode || ''}" class="w-24 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-purple-500 text-white font-mono text-center">
+                                <button onclick="saveUserSecretCode('${docSnap.id}')" class="text-[10px] bg-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 transition-all font-bold flex-1">
                                     Сохранить
                                 </button>
                             </div>
                         </div>
                     `;
                 });
+                lucide.createIcons();
             }, (error) => {
                 console.error("Ошибка загрузки юзеров", error);
                 list.innerHTML = '<div class="text-sm text-red-500">Ошибка загрузки</div>';
@@ -916,6 +985,7 @@ ${chatLink}
                     try {
                         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'activated_users', user.uid);
                         const docSnap = await getDoc(docRef);
+                        const platform = window.Telegram?.WebApp?.platform || 'unknown';
                         
                         if (!docSnap.exists()) {
                             // Если пользователь зашел впервые — создаем профиль без доступа (progress 0)
@@ -927,10 +997,17 @@ ${chatLink}
                                 nickname: nickname,
                                 progress: 0,
                                 secretCode: randomCode,
+                                platform: platform,
                                 createdAt: new Date().toISOString()
                             });
                         } else {
                             const data = docSnap.data();
+                            
+                            // Обновляем платформу при каждом входе, чтобы знать последнее устройство пользователя
+                            if (data.platform !== platform) {
+                                await updateDoc(docRef, { platform: platform });
+                            }
+
                             if (data.progress && data.progress > 0) {
                                 localStorage.setItem('academy_access_granted', 'true');
                                 if (typeof window.syncCloudData === 'function') {
