@@ -264,6 +264,19 @@
                 </div>
 
                 <div class="space-y-2">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Условие открытия урока</label>
+                    <select id="edit-mod-unlock-type" onchange="toggleUnlockDate()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all text-white">
+                        <option value="sequential">После сдачи предыдущего</option>
+                        <option value="date">В указанную дату</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2" id="unlock-date-container" style="display: none;">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Дата и время открытия</label>
+                    <input type="datetime-local" id="edit-mod-unlock-date" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
+                </div>
+
+                <div class="space-y-2">
                     <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Описание</label>
                     <textarea id="edit-mod-desc" rows="3" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all"></textarea>
                 </div>
@@ -349,6 +362,11 @@
         window.syncCloudData = function(level, access) {
             currentLevel = level;
             isAccessGranted = access;
+            if (!access) {
+                // Если доступ аннулирован (удалили ученика), принудительно закрываем урок
+                document.getElementById('lesson-modal').classList.add('hidden');
+                document.getElementById('lesson-video').src = '';
+            }
             renderModules();
         };
 
@@ -367,21 +385,45 @@
             document.getElementById('progress-text').innerText = `${Math.round(progress)}% Пройдено`;
 
             academyData.modules.forEach((mod, idx) => {
-                const isLocked = (idx + 1) > currentLevel;
-                const isDone = (idx + 1) < currentLevel;
-                const isActive = (idx + 1) === currentLevel;
+                let isLocked = false;
+                
+                // Проверка условий открытия (по дате или после предыдущего)
+                if (mod.unlockType === 'date' && mod.unlockDate) {
+                    isLocked = new Date() < new Date(mod.unlockDate);
+                } else {
+                    isLocked = (idx + 1) > currentLevel;
+                }
+
+                // Жесткая блокировка, если не введен базовый пароль курса
+                if (!isAccessGranted && idx !== 0) {
+                    isLocked = true;
+                }
+
+                const isSeq = !mod.unlockType || mod.unlockType === 'sequential';
+                const isDone = isSeq ? ((idx + 1) < currentLevel) : false;
+                const isActive = isSeq ? ((idx + 1) === currentLevel) : !isLocked;
+
+                let lockedText = isLocked ? 'Доступ закрыт' : 'Нажми, чтобы войти';
+                if (mod.unlockType === 'date' && isLocked && mod.unlockDate) {
+                    const d = new Date(mod.unlockDate);
+                    lockedText = 'Откроется ' + d.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'});
+                }
+
+                const iconHtml = isDone 
+                    ? '<i data-lucide="check" class="text-emerald-500 w-5 h-5"></i>' 
+                    : (mod.unlockType === 'date' ? '<i data-lucide="calendar" class="text-zinc-400 w-5 h-5"></i>' : idx + 1);
 
                 container.innerHTML += `
                     <div class="glass-card p-5 flex items-center justify-between ${isActive ? 'step-active' : ''} ${isLocked ? 'step-locked' : ''}" 
                          onclick="${!isLocked ? `openLesson(${idx})` : ''}">
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 rounded-xl ${isDone ? 'bg-emerald-500/10' : 'bg-zinc-800'} flex items-center justify-center text-sm font-bold">
-                                ${isDone ? '<i data-lucide="check" class="text-emerald-500 w-5 h-5"></i>' : idx + 1}
+                                ${iconHtml}
                             </div>
                             <div>
                                 <h3 class="font-bold text-sm">${mod.title}</h3>
                                 <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">
-                                    ${isLocked ? 'Доступ закрыт' : 'Нажми, чтобы войти'}
+                                    ${lockedText}
                                 </p>
                             </div>
                         </div>
@@ -627,11 +669,18 @@ ${chatLink}
                 video: "",
                 desc: "Описание модуля...",
                 deadline: "2026-12-31T23:59",
-                pdfUrl: ""
+                pdfUrl: "",
+                unlockType: "sequential",
+                unlockDate: ""
             });
             renderAdminModules();
             window.saveAcademyDataToCloud();
         }
+
+        window.toggleUnlockDate = function() {
+            const type = document.getElementById('edit-mod-unlock-type').value;
+            document.getElementById('unlock-date-container').style.display = type === 'date' ? 'block' : 'none';
+        };
 
         function saveAdminChanges() {
             const newName = document.getElementById('admin-academy-name').value;
@@ -725,7 +774,10 @@ ${chatLink}
             document.getElementById('edit-mod-video').value = mod.video || '';
             document.getElementById('edit-mod-pdf').value = mod.pdfUrl || '';
             document.getElementById('edit-mod-deadline').value = mod.deadline || '';
+            document.getElementById('edit-mod-unlock-type').value = mod.unlockType || 'sequential';
+            document.getElementById('edit-mod-unlock-date').value = mod.unlockDate || '';
             
+            window.toggleUnlockDate();
             updateAdminVideoPreview();
             
             document.getElementById('admin-modal').classList.add('hidden');
@@ -756,6 +808,8 @@ ${chatLink}
             mod.video = formatVideoUrl(rawVideo);
             mod.pdfUrl = document.getElementById('edit-mod-pdf').value;
             mod.deadline = document.getElementById('edit-mod-deadline').value;
+            mod.unlockType = document.getElementById('edit-mod-unlock-type').value;
+            mod.unlockDate = document.getElementById('edit-mod-unlock-date').value;
 
             closeAdminModuleEdit();
             window.saveAcademyDataToCloud();
@@ -1029,32 +1083,46 @@ ${chatLink}
                             nickname = tgUser.first_name + (tgUser.last_name ? " " + tgUser.last_name : "");
                         }
                         
-                        if (!docSnap.exists()) {
-                            // Если пользователь зашел впервые — создаем профиль без доступа (progress 0)
-                            const randomCode = Math.floor(1000 + Math.random() * 9000).toString(); // Генерируем случайный 4-значный код
-                            
-                            await setDoc(docRef, {
-                                nickname: nickname,
-                                progress: 0,
-                                secretCode: randomCode,
-                                platform: platform,
-                                createdAt: new Date().toISOString()
-                            });
-                        } else {
-                            const data = docSnap.data();
-                            
-                            // Обновляем платформу и никнейм при каждом входе (заменяет старые ID на реальные имена)
-                            if (data.platform !== platform || data.nickname !== nickname) {
-                                await updateDoc(docRef, { platform: platform, nickname: nickname });
-                            }
-
-                            if (data.progress && data.progress > 0) {
-                                localStorage.setItem('academy_access_granted', 'true');
+                        // Заменяем единоразовую проверку на прослушивание профиля в реальном времени
+                        onSnapshot(docRef, async (docSnap) => {
+                            if (!docSnap.exists()) {
+                                // Профиль удален администратором или первый вход
+                                localStorage.removeItem('academy_access_granted');
                                 if (typeof window.syncCloudData === 'function') {
-                                    window.syncCloudData(data.progress, true);
+                                    window.syncCloudData(1, false);
+                                }
+
+                                const randomCode = Math.floor(1000 + Math.random() * 9000).toString(); // Генерируем код
+                                
+                                await setDoc(docRef, {
+                                    nickname: nickname,
+                                    progress: 0,
+                                    secretCode: randomCode,
+                                    platform: platform,
+                                    createdAt: new Date().toISOString()
+                                });
+                            } else {
+                                const data = docSnap.data();
+                                
+                                // Обновляем платформу и никнейм
+                                if (data.platform !== platform || data.nickname !== nickname) {
+                                    await updateDoc(docRef, { platform: platform, nickname: nickname });
+                                }
+
+                                if (data.progress && data.progress > 0) {
+                                    localStorage.setItem('academy_access_granted', 'true');
+                                    if (typeof window.syncCloudData === 'function') {
+                                        window.syncCloudData(data.progress, true);
+                                    }
+                                } else {
+                                    // Прогресс сброшен на 0 (доступ закрыт)
+                                    localStorage.removeItem('academy_access_granted');
+                                    if (typeof window.syncCloudData === 'function') {
+                                        window.syncCloudData(1, false);
+                                    }
                                 }
                             }
-                        }
+                        });
                     } catch (e) {
                         console.error("Ошибка при загрузке профиля", e);
                     }
