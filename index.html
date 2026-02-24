@@ -159,12 +159,12 @@
     <!-- Модалка урока -->
     <div id="lesson-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto overflow-x-hidden">
         <div class="p-4 sm:p-6 min-h-screen flex flex-col max-w-2xl mx-auto w-full relative box-border">
-            <button onclick="closeLesson()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm w-fit mt-4 hover:text-white transition-colors">
+            <button onclick="closeLesson()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm w-fit mt-4 hover:text-white transition-colors relative z-40">
                 <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад к программе
             </button>
 
             <!-- Плашка 1: Видео, Заголовок, Подзаголовок (описание) -->
-            <div class="glass-card p-4 mb-4 box-border w-full">
+            <div class="glass-card p-4 mb-4 box-border w-full relative z-40">
                 <div class="video-container mb-4 relative" oncontextmenu="return false;" ondragstart="return false;">
                     <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black"></iframe>
                     
@@ -182,12 +182,12 @@
             </div>
 
             <!-- Плашка 2: Материалы к уроку -->
-            <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 mb-6 hover:border-purple-500 text-sm font-bold transition-all">
+            <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden relative z-40 flex items-center justify-center gap-2 w-full box-border glass-card p-4 mb-6 hover:border-purple-500 text-sm font-bold transition-all">
                 <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Материалы к уроку
             </a>
 
             <!-- Плашка 3: Дедлайн и Домашнее задание -->
-            <div class="mt-auto pt-2 pb-6 box-border w-full">
+            <div class="mt-auto pt-2 pb-6 box-border w-full relative z-40">
                 <div class="glass-card p-4 sm:p-5 space-y-4 border border-purple-500/10 bg-purple-500/5 box-border w-full">
                     <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-purple-500/10">
                         <div class="flex items-center gap-2">
@@ -437,6 +437,8 @@
                 document.getElementById('lesson-modal').classList.add('hidden');
                 document.getElementById('lesson-video').src = '';
                 if (deadlineInterval) clearInterval(deadlineInterval);
+                const wm = document.getElementById('global-watermark');
+                if (wm) wm.style.display = 'none';
             }
             renderModules();
         };
@@ -460,12 +462,10 @@
             academyData.modules.forEach((mod, idx) => {
                 let isLocked = false;
                 
-                // Исправлена логика блокировки для режима "по дате"
                 if (isGlobalDateMode) {
                     if (mod.unlockDate) {
                         isLocked = new Date() < new Date(mod.unlockDate);
                     } else {
-                        // Если режим "по дате", но дата не установлена - урок строго закрыт!
                         isLocked = true;
                     }
                 } else {
@@ -476,10 +476,7 @@
                     isLocked = true;
                 }
 
-                // Визуальный прогресс (зеленые галочки) остается в любом режиме
                 const isDone = (idx + 1) < currentLevel;
-                
-                // Активный (пульсирующий) урок
                 const isActive = isGlobalDateMode ? (!isLocked && !isDone) : ((idx + 1) === currentLevel);
 
                 let lockedText = isLocked ? 'Доступ закрыт' : 'Нажми, чтобы войти';
@@ -488,7 +485,6 @@
                     lockedText = 'Откроется ' + d.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'});
                 }
 
-                // Иконка строго 1 в 1 как в режиме "по очереди"
                 const iconHtml = isDone 
                     ? '<i data-lucide="check" class="text-emerald-500 w-5 h-5"></i>' 
                     : `<span class="text-sm font-bold">${idx + 1}</span>`;
@@ -616,6 +612,52 @@
                 pdfBtn.classList.remove('flex');
             }
 
+            // Инициализация летающего водяного знака (Анти-пиратство)
+            let wm = document.getElementById('global-watermark');
+            if (!wm) {
+                wm = document.createElement('div');
+                wm.id = 'global-watermark';
+                wm.style.position = 'fixed';
+                wm.style.color = 'rgba(255, 255, 255, 0.06)'; // полупрозрачный
+                wm.style.fontSize = '24px';
+                wm.style.fontWeight = '900';
+                wm.style.pointerEvents = 'none';
+                wm.style.whiteSpace = 'nowrap';
+                wm.style.zIndex = '9999'; // поверх всего, даже модалок
+                wm.style.userSelect = 'none';
+                wm.style.textShadow = '0 0 4px rgba(0,0,0,0.5)';
+                document.body.appendChild(wm);
+            }
+            
+            const nicknameForWm = window.currentUserData?.nickname || 'Студент';
+            wm.innerText = nicknameForWm + " • Cyber Academy";
+            
+            let wmx = 50, wmy = 50, wmdx = 0.8, wmdy = 0.8;
+            function animateWatermark() {
+                if (document.getElementById('lesson-modal').classList.contains('hidden')) {
+                    wm.style.display = 'none';
+                    if (window.watermarkAnimationFrame) cancelAnimationFrame(window.watermarkAnimationFrame);
+                    return;
+                }
+                wm.style.display = 'block';
+                
+                const w = wm.clientWidth;
+                const h = wm.clientHeight;
+
+                wmx += wmdx;
+                wmy += wmdy;
+
+                if (wmx <= 0 || wmx + w >= window.innerWidth) wmdx *= -1;
+                if (wmy <= 0 || wmy + h >= window.innerHeight) wmdy *= -1;
+
+                wm.style.left = wmx + 'px';
+                wm.style.top = wmy + 'px';
+
+                window.watermarkAnimationFrame = requestAnimationFrame(animateWatermark);
+            }
+            if (window.watermarkAnimationFrame) cancelAnimationFrame(window.watermarkAnimationFrame);
+            animateWatermark();
+
             // Управление статусом проверки ДЗ
             const hwData = window.currentUserData?.homeworks?.[idx];
             const hwStatusContainer = document.getElementById('hw-status-container');
@@ -648,12 +690,19 @@
                 hwFormWrapper.classList.remove('hidden');
             }
 
-            // Логика живого таймера дедлайна
+            // Логика живого таймера дедлайна с учетом персонального продления
             if (deadlineInterval) clearInterval(deadlineInterval);
             
             const updateTimer = () => {
                 const now = new Date();
-                const d = new Date(mod.deadline);
+                
+                // Проверяем, есть ли персональное продление
+                let targetDeadline = mod.deadline;
+                if (hwData && hwData.extendedDeadline) {
+                    targetDeadline = hwData.extendedDeadline;
+                }
+                
+                const d = new Date(targetDeadline);
                 const timerEl = document.getElementById('lesson-deadline-timer');
 
                 if (isNaN(d)) {
@@ -719,6 +768,9 @@
             document.getElementById('lesson-modal').classList.add('hidden');
             document.getElementById('lesson-video').src = '';
             if (deadlineInterval) clearInterval(deadlineInterval);
+            
+            const wm = document.getElementById('global-watermark');
+            if (wm) wm.style.display = 'none';
         }
 
         function submitHomework() {
@@ -731,7 +783,15 @@
 
             const mod = academyData.modules[currentViewedLesson];
             const now = new Date();
-            const deadlineDate = new Date(mod.deadline);
+            
+            // Учитываем продленный дедлайн при отправке
+            const hwData = window.currentUserData?.homeworks?.[currentViewedLesson];
+            let targetDeadline = mod.deadline;
+            if (hwData && hwData.extendedDeadline) {
+                targetDeadline = hwData.extendedDeadline;
+            }
+            
+            const deadlineDate = new Date(targetDeadline);
             const isLate = !isNaN(deadlineDate) && now > deadlineDate;
             let statusText = "Вовремя ✅";
             
@@ -783,14 +843,19 @@ ${chatLink}
                     currentLevel = newProgress;
                 }
 
+                // Аккуратно сохраняем, чтобы не затереть extendedDeadline
+                const existingHw = window.currentUserData?.homeworks?.[currentViewedLesson] || {};
+                const updatedHw = { 
+                    ...existingHw,
+                    link: hwInput, 
+                    status: 'pending', 
+                    timestamp: now.toISOString() 
+                };
+
                 window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
                     progress: newProgress,
                     homeworks: {
-                        [currentViewedLesson]: { 
-                            link: hwInput, 
-                            status: 'pending', 
-                            timestamp: now.toISOString() 
-                        }
+                        [currentViewedLesson]: updatedHw
                     }
                 }, { merge: true });
             }
@@ -819,16 +884,61 @@ ${chatLink}
             }
         }
 
+        // Обновление статуса из админки
         window.updateHWStatus = async function(uid, lessonIdx, newStatus) {
             try {
-                await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
-                    homeworks: {
-                        [lessonIdx]: { status: newStatus }
-                    }
-                }, { merge: true });
+                const userDocRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
+                const userSnap = await window.getDoc(userDocRef);
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    const existingHw = data.homeworks?.[lessonIdx] || {};
+                    const updatedHw = { ...existingHw, status: newStatus };
+                    await window.setDoc(userDocRef, {
+                        homeworks: {
+                            [lessonIdx]: updatedHw
+                        }
+                    }, { merge: true });
+                }
             } catch(e) {
                 console.error("Ошибка при обновлении статуса ДЗ", e);
                 alert('Ошибка при обновлении статуса');
+            }
+        };
+
+        // Продление дедлайна конкретному ученику на 24 часа
+        window.extendUserDeadline = async function(uid, lessonIdx) {
+            try {
+                const userDocRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
+                const userSnap = await window.getDoc(userDocRef);
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    const existingHw = data.homeworks?.[lessonIdx] || {};
+                    
+                    let currentDeadlineStr = existingHw.extendedDeadline || window.academyData.modules[lessonIdx].deadline;
+                    let d = new Date(currentDeadlineStr);
+                    
+                    if (isNaN(d)) {
+                        alert('У этого урока нет установленного дедлайна!');
+                        return;
+                    }
+                    
+                    // Добавляем 24 часа
+                    d.setHours(d.getHours() + 24);
+                    const newDeadline = d.toISOString();
+                    
+                    const updatedHw = { ...existingHw, extendedDeadline: newDeadline };
+                    
+                    await window.setDoc(userDocRef, {
+                        homeworks: {
+                            [lessonIdx]: updatedHw
+                        }
+                    }, { merge: true });
+                    
+                    alert('Дедлайн успешно продлен на 24 часа для этого ученика!');
+                }
+            } catch (e) {
+                console.error("Ошибка продления", e);
+                alert("Произошла ошибка при продлении дедлайна");
             }
         };
 
@@ -1103,26 +1213,45 @@ ${chatLink}
                         : `<span class="text-[9px] bg-zinc-500/20 text-zinc-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Ожидает</span>`;
 
                     let hwHtml = '';
-                    if (data.homeworks && Object.keys(data.homeworks).length > 0) {
-                        hwHtml = '<div class="mt-3 space-y-2 border-t border-zinc-700/50 pt-3">';
-                        for (const [lessonIdx, hw] of Object.entries(data.homeworks)) {
-                            const lessonTitle = window.academyData.modules[lessonIdx]?.title || `Урок ${parseInt(lessonIdx)+1}`;
-                            hwHtml += `
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800">
-                                    <div class="flex flex-col flex-1 min-w-0">
+                    const userProgress = data.progress || 1;
+                    
+                    hwHtml += '<div class="mt-3 space-y-2 border-t border-zinc-700/50 pt-3">';
+                    // Выводим все уроки, которые доступны ученику
+                    for (let i = 0; i < userProgress; i++) {
+                        if (i >= window.academyData.modules.length) break;
+                        
+                        const hw = data.homeworks?.[i] || {};
+                        const lessonTitle = window.academyData.modules[i].title || `Урок ${i+1}`;
+                        
+                        const linkHtml = hw.link ? `<a href="${hw.link}" target="_blank" class="text-[10px] text-purple-400 hover:text-purple-300 underline truncate max-w-[150px] inline-block">${hw.link}</a>` : `<span class="text-[10px] text-zinc-600 italic">ДЗ не сдано</span>`;
+                        
+                        const statusSelect = hw.link ? `
+                            <select onchange="updateHWStatus('${docSnap.id}', '${i}', this.value)" class="text-[10px] bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-md px-1 py-1.5 outline-none focus:border-purple-500 cursor-pointer appearance-none text-center font-bold w-[90px]">
+                                <option value="pending" class="bg-zinc-900 text-yellow-400 font-bold" ${hw.status === 'pending' ? 'selected' : ''}>👀 Проверка</option>
+                                <option value="accepted" class="bg-zinc-900 text-emerald-400 font-bold" ${hw.status === 'accepted' ? 'selected' : ''}>✅ Принято</option>
+                                <option value="rejected" class="bg-zinc-900 text-red-400 font-bold" ${hw.status === 'rejected' ? 'selected' : ''}>🔄 Отказ</option>
+                            </select>
+                        ` : `<span class="text-[10px] text-zinc-500 px-1 w-[90px] text-center inline-block">Ожидает</span>`;
+
+                        const extText = hw.extendedDeadline ? `<span class="text-[8px] text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-1 rounded uppercase tracking-widest">+ВРЕМЯ</span>` : '';
+
+                        hwHtml += `
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800">
+                                <div class="flex flex-col flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
                                         <span class="text-[10px] text-zinc-400 font-bold truncate">${lessonTitle}</span>
-                                        <a href="${hw.link}" target="_blank" class="text-[10px] text-purple-400 hover:text-purple-300 underline truncate max-w-full">${hw.link}</a>
+                                        ${extText}
                                     </div>
-                                    <select onchange="updateHWStatus('${docSnap.id}', '${lessonIdx}', this.value)" class="text-[10px] bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-md p-2 outline-none focus:border-purple-500 cursor-pointer appearance-none text-center font-bold shrink-0">
-                                        <option value="pending" class="bg-zinc-900 text-yellow-400 font-bold" ${hw.status === 'pending' ? 'selected' : ''}>👀 На проверке</option>
-                                        <option value="accepted" class="bg-zinc-900 text-emerald-400 font-bold" ${hw.status === 'accepted' ? 'selected' : ''}>✅ Принято</option>
-                                        <option value="rejected" class="bg-zinc-900 text-red-400 font-bold" ${hw.status === 'rejected' ? 'selected' : ''}>🔄 Поправить</option>
-                                    </select>
+                                    ${linkHtml}
                                 </div>
-                            `;
-                        }
-                        hwHtml += '</div>';
+                                <div class="flex items-center gap-1.5 shrink-0 mt-2 sm:mt-0">
+                                    <button onclick="extendUserDeadline('${docSnap.id}', ${i})" class="text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 rounded-md px-2 py-1.5 transition-all font-bold" title="Продлить дедлайн на 24 часа">+24ч</button>
+                                    ${statusSelect}
+                                </div>
+                            </div>
+                        `;
                     }
+                    hwHtml += '</div>';
 
                     list.innerHTML += `
                         <div class="flex flex-col gap-2.5 bg-zinc-800/50 p-3.5 rounded-lg border border-zinc-700/50">
