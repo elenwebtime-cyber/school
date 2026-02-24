@@ -124,7 +124,7 @@
                         <i data-lucide="lock" class="w-8 h-8 text-purple-400"></i>
                     </div>
                     <h2 class="text-xl font-bold mb-2">Доступ закрыт</h2>
-                    <p class="text-zinc-400 text-sm">Введите код доступа, который вы получили после оплаты курса.</p>
+                    <p class="text-zinc-400 text-sm">Введите личный код доступа, который вы получили для входа на курс.</p>
                 </div>
                 <div class="space-y-4">
                     <input type="text" id="access-code-input" placeholder="Введите код..." class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center tracking-widest text-lg font-mono outline-none focus:border-purple-500 transition-all">
@@ -146,6 +146,10 @@
                 <div class="video-container mb-4" oncontextmenu="return false;" ondragstart="return false;">
                     <!-- Удалили sandbox для корректной работы Яндекс Диска и других плееров -->
                     <iframe id="lesson-video" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
+                    
+                    <!-- Защитные слои плеера (блокируют клики по названиям, ссылкам и логотипам) -->
+                    <div class="absolute top-0 left-0 w-full h-[60px] z-10 bg-transparent"></div>
+                    <div class="absolute bottom-0 right-0 w-[70px] h-[50px] z-10 bg-transparent"></div>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -191,7 +195,7 @@
                         <input type="text" id="admin-academy-name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     </div>
                     <div class="space-y-2">
-                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Код доступа</label>
+                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Мастер-код доступа (глобальный)</label>
                         <input type="text" id="admin-secret-code" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     </div>
                 </div>
@@ -285,6 +289,12 @@
         let isAccessGranted = localStorage.getItem('academy_access_granted') === 'true';
         let currentViewedLesson = 0;
 
+        window.syncCloudData = function(level, access) {
+            currentLevel = level;
+            isAccessGranted = access;
+            renderModules();
+        };
+
         function init() {
             document.getElementById('academy-name').innerText = academyData.name;
             renderModules();
@@ -325,43 +335,64 @@
             lucide.createIcons();
         }
 
+        async function grantAccess() {
+            isAccessGranted = true;
+            localStorage.setItem('academy_access_granted', 'true');
+            
+            if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
+                const uid = window.auth.currentUser.uid;
+                const nickname = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 
+                                 window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 
+                                 "Студент " + uid.substring(0, 4);
+                
+                const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
+                
+                let existingProgress = currentLevel;
+                try {
+                    const docSnap = await window.getDoc(docRef);
+                    if (docSnap.exists() && docSnap.data().progress) {
+                        existingProgress = Math.max(existingProgress, docSnap.data().progress);
+                    }
+                } catch (e) { console.error(e); }
+
+                if (existingProgress === 0) existingProgress = 1; // Устанавливаем прогресс 1 (активирован)
+                currentLevel = existingProgress;
+
+                await window.setDoc(docRef, {
+                    nickname: nickname,
+                    progress: currentLevel,
+                    activatedAt: new Date().toISOString()
+                }, { merge: true });
+            }
+
+            closeAccessModal();
+            renderModules(); 
+            openLesson(0);
+        }
+
         async function checkAccessCode() {
             const inputCode = document.getElementById('access-code-input').value.trim();
+            
+            // Проверка на мастер-код (остается на всякий случай)
             if (inputCode === academyData.secretCode) {
-                isAccessGranted = true;
-                localStorage.setItem('academy_access_granted', 'true');
-                
-                if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
-                    const uid = window.auth.currentUser.uid;
-                    const nickname = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 
-                                     window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 
-                                     "Студент " + uid.substring(0, 4);
-                    
-                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
-                    
-                    // Сначала получаем документ, чтобы не перезаписать/обнулить прогресс, если он уже есть!
-                    let existingProgress = currentLevel;
-                    try {
-                        const docSnap = await window.getDoc(docRef);
-                        if (docSnap.exists() && docSnap.data().progress) {
-                            existingProgress = Math.max(existingProgress, docSnap.data().progress);
-                            currentLevel = existingProgress;
-                        }
-                    } catch (e) { console.error(e); }
-
-                    window.setDoc(docRef, {
-                        nickname: nickname,
-                        progress: existingProgress,
-                        activatedAt: new Date().toISOString()
-                    }, { merge: true });
-                }
-
-                closeAccessModal();
-                renderModules(); // Перерисовываем модули с правильным прогрессом
-                openLesson(0);
-            } else {
-                alert('Неверный код доступа!');
+                await grantAccess();
+                return;
             }
+
+            // Проверка на личный секретный код ученика из базы данных
+            if (window.auth && window.auth.currentUser && window.db) {
+                const uid = window.auth.currentUser.uid;
+                const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
+                try {
+                    const docSnap = await window.getDoc(docRef);
+                    if (docSnap.exists() && docSnap.data().secretCode === inputCode) {
+                        await grantAccess();
+                        return;
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            alert('Неверный код доступа!');
         }
 
         function closeAccessModal() {
@@ -369,7 +400,8 @@
         }
 
         function openLesson(idx) {
-            if (idx === 0 && academyData.secretCode && academyData.secretCode.trim() !== '' && !isAccessGranted) {
+            // Если курс закрыт, отправляем на ввод пароля
+            if (idx === 0 && !isAccessGranted) {
                 document.getElementById('access-code-input').value = '';
                 document.getElementById('access-modal').classList.remove('hidden');
                 return;
@@ -549,16 +581,25 @@ ${chatLink}
             
             if (formattedUrl.includes('youtube.com/watch?v=')) {
                 const videoId = formattedUrl.split('v=')[1].split('&')[0];
-                return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0`;
+                return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&controls=1&disablekb=1&fs=1`;
             }
             if (formattedUrl.includes('youtu.be/')) {
                 const videoId = formattedUrl.split('youtu.be/')[1].split('?')[0];
-                return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0`;
+                return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&controls=1&disablekb=1&fs=1`;
             }
             
             if (formattedUrl.includes('rutube.ru/video/')) {
-                const videoId = formattedUrl.split('rutube.ru/video/')[1].replace(/\//g, '');
-                return `https://rutube.ru/play/embed/${videoId}/`;
+                let videoPart = formattedUrl.split('rutube.ru/video/')[1];
+                // Обработка приватных/закрытых видео Rutube
+                if (videoPart.startsWith('private/')) {
+                    const parts = videoPart.split('/');
+                    const vId = parts[1];
+                    const query = formattedUrl.split('?')[1] ? '?' + formattedUrl.split('?')[1] : '';
+                    return `https://rutube.ru/play/embed/${vId}/${query}`;
+                } else {
+                    const vId = videoPart.split('/')[0].split('?')[0];
+                    return `https://rutube.ru/play/embed/${vId}/`;
+                }
             }
 
             if (formattedUrl.includes('berrycast.com/conversations/') && !formattedUrl.includes('/embed')) {
@@ -609,7 +650,6 @@ ${chatLink}
         }
 
         window.loadAdminUsers = function() {
-            // Предотвращаем задвоение: отписываемся от предыдущего слушателя базы данных
             if (window.adminUsersUnsubscribe) {
                 window.adminUsersUnsubscribe();
             }
@@ -625,23 +665,32 @@ ${chatLink}
             window.adminUsersUnsubscribe = window.onSnapshot(q, (snapshot) => {
                 list.innerHTML = '';
                 if (snapshot.empty) {
-                    list.innerHTML = '<div class="text-sm text-zinc-500">Пока никто не активировал код</div>';
+                    list.innerHTML = '<div class="text-sm text-zinc-500">Пока никто не зашел в бота</div>';
                     return;
                 }
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
                     list.innerHTML += `
-                        <div class="flex items-center justify-between bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50">
-                            <div>
-                                <p class="text-sm font-bold text-white">${data.nickname || 'Неизвестный'}</p>
-                                <p class="text-[10px] text-zinc-400">Пройдено модулей: ${data.progress ? data.progress - 1 : 0}</p>
+                        <div class="flex flex-col gap-2 bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-bold text-white">${data.nickname || 'Неизвестный'}</p>
+                                    <p class="text-[10px] text-zinc-400">Пройдено модулей: ${data.progress ? data.progress - 1 : 0}</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="resetUserProgress('${docSnap.id}')" class="text-xs bg-zinc-500/10 text-zinc-400 px-3 py-1.5 rounded-lg border border-zinc-500/20 hover:bg-zinc-500/20 transition-all">
+                                        Сбросить
+                                    </button>
+                                    <button onclick="deleteAdminUser('${docSnap.id}')" class="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-all">
+                                        Удалить
+                                    </button>
+                                </div>
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="resetUserProgress('${docSnap.id}')" class="text-xs bg-zinc-500/10 text-zinc-400 px-3 py-1.5 rounded-lg border border-zinc-500/20 hover:bg-zinc-500/20 transition-all">
-                                    Сбросить
-                                </button>
-                                <button onclick="deleteAdminUser('${docSnap.id}')" class="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-all">
-                                    Удалить
+                            <div class="flex items-center gap-2 mt-2 pt-2 border-t border-zinc-700/50">
+                                <label class="text-[10px] uppercase text-zinc-500 font-bold">Секретный код:</label>
+                                <input type="text" id="admin-user-code-${docSnap.id}" value="${data.secretCode || ''}" class="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-purple-500 text-white font-mono">
+                                <button onclick="saveUserSecretCode('${docSnap.id}')" class="text-[10px] bg-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 transition-all font-bold">
+                                    Сохранить
                                 </button>
                             </div>
                         </div>
@@ -651,6 +700,19 @@ ${chatLink}
                 console.error("Ошибка загрузки юзеров", error);
                 list.innerHTML = '<div class="text-sm text-red-500">Ошибка загрузки</div>';
             });
+        };
+
+        window.saveUserSecretCode = async function(uid) {
+            const newCode = document.getElementById(`admin-user-code-${uid}`).value.trim();
+            try {
+                await window.updateDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                    secretCode: newCode
+                });
+                alert("Секретный код ученика успешно обновлен!");
+            } catch(e) {
+                console.error("Ошибка при сохранении кода", e);
+                alert("Произошла ошибка при сохранении");
+            }
         };
 
         window.resetUserProgress = async function(uid) {
@@ -673,7 +735,7 @@ ${chatLink}
         };
 
         window.deleteAdminUser = async function(uid) {
-            if (confirm("Точно удалить этого ученика из списка?")) {
+            if (confirm("Точно удалить этого ученика из списка? (Это обнулит его аккаунт)")) {
                 try {
                     await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid));
                     alert("Ученик удален!");
@@ -786,13 +848,30 @@ ${chatLink}
                     try {
                         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'activated_users', user.uid);
                         const docSnap = await getDoc(docRef);
-                        if (docSnap.exists() && docSnap.data().progress) {
-                            window.currentLevel = docSnap.data().progress;
-                            localStorage.setItem('academy_access_granted', 'true');
-                            if (typeof window.renderModules === 'function') window.renderModules();
+                        
+                        if (!docSnap.exists()) {
+                            // Если пользователь зашел впервые — создаем профиль без доступа (progress 0)
+                            const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+                            const nickname = tgUser.username || tgUser.first_name || "Студент " + user.uid.substring(0, 4);
+                            const randomCode = Math.floor(1000 + Math.random() * 9000).toString(); // Генерируем случайный 4-значный код
+                            
+                            await setDoc(docRef, {
+                                nickname: nickname,
+                                progress: 0,
+                                secretCode: randomCode,
+                                createdAt: new Date().toISOString()
+                            });
+                        } else {
+                            const data = docSnap.data();
+                            if (data.progress && data.progress > 0) {
+                                localStorage.setItem('academy_access_granted', 'true');
+                                if (typeof window.syncCloudData === 'function') {
+                                    window.syncCloudData(data.progress, true);
+                                }
+                            }
                         }
                     } catch (e) {
-                        console.error("Ошибка при загрузке прогресса", e);
+                        console.error("Ошибка при загрузке профиля", e);
                     }
                 } else {
                     updateCloudIndicator(false);
