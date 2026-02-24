@@ -147,11 +147,8 @@
                     <!-- Удалили sandbox для корректной работы Яндекс Диска и других плееров -->
                     <iframe id="lesson-video" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
                     
-                    <!-- Защитные слои плеера (перекрывают края, оставляя только центр для плей/паузы) 100000% защита -->
-                    <div class="absolute top-0 left-0 w-full h-[22%] z-10 bg-transparent"></div>
-                    <div class="absolute bottom-0 left-0 w-full h-[22%] z-10 bg-transparent"></div>
-                    <div class="absolute top-0 right-0 w-[22%] h-full z-10 bg-transparent"></div>
-                    <div class="absolute top-0 left-0 w-[10%] h-full z-10 bg-transparent"></div>
+                    <!-- Защитный слой сверху (скрывает названия и кнопку Поделиться), оставляя элементы управления снизу полностью открытыми -->
+                    <div class="absolute top-0 left-0 w-full h-[60px] z-10 bg-transparent"></div>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -590,10 +587,11 @@ ${chatLink}
             let formattedUrl = url.trim();
             
             // Если вставили код <iframe> (например, из Яндекс Диска)
-            if (formattedUrl.includes('<iframe') && formattedUrl.includes('src=')) {
+            if (formattedUrl.toLowerCase().includes('<iframe') && formattedUrl.toLowerCase().includes('src=')) {
                 const match = formattedUrl.match(/src=["'](.*?)["']/);
                 if (match) {
-                    formattedUrl = match[1];
+                    // Исправляем сломанные символы &amp;, из-за которых в Яндексе был черный экран
+                    formattedUrl = match[1].replace(/&amp;/g, '&');
                 }
             }
             
@@ -608,7 +606,7 @@ ${chatLink}
                     videoId = formattedUrl.split('embed/')[1].split('?')[0];
                 }
                 if (videoId) {
-                    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&controls=1&disablekb=1&fs=1`;
+                    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0`;
                 }
             }
             
@@ -633,11 +631,15 @@ ${chatLink}
                 }
             }
 
-            // Berrycast
+            // Berrycast (умная подстановка /embed без поломки параметров)
             if (formattedUrl.includes('berrycast.com/')) {
-                if (!formattedUrl.includes('/embed')) {
-                    formattedUrl = formattedUrl.replace(/\/$/, '') + '/embed';
-                }
+                try {
+                    const urlObj = new URL(formattedUrl.startsWith('http') ? formattedUrl : 'https://' + formattedUrl);
+                    if (!urlObj.pathname.endsWith('/embed')) {
+                        urlObj.pathname = urlObj.pathname.replace(/\/$/, '') + '/embed';
+                    }
+                    formattedUrl = urlObj.toString();
+                } catch(e) {}
             }
             
             return formattedUrl;
