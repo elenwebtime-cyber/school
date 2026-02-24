@@ -250,7 +250,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast, Google Drive)</label>
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Google Drive)</label>
                     <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     <div class="video-container mt-2 relative">
                         <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full rounded-xl bg-black" allowfullscreen></iframe>
@@ -283,7 +283,7 @@
             name: "Нейросети: Мастер",
             secretCode: "VIP2026",
             modules: [
-                { id: 1, title: "Основы генерации", video: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "" },
+                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "" },
                 { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "" },
                 { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "" },
                 { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "" }
@@ -432,6 +432,12 @@
             
             const finalUrl = formatVideoUrl(mod.video) || '';
             const videoIframe = document.getElementById('lesson-video');
+            
+            if (finalUrl.includes('drive.google.com')) {
+                videoIframe.removeAttribute('sandbox');
+            } else {
+                videoIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+            }
             
             videoIframe.src = finalUrl;
             
@@ -635,14 +641,6 @@ ${chatLink}
                 } catch(e) { console.error(e); }
             }
 
-            // Berrycast
-            if (formattedUrl.includes('berrycast.com/')) {
-                const berryMatch = formattedUrl.match(/berrycast\.com\/conversations\/([a-zA-Z0-9\-]+)/);
-                if (berryMatch) {
-                    return `https://www.berrycast.com/embed/${berryMatch[1]}`;
-                }
-            }
-
             // Google Drive
             if (formattedUrl.includes('drive.google.com/')) {
                 const driveMatch = formattedUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -671,7 +669,15 @@ ${chatLink}
 
         function updateAdminVideoPreview() {
             const videoUrl = formatVideoUrl(document.getElementById('edit-mod-video').value);
-            document.getElementById('edit-mod-video-preview').src = videoUrl;
+            const previewIframe = document.getElementById('edit-mod-video-preview');
+            
+            if (videoUrl.includes('drive.google.com')) {
+                previewIframe.removeAttribute('sandbox');
+            } else {
+                previewIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+            }
+            
+            previewIframe.src = videoUrl;
         }
 
         function saveAdminModuleEdit() {
