@@ -151,26 +151,29 @@
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4"></p>
-                <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full bg-zinc-800 hover:bg-zinc-700 text-sm font-bold py-3 rounded-xl mb-4 transition-all">
+                <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full bg-zinc-800 hover:bg-zinc-700 text-sm font-bold py-3 rounded-xl transition-all">
                     <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i> Открыть материалы
                 </a>
-                <div class="flex items-center gap-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl">
-                    <i data-lucide="alert-circle" class="text-purple-500 w-5 h-5"></i>
-                    <div>
-                        <p class="text-[10px] text-purple-300 font-bold uppercase">Дедлайн сдачи:</p>
-                        <p id="lesson-deadline-timer" class="text-sm font-mono font-bold">00:00:00</p>
-                    </div>
-                </div>
             </div>
 
-            <div class="mt-auto space-y-4">
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на домашнее задание</label>
-                    <input type="url" id="hw-input" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+            <div class="mt-auto pt-2">
+                <div class="glass-card p-4 space-y-4 border border-purple-500/10 bg-purple-500/5">
+                    <div class="flex justify-between items-center pb-3 border-b border-purple-500/10">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="alert-circle" class="text-purple-500 w-4 h-4"></i>
+                            <span class="text-[10px] text-purple-300 font-bold uppercase tracking-widest">Дедлайн сдачи:</span>
+                        </div>
+                        <p id="lesson-deadline-timer" class="text-xs font-mono font-bold text-white">00:00:00</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Ссылка на домашнее задание</label>
+                        <input type="url" id="hw-input" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                    </div>
+                    <button onclick="submitHomework()" class="w-full btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm">
+                        Отправить работу
+                    </button>
                 </div>
-                <button onclick="submitHomework()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm mt-4">
-                    Отправить работу
-                </button>
             </div>
         </div>
     </div>
@@ -179,70 +182,70 @@
     <div id="admin-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
         <div class="p-4 min-h-screen flex flex-col">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold">Админ-панель</h2>
+                <h2 class="text-xl font-bold">Админ-панель</h2>
                 <button onclick="closeAdmin()" class="text-zinc-500 hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                    <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
 
             <div id="admin-main-view" class="flex-1 flex flex-col">
-                <div class="space-y-3">
-                    <div class="glass-card p-3 space-y-3" style="border-radius: 16px;">
+                <div class="space-y-4">
+                    <div class="glass-card p-4 space-y-3" style="border-radius: 16px;">
                         <div class="space-y-1">
-                            <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Название курса</label>
-                            <input type="text" id="admin-academy-name" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
+                            <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Название курса</label>
+                            <input type="text" id="admin-academy-name" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500 transition-all">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Мастер-код доступа (глобальный)</label>
-                            <input type="text" id="admin-secret-code" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
+                            <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Мастер-код доступа (глобальный)</label>
+                            <input type="text" id="admin-secret-code" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500 transition-all">
                         </div>
                     </div>
 
-                    <div class="glass-card p-3 space-y-3" style="border-radius: 16px;">
-                        <div class="flex justify-between items-center">
-                            <h3 class="font-bold text-[10px] text-purple-400 uppercase tracking-widest">Модули</h3>
-                            <button onclick="adminAddModule()" class="text-[9px] bg-purple-500/10 text-purple-400 px-2 py-1.5 rounded-md border border-purple-500/20 hover:bg-purple-500/20 transition-all flex items-center gap-1 font-bold uppercase tracking-widest">
-                                <i data-lucide="plus" class="w-3 h-3"></i> Добавить
+                    <div class="glass-card p-4 space-y-3" style="border-radius: 16px;">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="font-bold text-xs text-purple-400 uppercase tracking-widest">Модули</h3>
+                            <button onclick="adminAddModule()" class="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-1.5 rounded-md border border-purple-500/20 hover:bg-purple-500/20 transition-all flex items-center gap-1 font-bold uppercase tracking-widest">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Добавить
                             </button>
                         </div>
                         
-                        <div class="flex justify-between items-center p-2 bg-zinc-900/50 border border-zinc-800/50 rounded-lg">
-                            <span class="text-[9px] uppercase text-zinc-400 font-bold tracking-tight">Открывать уроки по дате (не по очереди)</span>
+                        <div class="flex justify-between items-center p-2.5 bg-zinc-900/50 border border-zinc-800/50 rounded-lg mb-2">
+                            <span class="text-[10px] uppercase text-zinc-400 font-bold tracking-tight">Открывать уроки по дате (не по очереди)</span>
                             <label class="relative inline-flex items-center cursor-pointer ml-2">
                                 <input type="checkbox" id="admin-global-unlock-toggle" class="sr-only peer" onchange="toggleGlobalUnlockMode()">
-                                <div class="w-7 h-4 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500"></div>
+                                <div class="w-8 h-4.5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-purple-500"></div>
                             </label>
                         </div>
 
-                        <div id="admin-modules-list" class="space-y-1.5"></div>
+                        <div id="admin-modules-list" class="space-y-2"></div>
                     </div>
 
-                    <div class="glass-card p-3 flex justify-between items-center cursor-pointer hover:border-purple-500 transition-all" style="border-radius: 16px;" onclick="openAdminUsers()">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                                <i data-lucide="users" class="w-4 h-4 text-purple-400"></i>
+                    <div class="glass-card p-4 flex justify-between items-center cursor-pointer hover:border-purple-500 transition-all" style="border-radius: 16px;" onclick="openAdminUsers()">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                                <i data-lucide="users" class="w-5 h-5 text-purple-400"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-xs">Ученики</h3>
-                                <p class="text-[9px] text-zinc-500 uppercase tracking-tight">Управление доступами</p>
+                                <h3 class="font-bold text-sm">Ученики</h3>
+                                <p class="text-[10px] text-zinc-500 uppercase tracking-tight">Управление доступами</p>
                             </div>
                         </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-500"></i>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-zinc-500"></i>
                     </div>
                 </div>
 
-                <div class="mt-auto pt-4">
-                    <button id="btn-save-admin" onclick="saveAdminChanges()" class="w-full bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors duration-300">
+                <div class="mt-auto pt-6">
+                    <button id="btn-save-admin" onclick="saveAdminChanges()" class="w-full bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 py-3.5 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors duration-300">
                         Сохранить изменения
                     </button>
                 </div>
             </div>
 
             <div id="admin-users-view" class="hidden flex-1 flex flex-col">
-                <button onclick="closeAdminUsers()" class="flex items-center gap-1 text-zinc-400 mb-4 text-xs font-bold uppercase tracking-widest">
+                <button onclick="closeAdminUsers()" class="flex items-center gap-1 text-zinc-400 mb-4 text-sm font-bold uppercase tracking-widest">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i> Назад
                 </button>
-                <div id="admin-users-list" class="space-y-2"></div>
+                <div id="admin-users-list" class="space-y-3"></div>
             </div>
         </div>
     </div>
@@ -250,36 +253,36 @@
     <!-- РЕДАКТОР УРОКА -->
     <div id="admin-module-edit-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
         <div class="p-4 min-h-screen flex flex-col">
-            <button onclick="closeAdminModuleEdit()" class="flex items-center gap-1 text-zinc-400 mb-4 text-xs font-bold uppercase tracking-widest">
+            <button onclick="closeAdminModuleEdit()" class="flex items-center gap-1 text-zinc-400 mb-4 text-sm font-bold uppercase tracking-widest">
                 <i data-lucide="chevron-left" class="w-4 h-4"></i> Назад
             </button>
 
-            <h2 class="text-lg font-bold mb-4">Редактирование урока</h2>
+            <h2 class="text-xl font-bold mb-5">Редактирование урока</h2>
             
             <input type="hidden" id="edit-mod-idx">
 
-            <div class="space-y-3 mb-6">
+            <div class="space-y-4 mb-8">
                 <!-- 1. Заголовок -->
-                <div class="space-y-1">
-                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Заголовок урока</label>
-                    <input type="text" id="edit-mod-title" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Заголовок урока</label>
+                    <input type="text" id="edit-mod-title" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
                 </div>
 
                 <!-- 2. Подзаголовок / Описание -->
-                <div class="space-y-1">
-                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Подзаголовок / Описание</label>
-                    <textarea id="edit-mod-desc" rows="2" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all"></textarea>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Подзаголовок / Описание</label>
+                    <textarea id="edit-mod-desc" rows="2" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all"></textarea>
                 </div>
 
                 <!-- 3. Время открытия -->
-                <div class="space-y-1 p-2 bg-purple-500/5 border border-purple-500/20 rounded-lg" id="unlock-date-container" style="display: none;">
-                    <label class="text-[9px] uppercase text-purple-400 font-bold">Время для открытия урока</label>
-                    <input type="datetime-local" id="edit-mod-unlock-date" class="w-full mt-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
+                <div class="space-y-1.5 p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg" id="unlock-date-container" style="display: none;">
+                    <label class="text-[10px] uppercase text-purple-400 font-bold">Время для открытия урока</label>
+                    <input type="datetime-local" id="edit-mod-unlock-date" class="w-full mt-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
                 </div>
 
                 <!-- 4. Видеоплеер (Превью) -->
-                <div class="space-y-1">
-                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Видеоплеер</label>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Видеоплеер</label>
                     <div class="video-container relative rounded-lg border border-zinc-800 overflow-hidden">
                         <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full bg-black" allowfullscreen></iframe>
                         <div class="absolute top-0 right-0 w-[50px] h-[50px] z-10 bg-transparent"></div>
@@ -287,26 +290,26 @@
                 </div>
 
                 <!-- 5. Ссылка на видео -->
-                <div class="space-y-1">
-                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Drive)</label>
-                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube)</label>
+                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
                 </div>
 
                 <!-- 6. Ссылка на документ -->
-                <div class="space-y-1">
-                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (PDF / Drive)</label>
-                    <input type="url" id="edit-mod-pdf" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (PDF)</label>
+                    <input type="url" id="edit-mod-pdf" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
                 </div>
 
                 <!-- 7. Дедлайн сдачи -->
-                <div class="space-y-1">
-                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Дедлайн сдачи</label>
-                    <input type="datetime-local" id="edit-mod-deadline" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Дедлайн сдачи</label>
+                    <input type="datetime-local" id="edit-mod-deadline" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
                 </div>
             </div>
 
             <div class="mt-auto">
-                <button id="btn-save-module" onclick="saveAdminModuleEdit()" class="w-full bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors duration-300">
+                <button id="btn-save-module" onclick="saveAdminModuleEdit()" class="w-full bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 py-3.5 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors duration-300">
                     Сохранить урок
                 </button>
             </div>
@@ -670,17 +673,31 @@ ${chatLink}
             renderModules();
         };
 
+        window.adminDeleteModule = function(idx) {
+            if (confirm('Вы уверены, что хотите удалить этот урок?')) {
+                academyData.modules.splice(idx, 1);
+                renderAdminModules();
+                window.saveAcademyDataToCloud();
+                renderModules();
+            }
+        };
+
         function renderAdminModules() {
             const list = document.getElementById('admin-modules-list');
             list.innerHTML = '';
             academyData.modules.forEach((mod, idx) => {
-                const typeIcon = academyData.globalUnlockMode === 'date' ? '<i data-lucide="calendar" class="w-3 h-3 text-purple-400" title="По дате"></i>' : '<i data-lucide="link" class="w-3 h-3 text-emerald-400" title="Последовательно"></i>';
+                const typeIcon = academyData.globalUnlockMode === 'date' ? '<i data-lucide="calendar" class="w-4 h-4 text-purple-400" title="По дате"></i>' : '<i data-lucide="link" class="w-4 h-4 text-emerald-400" title="Последовательно"></i>';
                 list.innerHTML += `
-                    <div onclick="openAdminModuleEdit(${idx})" class="flex items-center gap-2 bg-zinc-800/50 p-2.5 rounded-lg border border-zinc-700/50 cursor-pointer hover:border-purple-500 transition-all">
-                        <span class="text-zinc-500 text-xs font-bold w-4">${idx + 1}.</span>
-                        <span class="flex-1 text-xs truncate">${mod.title}</span>
-                        ${typeIcon}
-                        <i data-lucide="edit-3" class="w-3 h-3 text-zinc-400"></i>
+                    <div class="flex items-center gap-2 bg-zinc-800/50 p-2.5 rounded-lg border border-zinc-700/50 hover:border-purple-500 transition-all">
+                        <div onclick="openAdminModuleEdit(${idx})" class="flex-1 flex items-center gap-2 cursor-pointer truncate">
+                            <span class="text-zinc-500 text-sm font-bold w-5">${idx + 1}.</span>
+                            <span class="flex-1 text-sm truncate">${mod.title}</span>
+                            ${typeIcon}
+                            <i data-lucide="edit-3" class="w-4 h-4 text-zinc-400"></i>
+                        </div>
+                        <button onclick="adminDeleteModule(${idx})" class="p-2 text-red-400/70 hover:text-red-400 hover:bg-red-500/20 rounded-md transition-all">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
                     </div>
                 `;
             });
@@ -871,48 +888,48 @@ ${chatLink}
                 list.innerHTML = '<div class="text-sm text-red-500">Нет связи с БД</div>';
                 return;
             }
-            list.innerHTML = '<div class="text-xs text-zinc-500">Загрузка...</div>';
+            list.innerHTML = '<div class="text-sm text-zinc-500">Загрузка...</div>';
             
             const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users'));
             window.adminUsersUnsubscribe = window.onSnapshot(q, (snapshot) => {
                 list.innerHTML = '';
                 if (snapshot.empty) {
-                    list.innerHTML = '<div class="text-xs text-zinc-500">Пока никто не зашел в бота</div>';
+                    list.innerHTML = '<div class="text-sm text-zinc-500">Пока никто не зашел в бота</div>';
                     return;
                 }
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
                     const isActivated = data.progress && data.progress > 0;
                     const statusBadge = isActivated 
-                        ? `<span class="text-[8px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Активен</span>`
-                        : `<span class="text-[8px] bg-zinc-500/20 text-zinc-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Ожидает</span>`;
+                        ? `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Активен</span>`
+                        : `<span class="text-[9px] bg-zinc-500/20 text-zinc-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Ожидает</span>`;
 
                     list.innerHTML += `
-                        <div class="flex flex-col gap-2 bg-zinc-800/50 p-3 rounded-lg border border-zinc-700/50">
-                            <div class="flex items-start justify-between gap-2">
+                        <div class="flex flex-col gap-2.5 bg-zinc-800/50 p-3.5 rounded-lg border border-zinc-700/50">
+                            <div class="flex items-start justify-between gap-3">
                                 <div class="flex-1 min-w-0">
-                                    <div class="flex items-center mb-0.5">
-                                        <p class="text-xs font-bold text-white truncate">${data.nickname || 'Неизвестный'}</p>
+                                    <div class="flex items-center mb-1">
+                                        <p class="text-sm font-bold text-white truncate">${data.nickname || 'Неизвестный'}</p>
                                         ${statusBadge}
                                     </div>
-                                    <p class="text-[9px] text-zinc-400">Пройдено модулей: ${data.progress ? data.progress - 1 : 0}</p>
-                                    <p class="text-[9px] text-zinc-500 flex items-center gap-1 mt-1">
-                                        <i data-lucide="${getPlatformIcon(data.platform)}" class="w-3 h-3"></i> ${getPlatformName(data.platform)}
+                                    <p class="text-[10px] text-zinc-400">Пройдено модулей: ${data.progress ? data.progress - 1 : 0}</p>
+                                    <p class="text-[10px] text-zinc-500 flex items-center gap-1.5 mt-1.5">
+                                        <i data-lucide="${getPlatformIcon(data.platform)}" class="w-3.5 h-3.5"></i> ${getPlatformName(data.platform)}
                                     </p>
                                 </div>
-                                <div class="flex flex-col gap-1.5 shrink-0">
-                                    <button onclick="resetUserProgress('${docSnap.id}')" class="text-[9px] bg-zinc-500/10 text-zinc-400 px-2 py-1.5 rounded-md border border-zinc-500/20 hover:bg-zinc-500/20 transition-all text-center">
+                                <div class="flex flex-col gap-2 shrink-0">
+                                    <button onclick="resetUserProgress('${docSnap.id}')" class="text-[10px] bg-zinc-500/10 text-zinc-400 px-2.5 py-1.5 rounded-md border border-zinc-500/20 hover:bg-zinc-500/20 transition-all text-center">
                                         Сбросить
                                     </button>
-                                    <button onclick="deleteAdminUser('${docSnap.id}')" class="text-[9px] bg-red-500/10 text-red-400 px-2 py-1.5 rounded-md border border-red-500/20 hover:bg-red-500/20 transition-all text-center">
+                                    <button onclick="deleteAdminUser('${docSnap.id}')" class="text-[10px] bg-red-500/10 text-red-400 px-2.5 py-1.5 rounded-md border border-red-500/20 hover:bg-red-500/20 transition-all text-center">
                                         Удалить
                                     </button>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2 pt-2 border-t border-zinc-700/50">
-                                <label class="text-[9px] uppercase text-zinc-500 font-bold shrink-0">Код:</label>
-                                <input type="text" id="admin-user-code-${docSnap.id}" value="${data.secretCode || ''}" class="w-20 bg-zinc-900 border border-zinc-700 rounded-md px-2 py-1.5 text-[10px] outline-none focus:border-purple-500 text-white font-mono text-center">
-                                <button id="btn-save-user-${docSnap.id}" onclick="saveUserSecretCode('${docSnap.id}')" class="text-[9px] bg-purple-500/20 text-purple-300 px-3 py-1.5 rounded-md border border-purple-500/30 hover:bg-purple-500/30 transition-colors duration-300 font-bold flex-1 uppercase tracking-widest">
+                            <div class="flex items-center gap-2 pt-2 border-t border-zinc-700/50 mt-1">
+                                <label class="text-[10px] uppercase text-zinc-500 font-bold shrink-0">Код:</label>
+                                <input type="text" id="admin-user-code-${docSnap.id}" value="${data.secretCode || ''}" class="w-24 bg-zinc-900 border border-zinc-700 rounded-md px-2 py-1.5 text-xs outline-none focus:border-purple-500 text-white font-mono text-center">
+                                <button id="btn-save-user-${docSnap.id}" onclick="saveUserSecretCode('${docSnap.id}')" class="text-[10px] bg-purple-500/20 text-purple-300 px-3 py-1.5 rounded-md border border-purple-500/30 hover:bg-purple-500/30 transition-colors duration-300 font-bold flex-1 uppercase tracking-widest">
                                     Сохранить
                                 </button>
                             </div>
@@ -922,7 +939,7 @@ ${chatLink}
                 lucide.createIcons();
             }, (error) => {
                 console.error("Ошибка загрузки юзеров", error);
-                list.innerHTML = '<div class="text-xs text-red-500">Ошибка загрузки</div>';
+                list.innerHTML = '<div class="text-sm text-red-500">Ошибка загрузки</div>';
             });
         };
 
