@@ -143,13 +143,15 @@
             </button>
 
             <div class="glass-card p-4 mb-6">
-                <div class="video-container mb-4" oncontextmenu="return false;" ondragstart="return false;">
+                <div class="video-container mb-4 relative" oncontextmenu="return false;" ondragstart="return false;">
                     <!-- Удалили sandbox для корректной работы Яндекс Диска и других плееров -->
                     <iframe id="lesson-video" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
                     
-                    <!-- Защитные слои плеера (блокируют клики по названиям, ссылкам и логотипам) -->
-                    <div class="absolute top-0 left-0 w-full h-[60px] z-10 bg-transparent"></div>
-                    <div class="absolute bottom-0 right-0 w-[70px] h-[50px] z-10 bg-transparent"></div>
+                    <!-- Защитные слои плеера (перекрывают края, оставляя только центр для плей/паузы) 100000% защита -->
+                    <div class="absolute top-0 left-0 w-full h-[22%] z-10 bg-transparent"></div>
+                    <div class="absolute bottom-0 left-0 w-full h-[22%] z-10 bg-transparent"></div>
+                    <div class="absolute top-0 right-0 w-[22%] h-full z-10 bg-transparent"></div>
+                    <div class="absolute top-0 left-0 w-[10%] h-full z-10 bg-transparent"></div>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -248,7 +250,7 @@
                 <div class="space-y-2">
                     <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast, Яндекс Диск)</label>
                     <input type="url" id="edit-mod-video" placeholder="https://... или код <iframe> с Яндекс Диска" oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
-                    <div class="video-container mt-2">
+                    <div class="video-container mt-2 relative">
                         <!-- Удалили sandbox для корректной работы Яндекс Диска и других плееров -->
                         <iframe id="edit-mod-video-preview" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
                     </div>
@@ -576,34 +578,50 @@ ${chatLink}
             // Если вставили код <iframe> (например, из Яндекс Диска)
             if (formattedUrl.includes('<iframe') && formattedUrl.includes('src=')) {
                 const match = formattedUrl.match(/src=["'](.*?)["']/);
-                if (match) return match[1];
+                if (match) formattedUrl = match[1];
             }
             
-            if (formattedUrl.includes('youtube.com/watch?v=')) {
-                const videoId = formattedUrl.split('v=')[1].split('&')[0];
-                return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&controls=1&disablekb=1&fs=1`;
-            }
-            if (formattedUrl.includes('youtu.be/')) {
-                const videoId = formattedUrl.split('youtu.be/')[1].split('?')[0];
-                return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&controls=1&disablekb=1&fs=1`;
+            // YouTube (поддержка обычных, коротких и embed ссылок)
+            if (formattedUrl.includes('youtube.com/') || formattedUrl.includes('youtu.be/')) {
+                let videoId = '';
+                if (formattedUrl.includes('youtu.be/')) {
+                    videoId = formattedUrl.split('youtu.be/')[1].split('?')[0];
+                } else if (formattedUrl.includes('watch?v=')) {
+                    videoId = formattedUrl.split('v=')[1].split('&')[0];
+                } else if (formattedUrl.includes('embed/')) {
+                    videoId = formattedUrl.split('embed/')[1].split('?')[0];
+                }
+                if (videoId) {
+                    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&controls=1&disablekb=1&fs=1`;
+                }
             }
             
-            if (formattedUrl.includes('rutube.ru/video/')) {
-                let videoPart = formattedUrl.split('rutube.ru/video/')[1];
-                // Обработка приватных/закрытых видео Rutube
-                if (videoPart.startsWith('private/')) {
-                    const parts = videoPart.split('/');
-                    const vId = parts[1];
-                    const query = formattedUrl.split('?')[1] ? '?' + formattedUrl.split('?')[1] : '';
-                    return `https://rutube.ru/play/embed/${vId}/${query}`;
-                } else {
-                    const vId = videoPart.split('/')[0].split('?')[0];
-                    return `https://rutube.ru/play/embed/${vId}/`;
+            // Rutube (правильная обработка открытых и закрытых/private видео)
+            if (formattedUrl.includes('rutube.ru/')) {
+                try {
+                    const urlObj = new URL(formattedUrl.startsWith('http') ? formattedUrl : 'https://' + formattedUrl);
+                    const paths = urlObj.pathname.split('/').filter(Boolean);
+                    
+                    if (paths.includes('embed')) return formattedUrl;
+                    
+                    const vid = paths[paths.length - 1];
+                    const query = urlObj.search;
+                    
+                    if (paths.includes('private')) {
+                        return `https://rutube.ru/play/embed/${vid}/${query}`;
+                    } else {
+                        return `https://rutube.ru/play/embed/${vid}/`;
+                    }
+                } catch(e) {
+                    console.error(e);
                 }
             }
 
-            if (formattedUrl.includes('berrycast.com/conversations/') && !formattedUrl.includes('/embed')) {
-                return formattedUrl.replace(/\/$/, '') + '/embed';
+            // Berrycast
+            if (formattedUrl.includes('berrycast.com/conversations/')) {
+                if (!formattedUrl.includes('/embed')) {
+                    return formattedUrl.replace(/\/$/, '') + '/embed';
+                }
             }
             
             return formattedUrl;
