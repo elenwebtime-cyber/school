@@ -144,18 +144,8 @@
 
             <div class="glass-card p-4 mb-6">
                 <div class="video-container mb-4 relative" oncontextmenu="return false;" ondragstart="return false;">
-                    <!-- Sandbox блокирует любые переходы на внешние сайты из плеера (железобетонная защита) -->
-                    <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
-                    
-                    <!-- Точечная защита: только самые верхние углы -->
-                    <div class="absolute top-0 left-0 w-[70%] h-[45px] z-10 bg-transparent"></div>
-                    <div class="absolute top-0 right-0 w-[100px] h-[45px] z-10 bg-transparent"></div>
-
-                    <!-- УМНАЯ ЗАЩИТА Вкладки "Ещё" (Rutube) -->
-                    <!-- На десктопе: перекрывает шапку меню над списком качества (~230px снизу) -->
-                    <div class="absolute bottom-[230px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent hidden sm:block"></div>
-                    <!-- На мобильных: меню часто открывается на весь экран, перекрываем верхний правый угол меню -->
-                    <div class="absolute top-[10px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent sm:hidden"></div>
+                    <!-- Нативный видеоплеер с отключенной кнопкой скачивания -->
+                    <video id="lesson-video" src="" controls controlsList="nodownload" class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black"></video>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -252,10 +242,10 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast)</label>
-                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (Google Drive)</label>
+                    <input type="url" id="edit-mod-video" placeholder="https://drive.google.com/file/d/..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     <div class="video-container mt-2 relative">
-                        <iframe id="edit-mod-video-preview" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
+                        <video id="edit-mod-video-preview" src="" controls controlsList="nodownload" class="absolute top-0 left-0 w-full h-full rounded-xl bg-black"></video>
                     </div>
                 </div>
 
@@ -501,7 +491,7 @@ ${chatLink}
                 window.sendToTelegram(tgMessage);
             }
 
-            alert('Заинька, работа отправлена! Ты молодец!');
+            alert('Работа успешно отправлена!');
             
             if (currentViewedLesson + 1 === currentLevel) {
                 currentLevel++;
@@ -596,51 +586,12 @@ ${chatLink}
             if (!url) return '';
             let formattedUrl = url.trim();
             
-            // Если вставили код <iframe>
-            if (formattedUrl.toLowerCase().includes('<iframe') && formattedUrl.toLowerCase().includes('src=')) {
-                const match = formattedUrl.match(/src=["'](.*?)["']/);
-                if (match) {
-                    formattedUrl = match[1];
-                }
+            // Преобразование стандартной ссылки Google Диск в прямую ссылку для видеоплеера
+            const driveMatch = formattedUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (driveMatch) {
+                return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
             }
             
-            // YouTube (поддержка обычных, коротких и embed ссылок)
-            if (formattedUrl.includes('youtube.com/') || formattedUrl.includes('youtu.be/')) {
-                let videoId = '';
-                if (formattedUrl.includes('youtu.be/')) {
-                    videoId = formattedUrl.split('youtu.be/')[1].split('?')[0];
-                } else if (formattedUrl.includes('watch?v=')) {
-                    videoId = formattedUrl.split('v=')[1].split('&')[0];
-                } else if (formattedUrl.includes('embed/')) {
-                    videoId = formattedUrl.split('embed/')[1].split('?')[0];
-                }
-                if (videoId) {
-                    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0`;
-                }
-            }
-            
-            // Rutube (правильная обработка открытых и закрытых/private видео)
-            if (formattedUrl.includes('rutube.ru/')) {
-                try {
-                    const urlObj = new URL(formattedUrl.startsWith('http') ? formattedUrl : 'https://' + formattedUrl);
-                    const paths = urlObj.pathname.split('/').filter(Boolean);
-                    
-                    if (paths.includes('embed')) return formattedUrl;
-                    
-                    const vid = paths[paths.length - 1];
-                    const query = urlObj.search;
-                    
-                    if (paths.includes('private')) {
-                        return `https://rutube.ru/play/embed/${vid}/${query}`;
-                    } else {
-                        return `https://rutube.ru/play/embed/${vid}/`;
-                    }
-                } catch(e) {
-                    console.error(e);
-                }
-            }
-
-            // Все остальные ссылки отдаем "как есть"
             return formattedUrl;
         }
 
