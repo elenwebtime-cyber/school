@@ -174,14 +174,14 @@
                             <i data-lucide="alert-circle" class="text-purple-500 w-4 h-4"></i>
                             <span class="text-[10px] text-purple-300 font-bold uppercase tracking-widest">Дедлайн сдачи:</span>
                         </div>
-                        <p id="lesson-deadline-timer" class="text-xs font-mono font-bold text-white">00:00:00</p>
+                        <p id="lesson-deadline-timer" class="text-sm font-mono font-bold text-white transition-all">00:00:00</p>
                     </div>
                     
                     <div class="space-y-2 box-border w-full">
                         <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Ссылка на домашнее задание</label>
                         <input type="url" id="hw-input" placeholder="https://..." class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     </div>
-                    <button onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm">
+                    <button id="lesson-submit-btn" onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all">
                         Отправить работу
                     </button>
                 </div>
@@ -402,6 +402,7 @@
         let currentLevel = 1;
         let isAccessGranted = localStorage.getItem('academy_access_granted') === 'true';
         let currentViewedLesson = 0;
+        let deadlineInterval = null;
 
         window.syncCloudData = function(level, access) {
             currentLevel = level;
@@ -409,6 +410,7 @@
             if (!access) {
                 document.getElementById('lesson-modal').classList.add('hidden');
                 document.getElementById('lesson-video').src = '';
+                if (deadlineInterval) clearInterval(deadlineInterval);
             }
             renderModules();
         };
@@ -586,8 +588,52 @@
                 pdfBtn.classList.add('hidden');
             }
 
-            const d = new Date(mod.deadline);
-            document.getElementById('lesson-deadline-timer').innerText = !isNaN(d) ? d.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : "Не установлен";
+            // Логика живого таймера дедлайна
+            if (deadlineInterval) clearInterval(deadlineInterval);
+            
+            const updateTimer = () => {
+                const now = new Date();
+                const d = new Date(mod.deadline);
+                const timerEl = document.getElementById('lesson-deadline-timer');
+                const submitBtn = document.getElementById('lesson-submit-btn');
+
+                if (isNaN(d)) {
+                    timerEl.innerText = "Не установлен";
+                    timerEl.className = "text-sm font-mono font-bold text-white transition-all";
+                    submitBtn.innerText = "ОТПРАВИТЬ РАБОТУ";
+                    submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all";
+                    return;
+                }
+
+                const diff = d - now;
+
+                if (diff <= 0) {
+                    // Время вышло
+                    timerEl.innerText = "00:00:00";
+                    timerEl.className = "text-xl font-mono font-bold text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,1)] transition-all";
+                    submitBtn.innerText = "СДАТЬ С ОПОЗДАНИЕМ";
+                    submitBtn.className = "w-full box-border bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all";
+                    if (deadlineInterval) clearInterval(deadlineInterval);
+                } else {
+                    // Время еще есть
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                    const mins = Math.floor((diff / 1000 / 60) % 60);
+                    const secs = Math.floor((diff / 1000) % 60);
+
+                    let timeStr = "";
+                    if (days > 0) timeStr += days + " дн. ";
+                    timeStr += String(hours).padStart(2, '0') + ":" + String(mins).padStart(2, '0') + ":" + String(secs).padStart(2, '0');
+
+                    timerEl.innerText = timeStr;
+                    timerEl.className = "text-sm font-mono font-bold text-white transition-all";
+                    submitBtn.innerText = "ОТПРАВИТЬ РАБОТУ";
+                    submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all";
+                }
+            };
+            
+            updateTimer(); // Вызов сразу, чтобы не ждать 1 секунду
+            deadlineInterval = setInterval(updateTimer, 1000);
 
             document.getElementById('lesson-modal').classList.remove('hidden');
         }
@@ -595,6 +641,7 @@
         function closeLesson() {
             document.getElementById('lesson-modal').classList.add('hidden');
             document.getElementById('lesson-video').src = '';
+            if (deadlineInterval) clearInterval(deadlineInterval);
         }
 
         function submitHomework() {
@@ -603,6 +650,20 @@
             if (!urlPattern.test(hwInput)) {
                 alert('Ошибка! Можно вводить только ссылки (строка должна начинаться с http:// или https://)');
                 return;
+            }
+
+            const mod = academyData.modules[currentViewedLesson];
+            const now = new Date();
+            const deadlineDate = new Date(mod.deadline);
+            const isLate = !isNaN(deadlineDate) && now > deadlineDate;
+            let statusText = "Вовремя ✅";
+            
+            if (isLate) {
+                statusText = "После дедлайна 🚩";
+                // Запрос подтверждения при опоздании
+                if (!confirm('Дедлайн пропущен! Сдать с опозданием?')) {
+                    return; // Если пользователь нажал Отмена - прерываем отправку
+                }
             }
 
             if (window.sendToTelegram) {
@@ -615,17 +676,8 @@
                 const loginText = username ? `@${username}` : "Скрыт";
                 const chatLink = username ? `<a href="https://t.me/${username}">ОТКРЫТЬ ЧАТ</a>` : "<i>Нет юзернейма</i>";
                 
-                const mod = academyData.modules[currentViewedLesson];
                 const moduleTitle = mod.title;
                 const hwLink = hwInput;
-                
-                const now = new Date();
-                const deadlineDate = new Date(mod.deadline);
-                let statusText = "Вовремя ✅";
-                
-                if (!isNaN(deadlineDate) && now > deadlineDate) {
-                    statusText = "После дедлайна 🚩";
-                }
                 
                 const submitTime = now.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
 
@@ -643,7 +695,11 @@ ${chatLink}
                 window.sendToTelegram(tgMessage);
             }
 
-            alert('Работа успешно отправлена!');
+            if (!isLate) {
+                alert('Отправлено на проверку куратору');
+            } else {
+                alert('Отправлено с опозданием');
+            }
             
             if (currentViewedLesson + 1 === currentLevel) {
                 currentLevel++;
