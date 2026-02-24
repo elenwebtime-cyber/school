@@ -144,8 +144,16 @@
 
             <div class="glass-card p-4 mb-6">
                 <div class="video-container mb-4 relative" oncontextmenu="return false;" ondragstart="return false;">
-                    <!-- Нативный видеоплеер с отключенной кнопкой скачивания -->
-                    <video id="lesson-video" src="" controls controlsList="nodownload" class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black"></video>
+                    <!-- Sandbox строго блокирует скачивание (нет allow-downloads) и переходы (нет allow-popups) -->
+                    <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black" allowfullscreen></iframe>
+                    
+                    <!-- Точечная защита: только самые верхние углы -->
+                    <div class="absolute top-0 left-0 w-[70%] h-[45px] z-10 bg-transparent"></div>
+                    <div class="absolute top-0 right-0 w-[100px] h-[45px] z-10 bg-transparent"></div>
+
+                    <!-- Умная защита вкладки "Ещё" (Rutube) -->
+                    <div class="absolute bottom-[230px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent hidden sm:block"></div>
+                    <div class="absolute top-[10px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent sm:hidden"></div>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -242,10 +250,12 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (Google Drive)</label>
-                    <input type="url" id="edit-mod-video" placeholder="https://drive.google.com/file/d/..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast, Google Drive)</label>
+                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     <div class="video-container mt-2 relative">
-                        <video id="edit-mod-video-preview" src="" controls controlsList="nodownload" class="absolute top-0 left-0 w-full h-full rounded-xl bg-black"></video>
+                        <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full rounded-xl bg-black" allowfullscreen></iframe>
+                        <!-- Невидимый щит в правом верхнем углу -->
+                        <div class="absolute top-0 right-0 w-[50px] h-[50px] z-10 bg-transparent"></div>
                     </div>
                 </div>
 
@@ -586,10 +596,59 @@ ${chatLink}
             if (!url) return '';
             let formattedUrl = url.trim();
             
-            // Преобразование стандартной ссылки Google Диск в прямую ссылку для видеоплеера
-            const driveMatch = formattedUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            if (driveMatch) {
-                return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+            // Если вставили код <iframe>
+            if (formattedUrl.toLowerCase().includes('<iframe') && formattedUrl.toLowerCase().includes('src=')) {
+                const match = formattedUrl.match(/src=["'](.*?)["']/);
+                if (match) {
+                    formattedUrl = match[1].replace(/&amp;/g, '&');
+                }
+            }
+            
+            // YouTube
+            if (formattedUrl.includes('youtube.com/') || formattedUrl.includes('youtu.be/')) {
+                let videoId = '';
+                if (formattedUrl.includes('youtu.be/')) {
+                    videoId = formattedUrl.split('youtu.be/')[1].split('?')[0];
+                } else if (formattedUrl.includes('watch?v=')) {
+                    videoId = formattedUrl.split('v=')[1].split('&')[0];
+                } else if (formattedUrl.includes('embed/')) {
+                    videoId = formattedUrl.split('embed/')[1].split('?')[0];
+                }
+                if (videoId) {
+                    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0`;
+                }
+            }
+            
+            // Rutube
+            if (formattedUrl.includes('rutube.ru/')) {
+                try {
+                    const urlObj = new URL(formattedUrl.startsWith('http') ? formattedUrl : 'https://' + formattedUrl);
+                    const paths = urlObj.pathname.split('/').filter(Boolean);
+                    if (paths.includes('embed')) return formattedUrl;
+                    const vid = paths[paths.length - 1];
+                    const query = urlObj.search;
+                    if (paths.includes('private')) {
+                        return `https://rutube.ru/play/embed/${vid}/${query}`;
+                    } else {
+                        return `https://rutube.ru/play/embed/${vid}/`;
+                    }
+                } catch(e) { console.error(e); }
+            }
+
+            // Berrycast
+            if (formattedUrl.includes('berrycast.com/')) {
+                const berryMatch = formattedUrl.match(/berrycast\.com\/conversations\/([a-zA-Z0-9\-]+)/);
+                if (berryMatch) {
+                    return `https://www.berrycast.com/embed/${berryMatch[1]}`;
+                }
+            }
+
+            // Google Drive
+            if (formattedUrl.includes('drive.google.com/')) {
+                const driveMatch = formattedUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (driveMatch) {
+                    return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+                }
             }
             
             return formattedUrl;
