@@ -147,19 +147,22 @@
                     <!-- Sandbox блокирует любые переходы на внешние сайты из плеера (железобетонная защита) -->
                     <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
                     
-                    <!-- Защитный слой сверху (скрывает названия и кнопку Поделиться) -->
-                    <div class="absolute top-0 left-0 w-full h-[70px] z-10 bg-transparent"></div>
-                    <!-- Защитный слой правый верхний угол (глушит кнопку "Еще" и меню в Rutube) -->
-                    <div class="absolute top-0 right-0 w-[120px] h-[100px] z-10 bg-transparent"></div>
-                    <!-- Защитный слой правый нижний угол (скрывает логотип YouTube над панелью управления) -->
-                    <div class="absolute bottom-[40px] right-0 w-[90px] h-[50px] z-10 bg-transparent"></div>
+                    <!-- Точечная защита: только самые верхние углы -->
+                    <div class="absolute top-0 left-0 w-[70%] h-[45px] z-10 bg-transparent"></div>
+                    <div class="absolute top-0 right-0 w-[100px] h-[45px] z-10 bg-transparent"></div>
+
+                    <!-- УМНАЯ ЗАЩИТА Вкладки "Ещё" (Rutube) -->
+                    <!-- На десктопе: перекрывает шапку меню над списком качества (~230px снизу) -->
+                    <div class="absolute bottom-[230px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent hidden sm:block"></div>
+                    <!-- На мобильных: меню часто открывается на весь экран, перекрываем верхний правый угол меню -->
+                    <div class="absolute top-[10px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent sm:hidden"></div>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
                     В этом уроке мы изучим основы работы с нейросетями и разберем первые шаги.
                 </p>
                 <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full bg-zinc-800 hover:bg-zinc-700 text-sm font-bold py-3 rounded-xl mb-4 transition-all">
-                    <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i> Скачать материалы
+                    <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i> Открыть материалы (Google Drive)
                 </a>
                 <div class="flex items-center gap-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl">
                     <i data-lucide="alert-circle" class="text-purple-500 w-5 h-5"></i>
@@ -257,8 +260,8 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (PDF/Материалы)</label>
-                    <input type="url" id="edit-mod-pdf" placeholder="https://диск..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (Google Drive / PDF)</label>
+                    <input type="url" id="edit-mod-pdf" placeholder="https://drive.google.com/..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                 </div>
 
                 <div class="space-y-2">
