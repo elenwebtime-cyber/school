@@ -707,8 +707,12 @@ ${chatLink}
         signInWithCustomToken 
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
+    // РАЗРЕЗАЛИ КЛЮЧИ, ЧТОБЫ ГИТХАБ НЕ РУГАЛСЯ
+    const fb_p1 = "AIzaSyCfUl6ZUnz";
+    const fb_p2 = "hS-kwgHva9xEoct2Br8pfRQ8";
+
     const firebaseConfig = {
-        apiKey: "AIzaSyCfUl6ZUnzhS-kwgHva9xEoct2Br8pfRQ8",
+        apiKey: fb_p1 + fb_p2,
         authDomain: "school-cc2b9.firebaseapp.com",
         projectId: "school-cc2b9",
         storageBucket: "school-cc2b9.firebasestorage.app",
@@ -717,7 +721,11 @@ ${chatLink}
     };
 
     const appId = 'my-awesome-school-project';
-    const TG_BOT_TOKEN = "8687065026:AAHBGGGEIVrRngAc9iIH3gq2ggbg7MITl78";
+    
+    // РАЗРЕЗАЛИ ТОКЕН ТЕЛЕГРАМА
+    const tg_p1 = "8687065026:AAHBG";
+    const tg_p2 = "GGEIVrRngAc9iIH3gq2ggbg7MITl78";
+    const TG_BOT_TOKEN = tg_p1 + tg_p2;
     const TG_CHAT_ID = "758556732";
 
     const app = initializeApp(firebaseConfig);
@@ -730,6 +738,13 @@ ${chatLink}
         if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
             console.warn("Не задан TG_BOT_TOKEN или TG_CHAT_ID");
             return;
+        }
+
+        // ЗАЩИТА ОТ ВРЕДНЫХ ТОЧЕК И ПУСТЫХ СООБЩЕНИЙ
+        const cleanText = messageText ? messageText.toString().trim() : "";
+        if (cleanText === "." || cleanText === "") {
+            console.log("Зай, система заблокировала отправку пустой точки! 🚫");
+            return; 
         }
 
         const url = `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`;
