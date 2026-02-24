@@ -213,6 +213,16 @@
                                 <i data-lucide="plus" class="w-3 h-3"></i> Добавить
                             </button>
                         </div>
+                        
+                        <!-- Глобальный тумблер переключения режима открытия уроков -->
+                        <div class="flex justify-between items-center p-3 bg-zinc-900/50 border border-zinc-800/50 rounded-xl">
+                            <span class="text-[10px] uppercase text-zinc-400 font-bold">Открывать уроки по дате (не по очереди)</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="admin-global-unlock-toggle" class="sr-only peer" onchange="toggleGlobalUnlockMode()">
+                                <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                            </label>
+                        </div>
+
                         <div id="admin-modules-list" class="space-y-2"></div>
                     </div>
 
@@ -263,14 +273,7 @@
                     <input type="text" id="edit-mod-title" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                 </div>
 
-                <div class="space-y-2 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
-                    <label class="text-[10px] uppercase text-purple-400 font-bold">Как открывается этот урок?</label>
-                    <select id="edit-mod-unlock-type" onchange="toggleUnlockDate()" class="w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all text-white">
-                        <option value="sequential">После сдачи предыдущего модуля</option>
-                        <option value="date">В указанную дату и время</option>
-                    </select>
-                </div>
-
+                <!-- Поле ввода даты (показывается только если включен тумблер "По дате" на главной) -->
                 <div class="space-y-2 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl" id="unlock-date-container" style="display: none;">
                     <label class="text-[10px] uppercase text-purple-400 font-bold">Укажите дату и время открытия</label>
                     <input type="datetime-local" id="edit-mod-unlock-date" class="w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
@@ -335,11 +338,12 @@
         const academyData = {
             name: "Нейросети: Мастер",
             secretCode: "VIP2026",
+            globalUnlockMode: "sequential",
             modules: [
-                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "" },
-                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "" },
-                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "" },
-                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "" }
+                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", unlockDate: "" },
+                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", unlockDate: "" },
+                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "", unlockDate: "" },
+                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "", unlockDate: "" }
             ]
         };
 
@@ -384,13 +388,15 @@
             document.getElementById('progress-bar').style.width = `${progress}%`;
             document.getElementById('progress-text').innerText = `${Math.round(progress)}% Пройдено`;
 
+            const isGlobalDateMode = academyData.globalUnlockMode === 'date';
+
             academyData.modules.forEach((mod, idx) => {
                 let isLocked = false;
                 
-                // Проверка условий открытия (по дате или после предыдущего)
-                if (mod.unlockType === 'date' && mod.unlockDate) {
+                // Проверка глобального условия открытия
+                if (isGlobalDateMode && mod.unlockDate) {
                     isLocked = new Date() < new Date(mod.unlockDate);
-                } else {
+                } else if (!isGlobalDateMode) {
                     isLocked = (idx + 1) > currentLevel;
                 }
 
@@ -399,19 +405,18 @@
                     isLocked = true;
                 }
 
-                const isSeq = !mod.unlockType || mod.unlockType === 'sequential';
-                const isDone = isSeq ? ((idx + 1) < currentLevel) : false;
-                const isActive = isSeq ? ((idx + 1) === currentLevel) : !isLocked;
+                const isDone = !isGlobalDateMode ? ((idx + 1) < currentLevel) : false;
+                const isActive = !isGlobalDateMode ? ((idx + 1) === currentLevel) : !isLocked;
 
                 let lockedText = isLocked ? 'Доступ закрыт' : 'Нажми, чтобы войти';
-                if (mod.unlockType === 'date' && isLocked && mod.unlockDate) {
+                if (isGlobalDateMode && isLocked && mod.unlockDate) {
                     const d = new Date(mod.unlockDate);
                     lockedText = 'Откроется ' + d.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'});
                 }
 
                 const iconHtml = isDone 
                     ? '<i data-lucide="check" class="text-emerald-500 w-5 h-5"></i>' 
-                    : (mod.unlockType === 'date' ? '<i data-lucide="calendar" class="text-zinc-400 w-5 h-5"></i>' : idx + 1);
+                    : (isGlobalDateMode ? '<i data-lucide="calendar" class="text-zinc-400 w-5 h-5"></i>' : idx + 1);
 
                 container.innerHTML += `
                     <div class="glass-card p-5 flex items-center justify-between ${isActive ? 'step-active' : ''} ${isLocked ? 'step-locked' : ''}" 
@@ -640,17 +645,25 @@ ${chatLink}
         function openAdmin() {
             document.getElementById('admin-academy-name').value = academyData.name;
             document.getElementById('admin-secret-code').value = academyData.secretCode || '';
+            document.getElementById('admin-global-unlock-toggle').checked = (academyData.globalUnlockMode === 'date');
             renderAdminModules();
             document.getElementById('admin-main-view').classList.remove('hidden');
             document.getElementById('admin-users-view').classList.add('hidden');
             document.getElementById('admin-modal').classList.remove('hidden');
         }
 
+        window.toggleGlobalUnlockMode = function() {
+            academyData.globalUnlockMode = document.getElementById('admin-global-unlock-toggle').checked ? 'date' : 'sequential';
+            window.saveAcademyDataToCloud();
+            renderAdminModules();
+            renderModules();
+        };
+
         function renderAdminModules() {
             const list = document.getElementById('admin-modules-list');
             list.innerHTML = '';
             academyData.modules.forEach((mod, idx) => {
-                const typeIcon = mod.unlockType === 'date' ? '<i data-lucide="calendar" class="w-4 h-4 text-purple-400" title="По дате"></i>' : '<i data-lucide="link" class="w-4 h-4 text-emerald-400" title="Последовательно"></i>';
+                const typeIcon = academyData.globalUnlockMode === 'date' ? '<i data-lucide="calendar" class="w-4 h-4 text-purple-400" title="По дате"></i>' : '<i data-lucide="link" class="w-4 h-4 text-emerald-400" title="Последовательно"></i>';
                 list.innerHTML += `
                     <div onclick="openAdminModuleEdit(${idx})" class="flex items-center gap-3 bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50 cursor-pointer hover:border-purple-500 transition-all">
                         <span class="text-zinc-500 text-sm font-bold w-4">${idx + 1}.</span>
@@ -672,17 +685,11 @@ ${chatLink}
                 desc: "Описание модуля...",
                 deadline: "2026-12-31T23:59",
                 pdfUrl: "",
-                unlockType: "sequential",
                 unlockDate: ""
             });
             renderAdminModules();
             window.saveAcademyDataToCloud();
         }
-
-        window.toggleUnlockDate = function() {
-            const type = document.getElementById('edit-mod-unlock-type').value;
-            document.getElementById('unlock-date-container').style.display = type === 'date' ? 'block' : 'none';
-        };
 
         function saveAdminChanges() {
             const newName = document.getElementById('admin-academy-name').value;
@@ -776,10 +783,10 @@ ${chatLink}
             document.getElementById('edit-mod-video').value = mod.video || '';
             document.getElementById('edit-mod-pdf').value = mod.pdfUrl || '';
             document.getElementById('edit-mod-deadline').value = mod.deadline || '';
-            document.getElementById('edit-mod-unlock-type').value = mod.unlockType || 'sequential';
             document.getElementById('edit-mod-unlock-date').value = mod.unlockDate || '';
             
-            window.toggleUnlockDate();
+            document.getElementById('unlock-date-container').style.display = academyData.globalUnlockMode === 'date' ? 'block' : 'none';
+            
             updateAdminVideoPreview();
             
             document.getElementById('admin-modal').classList.add('hidden');
@@ -810,7 +817,6 @@ ${chatLink}
             mod.video = formatVideoUrl(rawVideo);
             mod.pdfUrl = document.getElementById('edit-mod-pdf').value;
             mod.deadline = document.getElementById('edit-mod-deadline').value;
-            mod.unlockType = document.getElementById('edit-mod-unlock-type').value;
             mod.unlockDate = document.getElementById('edit-mod-unlock-date').value;
 
             closeAdminModuleEdit();
@@ -1063,6 +1069,7 @@ ${chatLink}
                             const data = configSnap.data();
                             if (data.name) window.academyData.name = data.name;
                             if (data.secretCode !== undefined) window.academyData.secretCode = data.secretCode;
+                            if (data.globalUnlockMode) window.academyData.globalUnlockMode = data.globalUnlockMode;
                             if (data.modules && Array.isArray(data.modules)) window.academyData.modules = data.modules;
                             
                             if (typeof window.init === 'function') window.init();
