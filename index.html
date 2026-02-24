@@ -83,35 +83,39 @@
         ::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
-<body class="p-4 pb-20" oncontextmenu="return false;">
+<body class="overflow-x-hidden" oncontextmenu="return false;">
 
-    <header class="flex justify-between items-center mb-8 pt-4">
-        <div>
-            <div class="flex items-center gap-2">
-                <h1 id="academy-name" class="text-2xl font-extrabold tracking-tight" onclick="handleAdminTrigger()">Cyber Academy</h1>
-                <div id="cloud-indicator" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-colors duration-500" title="Нет связи с облаком"></div>
-            </div>
-            <div class="flex items-center gap-2 mt-1">
-                <div class="h-1.5 w-24 bg-zinc-800 rounded-full overflow-hidden">
-                    <div id="progress-bar" class="h-full bg-purple-500 transition-all duration-500" style="width: 0%"></div>
+    <!-- Главный контейнер для центрирования на десктопах и планшетах -->
+    <div class="p-4 pb-20 max-w-2xl mx-auto w-full relative min-h-screen flex flex-col">
+        <header class="flex justify-between items-center mb-8 pt-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 id="academy-name" class="text-2xl font-extrabold tracking-tight" onclick="handleAdminTrigger()">Cyber Academy</h1>
+                    <div id="cloud-indicator" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-colors duration-500" title="Нет связи с облаком"></div>
                 </div>
-                <span id="progress-text" class="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">0% Пройдено</span>
+                <div class="flex items-center gap-2 mt-1">
+                    <div class="h-1.5 w-24 bg-zinc-800 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-purple-500 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <span id="progress-text" class="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">0% Пройдено</span>
+                </div>
             </div>
-        </div>
-        <div class="flex items-center gap-2">
-            <button id="admin-btn" onclick="openAdmin()" class="hidden w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center transition-all">
-                <i data-lucide="settings" class="text-zinc-400 w-6 h-6"></i>
-            </button>
-            <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                <i data-lucide="zap" class="text-purple-500 w-6 h-6"></i>
+            <div class="flex items-center gap-2">
+                <button id="admin-btn" onclick="openAdmin()" class="hidden w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center transition-all">
+                    <i data-lucide="settings" class="text-zinc-400 w-6 h-6"></i>
+                </button>
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                    <i data-lucide="zap" class="text-purple-500 w-6 h-6"></i>
+                </div>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <div id="modules-container" class="space-y-4"></div>
+        <div id="modules-container" class="space-y-4 flex-1"></div>
+    </div>
 
-    <div id="access-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto flex items-center justify-center">
-        <div class="p-6 w-full max-w-md flex flex-col">
+    <!-- Модалка доступа -->
+    <div id="access-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto overflow-x-hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md mx-auto flex flex-col">
             <div class="glass-card p-6 space-y-6 relative">
                 <button onclick="closeAccessModal()" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -133,8 +137,9 @@
         </div>
     </div>
 
-    <div id="lesson-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
-        <div class="p-6 min-h-screen flex flex-col">
+    <!-- Модалка урока -->
+    <div id="lesson-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto overflow-x-hidden">
+        <div class="p-6 min-h-screen flex flex-col max-w-2xl mx-auto w-full relative">
             <button onclick="closeLesson()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
                 <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад к программе
             </button>
@@ -156,7 +161,7 @@
                 </a>
             </div>
 
-            <div class="mt-auto pt-2">
+            <div class="mt-auto pt-2 pb-6">
                 <div class="glass-card p-4 space-y-4 border border-purple-500/10 bg-purple-500/5">
                     <div class="flex justify-between items-center pb-3 border-b border-purple-500/10">
                         <div class="flex items-center gap-2">
@@ -179,9 +184,9 @@
     </div>
 
     <!-- АДМИН ПАНЕЛЬ -->
-    <div id="admin-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
-        <div class="p-4 min-h-screen flex flex-col">
-            <div class="flex justify-between items-center mb-4">
+    <div id="admin-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto overflow-x-hidden">
+        <div class="p-4 min-h-screen flex flex-col max-w-2xl mx-auto w-full relative pb-10">
+            <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold">Админ-панель</h2>
                 <button onclick="closeAdmin()" class="text-zinc-500 hover:text-white transition-colors">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -204,16 +209,16 @@
                     <div class="glass-card p-4 space-y-3" style="border-radius: 16px;">
                         <div class="flex justify-between items-center mb-1">
                             <h3 class="font-bold text-xs text-purple-400 uppercase tracking-widest">Модули</h3>
-                            <button onclick="adminAddModule()" class="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-1.5 rounded-md border border-purple-500/20 hover:bg-purple-500/20 transition-all flex items-center gap-1 font-bold uppercase tracking-widest">
+                            <button onclick="adminAddModule()" class="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-1.5 rounded-md border border-purple-500/20 hover:bg-purple-500/20 transition-all flex items-center gap-1 font-bold uppercase tracking-widest shrink-0">
                                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Добавить
                             </button>
                         </div>
                         
-                        <div class="flex justify-between items-center p-2.5 bg-zinc-900/50 border border-zinc-800/50 rounded-lg mb-2">
-                            <span class="text-[10px] uppercase text-zinc-400 font-bold tracking-tight">Открывать уроки по дате (не по очереди)</span>
-                            <label class="relative inline-flex items-center cursor-pointer ml-2">
+                        <div class="flex justify-between items-center p-3 bg-zinc-900/50 border border-zinc-800/50 rounded-lg mb-2">
+                            <span class="text-[10px] sm:text-xs uppercase text-zinc-400 font-bold tracking-tight pr-2">Открывать уроки по дате (не по очереди)</span>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
                                 <input type="checkbox" id="admin-global-unlock-toggle" class="sr-only peer" onchange="toggleGlobalUnlockMode()">
-                                <div class="w-8 h-4.5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-purple-500"></div>
+                                <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                             </label>
                         </div>
 
@@ -245,14 +250,14 @@
                 <button onclick="closeAdminUsers()" class="flex items-center gap-1 text-zinc-400 mb-4 text-sm font-bold uppercase tracking-widest">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i> Назад
                 </button>
-                <div id="admin-users-list" class="space-y-3"></div>
+                <div id="admin-users-list" class="space-y-3 pb-6"></div>
             </div>
         </div>
     </div>
 
     <!-- РЕДАКТОР УРОКА -->
-    <div id="admin-module-edit-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
-        <div class="p-4 min-h-screen flex flex-col">
+    <div id="admin-module-edit-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto overflow-x-hidden">
+        <div class="p-4 min-h-screen flex flex-col max-w-2xl mx-auto w-full relative pb-10">
             <button onclick="closeAdminModuleEdit()" class="flex items-center gap-1 text-zinc-400 mb-4 text-sm font-bold uppercase tracking-widest">
                 <i data-lucide="chevron-left" class="w-4 h-4"></i> Назад
             </button>
@@ -262,50 +267,57 @@
             <input type="hidden" id="edit-mod-idx">
 
             <div class="space-y-4 mb-8">
-                <!-- 1. Заголовок -->
-                <div class="space-y-1.5">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Заголовок урока</label>
-                    <input type="text" id="edit-mod-title" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
-                </div>
+                
+                <!-- ПЛАШКА 1: Заголовок, подзаголовок, время открытия -->
+                <div class="glass-card p-4 space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Заголовок урока</label>
+                        <input type="text" id="edit-mod-title" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
+                    </div>
 
-                <!-- 2. Подзаголовок / Описание -->
-                <div class="space-y-1.5">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Подзаголовок / Описание</label>
-                    <textarea id="edit-mod-desc" rows="2" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all"></textarea>
-                </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Подзаголовок / Описание</label>
+                        <textarea id="edit-mod-desc" rows="2" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all"></textarea>
+                    </div>
 
-                <!-- 3. Время открытия -->
-                <div class="space-y-1.5 p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg" id="unlock-date-container" style="display: none;">
-                    <label class="text-[10px] uppercase text-purple-400 font-bold">Время для открытия урока</label>
-                    <input type="datetime-local" id="edit-mod-unlock-date" class="w-full mt-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
-                </div>
-
-                <!-- 4. Видеоплеер (Превью) -->
-                <div class="space-y-1.5">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Видеоплеер</label>
-                    <div class="video-container relative rounded-lg border border-zinc-800 overflow-hidden">
-                        <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full bg-black" allowfullscreen></iframe>
-                        <div class="absolute top-0 right-0 w-[50px] h-[50px] z-10 bg-transparent"></div>
+                    <div class="space-y-1.5 p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg" id="unlock-date-container" style="display: none;">
+                        <label class="text-[10px] uppercase text-purple-400 font-bold">Время для открытия урока</label>
+                        <input type="datetime-local" id="edit-mod-unlock-date" class="w-full mt-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
                     </div>
                 </div>
 
-                <!-- 5. Ссылка на видео -->
-                <div class="space-y-1.5">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube)</label>
-                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
+                <!-- ПЛАШКА 2: Видеоплеер и ссылка на видео -->
+                <div class="glass-card p-4 space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Предпросмотр плеера</label>
+                        <div class="video-container relative rounded-lg border border-zinc-800 overflow-hidden">
+                            <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full bg-black" allowfullscreen></iframe>
+                            <div class="absolute top-0 right-0 w-[50px] h-[50px] z-10 bg-transparent"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube)</label>
+                        <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
+                    </div>
                 </div>
 
-                <!-- 6. Ссылка на документ -->
-                <div class="space-y-1.5">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (PDF)</label>
-                    <input type="url" id="edit-mod-pdf" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
+                <!-- ПЛАШКА 3: Ссылка на документ -->
+                <div class="glass-card p-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (PDF)</label>
+                        <input type="url" id="edit-mod-pdf" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
+                    </div>
                 </div>
 
-                <!-- 7. Дедлайн сдачи -->
-                <div class="space-y-1.5">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Дедлайн сдачи</label>
-                    <input type="datetime-local" id="edit-mod-deadline" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
+                <!-- ПЛАШКА 4: Дедлайн сдачи -->
+                <div class="glass-card p-4 border border-purple-500/10 bg-purple-500/5">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase text-purple-300 ml-1 font-bold">Дедлайн сдачи</label>
+                        <input type="datetime-local" id="edit-mod-deadline" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
+                    </div>
                 </div>
+
             </div>
 
             <div class="mt-auto">
