@@ -148,7 +148,9 @@
                     <iframe id="lesson-video" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
                     
                     <!-- Защитный слой сверху (скрывает названия и кнопку Поделиться), оставляя элементы управления снизу полностью открытыми -->
-                    <div class="absolute top-0 left-0 w-full h-[60px] z-10 bg-transparent"></div>
+                    <div class="absolute top-0 left-0 w-full h-[70px] z-10 bg-transparent"></div>
+                    <!-- Защитный слой правый нижний угол (скрывает логотип YouTube над панелью управления) -->
+                    <div class="absolute bottom-[45px] right-0 w-[100px] h-[60px] z-10 bg-transparent"></div>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -633,13 +635,10 @@ ${chatLink}
 
             // Berrycast (умная подстановка /embed без поломки параметров)
             if (formattedUrl.includes('berrycast.com/')) {
-                try {
-                    const urlObj = new URL(formattedUrl.startsWith('http') ? formattedUrl : 'https://' + formattedUrl);
-                    if (!urlObj.pathname.endsWith('/embed')) {
-                        urlObj.pathname = urlObj.pathname.replace(/\/$/, '') + '/embed';
-                    }
-                    formattedUrl = urlObj.toString();
-                } catch(e) {}
+                const berryMatch = formattedUrl.match(/berrycast\.com\/conversations\/([a-zA-Z0-9\-]+)/);
+                if (berryMatch) {
+                    formattedUrl = `https://www.berrycast.com/embed/${berryMatch[1]}`;
+                }
             }
             
             return formattedUrl;
@@ -669,9 +668,14 @@ ${chatLink}
             const idx = document.getElementById('edit-mod-idx').value;
             const mod = academyData.modules[idx];
             
+            const rawVideo = document.getElementById('edit-mod-video').value;
+            if (rawVideo.includes('disk.yandex.ru/i/')) {
+                alert("Зайка, для Яндекс.Диска нужно копировать 'Код для вставки' (<iframe...>), а не обычную ссылку. Иначе у учеников будет черный экран из-за защиты самого Яндекса!");
+            }
+
             mod.title = document.getElementById('edit-mod-title').value;
             mod.desc = document.getElementById('edit-mod-desc').value;
-            mod.video = formatVideoUrl(document.getElementById('edit-mod-video').value);
+            mod.video = formatVideoUrl(rawVideo);
             mod.pdfUrl = document.getElementById('edit-mod-pdf').value;
             mod.deadline = document.getElementById('edit-mod-deadline').value;
 
