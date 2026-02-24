@@ -112,9 +112,9 @@
                 <button id="admin-btn" onclick="openAdmin()" class="hidden w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center transition-all">
                     <i data-lucide="settings" class="text-zinc-400 w-6 h-6"></i>
                 </button>
-                <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                    <i data-lucide="zap" class="text-purple-500 w-6 h-6"></i>
-                </div>
+                <a id="support-link-btn" href="#" target="_blank" class="hidden w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 items-center justify-center hover:bg-purple-500/20 transition-all shadow-[0_0_15px_rgba(168,85,247,0.15)]">
+                    <span class="text-2xl" style="line-height: 1;">🛟</span>
+                </a>
             </div>
         </header>
 
@@ -215,6 +215,26 @@
         </div>
     </div>
 
+    <!-- Модалка отзыва (Поздравление) -->
+    <div id="congrats-modal" class="fixed inset-0 z-[60] bg-black/95 hidden overflow-y-auto overflow-x-hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md mx-auto flex flex-col box-border animate-[pulse_0.5s_ease-in-out_1]">
+            <div class="glass-card p-6 space-y-6 relative text-center border-emerald-500/30 bg-emerald-500/5">
+                <button onclick="closeCongratsModal()" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <div class="text-6xl mb-2">🎉</div>
+                <h2 class="text-2xl font-bold text-white mb-2">Ура! Ты прошла этот путь!</h2>
+                <p class="text-zinc-300 text-sm">Оставь пару слов о своих эмоциях от обучения. Твой отзыв очень важен для нас! 💖</p>
+                <div class="space-y-4 text-left mt-4">
+                    <textarea id="review-input" rows="4" placeholder="Было супер! Мне очень понравилось..." class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm outline-none focus:border-emerald-500 transition-all text-white resize-none"></textarea>
+                    <button onclick="submitReview()" class="w-full box-border bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                        Отправить отзыв
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- АДМИН ПАНЕЛЬ -->
     <div id="admin-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto overflow-x-hidden">
         <div class="p-4 sm:p-6 min-h-screen flex flex-col max-w-2xl mx-auto w-full relative pb-10 box-border">
@@ -235,6 +255,10 @@
                         <div class="space-y-1.5 box-border w-full">
                             <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Мастер-код доступа (глобальный)</label>
                             <input type="text" id="admin-secret-code" class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500 transition-all">
+                        </div>
+                        <div class="space-y-1.5 box-border w-full mt-2">
+                            <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на поддержку / чат (🛟)</label>
+                            <input type="url" id="admin-support-link" placeholder="https://t.me/..." class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500 transition-all">
                         </div>
                     </div>
 
@@ -408,6 +432,7 @@
         const academyData = {
             name: "Нейросети: Мастер",
             secretCode: "VIP2026",
+            supportLink: "",
             globalUnlockMode: "sequential",
             modules: [
                 { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" },
@@ -434,6 +459,19 @@
         let currentViewedLesson = 0;
         let deadlineInterval = null;
 
+        function updateSupportLinkUI() {
+            const btn = document.getElementById('support-link-btn');
+            if (!btn) return;
+            if (window.academyData.supportLink) {
+                btn.href = window.academyData.supportLink;
+                btn.classList.remove('hidden');
+                btn.classList.add('flex');
+            } else {
+                btn.classList.add('hidden');
+                btn.classList.remove('flex');
+            }
+        }
+
         window.syncCloudData = function(level, access) {
             currentLevel = level;
             isAccessGranted = access;
@@ -447,6 +485,7 @@
 
         function init() {
             document.getElementById('academy-name').innerText = academyData.name;
+            updateSupportLinkUI();
             renderModules();
             lucide.createIcons();
         }
@@ -578,6 +617,42 @@
 
         function closeAccessModal() {
             document.getElementById('access-modal').classList.add('hidden');
+        }
+
+        function closeCongratsModal() {
+            document.getElementById('congrats-modal').classList.add('hidden');
+        }
+
+        function submitReview() {
+            const reviewText = document.getElementById('review-input').value.trim();
+            if (!reviewText) {
+                alert('Пожалуйста, напиши пару слов 😊');
+                return;
+            }
+
+            if (window.sendToTelegram) {
+                const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+                const firstName = tgUser.first_name || "Неизвестный";
+                const lastName = tgUser.last_name || "";
+                const fullName = `${firstName} ${lastName}`.trim();
+                const username = tgUser.username || "";
+                const loginText = username ? `@${username}` : "Скрыт";
+
+                const tgMessage = `
+🌟 <b>НОВЫЙ ОТЗЫВ О КУРСЕ!</b> 🎉
+<b>Ученик:</b> ${fullName}
+<b>Контакт:</b> ${loginText}
+
+<b>Отзыв:</b>
+<i>"${reviewText}"</i>
+                `.trim();
+
+                window.sendToTelegram(tgMessage);
+            }
+
+            alert('Спасибо большое за твой отзыв! ❤️');
+            document.getElementById('review-input').value = '';
+            closeCongratsModal();
         }
 
         function openLesson(idx) {
@@ -856,12 +931,28 @@ ${chatLink}
                     document.getElementById('hw-input').value = '';
                     closeLesson();
                     renderModules();
+                    
+                    // Проверка на финальный проект
+                    if (currentViewedLesson === academyData.modules.length - 1) {
+                        setTimeout(() => {
+                            document.getElementById('congrats-modal').classList.remove('hidden');
+                            confetti({ particleCount: 300, spread: 120, origin: { y: 0.6 }, zIndex: 99999 });
+                        }, 500);
+                    }
                 }, 500);
             } else {
                 alert('Отправлено с опозданием');
                 document.getElementById('hw-input').value = '';
                 closeLesson();
                 renderModules();
+                
+                // Проверка на финальный проект (даже если с опозданием)
+                if (currentViewedLesson === academyData.modules.length - 1) {
+                    setTimeout(() => {
+                        document.getElementById('congrats-modal').classList.remove('hidden');
+                        confetti({ particleCount: 300, spread: 120, origin: { y: 0.6 }, zIndex: 99999 });
+                    }, 500);
+                }
             }
         }
 
@@ -960,6 +1051,7 @@ ${chatLink}
         function openAdmin() {
             document.getElementById('admin-academy-name').value = academyData.name;
             document.getElementById('admin-secret-code').value = academyData.secretCode || '';
+            document.getElementById('admin-support-link').value = academyData.supportLink || '';
             document.getElementById('admin-global-unlock-toggle').checked = (academyData.globalUnlockMode === 'date');
             renderAdminModules();
             document.getElementById('admin-main-view').classList.remove('hidden');
@@ -1030,7 +1122,9 @@ ${chatLink}
                 }
 
                 academyData.secretCode = document.getElementById('admin-secret-code').value.trim();
+                academyData.supportLink = document.getElementById('admin-support-link').value.trim();
 
+                updateSupportLinkUI();
                 renderModules();
                 closeAdmin();
                 window.saveAcademyDataToCloud();
@@ -1453,6 +1547,7 @@ ${chatLink}
                             const data = configSnap.data();
                             if (data.name) window.academyData.name = data.name;
                             if (data.secretCode !== undefined) window.academyData.secretCode = data.secretCode;
+                            if (data.supportLink !== undefined) window.academyData.supportLink = data.supportLink;
                             if (data.globalUnlockMode) window.academyData.globalUnlockMode = data.globalUnlockMode;
                             if (data.modules && Array.isArray(data.modules)) window.academyData.modules = data.modules;
                             
