@@ -646,45 +646,49 @@
                 wm = document.createElement('div');
                 wm.id = 'global-watermark';
                 wm.style.position = 'fixed';
-                wm.style.color = 'rgba(255, 255, 255, 0.3)'; // Сделали более видимым
+                wm.style.top = '0';
+                wm.style.left = '0';
+                wm.style.color = 'rgba(255, 255, 255, 0.45)'; // Сделали заметно ярче
                 wm.style.fontSize = '24px';
                 wm.style.fontWeight = '900';
                 wm.style.pointerEvents = 'none';
                 wm.style.whiteSpace = 'nowrap';
-                wm.style.zIndex = '2147483647'; // Абсолютно поверх всего !important
+                wm.style.zIndex = '9999999'; // Поверх всего в модалке
                 wm.style.userSelect = 'none';
-                wm.style.textShadow = '1px 1px 3px rgba(0,0,0,0.8)';
-                document.body.appendChild(wm);
+                wm.style.textShadow = '2px 2px 5px rgba(0,0,0,1)'; // Четкая тень
+                document.getElementById('lesson-modal').appendChild(wm);
             }
             
-            const nicknameForWm = window.currentUserData?.nickname || 'Студент';
+            const tgUserWm = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+            const nicknameForWm = window.currentUserData?.nickname || tgUserWm.username || tgUserWm.first_name || 'Студент';
             wm.innerText = nicknameForWm + " • Cyber Academy";
+            wm.style.display = 'block';
             
-            let wmx = 50, wmy = 50, wmdx = 0.8, wmdy = 0.8;
-            function animateWatermark() {
+            if (window.watermarkInterval) clearInterval(window.watermarkInterval);
+            
+            let wmx = 20, wmy = 20;
+            let wmdx = 1.5, wmdy = 1.5;
+            
+            window.watermarkInterval = setInterval(() => {
                 if (document.getElementById('lesson-modal').classList.contains('hidden')) {
                     wm.style.display = 'none';
-                    if (window.watermarkAnimationFrame) cancelAnimationFrame(window.watermarkAnimationFrame);
                     return;
                 }
-                wm.style.display = 'block';
                 
-                const w = wm.clientWidth;
-                const h = wm.clientHeight;
+                const w = wm.clientWidth || 200;
+                const h = wm.clientHeight || 30;
 
                 wmx += wmdx;
                 wmy += wmdy;
 
-                if (wmx <= 0 || wmx + w >= window.innerWidth) wmdx *= -1;
-                if (wmy <= 0 || wmy + h >= window.innerHeight) wmdy *= -1;
+                if (wmx <= 0) { wmx = 0; wmdx *= -1; }
+                if (wmx + w >= window.innerWidth) { wmx = window.innerWidth - w; wmdx *= -1; }
+                
+                if (wmy <= 0) { wmy = 0; wmdy *= -1; }
+                if (wmy + h >= window.innerHeight) { wmy = window.innerHeight - h; wmdy *= -1; }
 
-                wm.style.left = wmx + 'px';
-                wm.style.top = wmy + 'px';
-
-                window.watermarkAnimationFrame = requestAnimationFrame(animateWatermark);
-            }
-            if (window.watermarkAnimationFrame) cancelAnimationFrame(window.watermarkAnimationFrame);
-            animateWatermark();
+                wm.style.transform = `translate(${wmx}px, ${wmy}px)`;
+            }, 20);
 
             // Управление статусом проверки ДЗ
             const hwData = window.currentUserData?.homeworks?.[idx];
@@ -803,6 +807,7 @@
             
             const wm = document.getElementById('global-watermark');
             if (wm) wm.style.display = 'none';
+            if (window.watermarkInterval) clearInterval(window.watermarkInterval);
         }
 
         function submitHomework() {
