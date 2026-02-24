@@ -287,6 +287,18 @@
             ]
         };
 
+        window.academyData = academyData;
+
+        window.saveAcademyDataToCloud = async function() {
+            if (window.db && window.setDoc && window.doc) {
+                try {
+                    await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'config', 'academy_info'), window.academyData);
+                } catch(e) {
+                    console.error("Ошибка сохранения данных", e);
+                }
+            }
+        };
+
         let currentLevel = 1;
         let isAccessGranted = localStorage.getItem('academy_access_granted') === 'true';
         let currentViewedLesson = 0;
@@ -551,6 +563,7 @@ ${chatLink}
                 pdfUrl: ""
             });
             renderAdminModules();
+            window.saveAcademyDataToCloud();
         }
 
         function saveAdminChanges() {
@@ -564,6 +577,7 @@ ${chatLink}
 
             renderModules();
             closeAdmin();
+            window.saveAcademyDataToCloud();
         }
 
         function closeAdmin() {
@@ -578,7 +592,9 @@ ${chatLink}
             // Если вставили код <iframe> (например, из Яндекс Диска)
             if (formattedUrl.includes('<iframe') && formattedUrl.includes('src=')) {
                 const match = formattedUrl.match(/src=["'](.*?)["']/);
-                if (match) formattedUrl = match[1];
+                if (match) {
+                    formattedUrl = match[1];
+                }
             }
             
             // YouTube (поддержка обычных, коротких и embed ссылок)
@@ -618,9 +634,9 @@ ${chatLink}
             }
 
             // Berrycast
-            if (formattedUrl.includes('berrycast.com/conversations/')) {
+            if (formattedUrl.includes('berrycast.com/')) {
                 if (!formattedUrl.includes('/embed')) {
-                    return formattedUrl.replace(/\/$/, '') + '/embed';
+                    formattedUrl = formattedUrl.replace(/\/$/, '') + '/embed';
                 }
             }
             
@@ -658,6 +674,7 @@ ${chatLink}
             mod.deadline = document.getElementById('edit-mod-deadline').value;
 
             closeAdminModuleEdit();
+            window.saveAcademyDataToCloud();
         }
 
         function closeAdminModuleEdit() {
@@ -862,6 +879,20 @@ ${chatLink}
                 if (user) {
                     currentUser = user;
                     updateCloudIndicator(true);
+
+                    try {
+                        // Загружаем глобальные настройки курса из базы
+                        const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'academy_info');
+                        const configSnap = await getDoc(configRef);
+                        if (configSnap.exists()) {
+                            const data = configSnap.data();
+                            if (data.name) window.academyData.name = data.name;
+                            if (data.secretCode !== undefined) window.academyData.secretCode = data.secretCode;
+                            if (data.modules && Array.isArray(data.modules)) window.academyData.modules = data.modules;
+                            
+                            if (typeof window.init === 'function') window.init();
+                        }
+                    } catch (e) { console.error("Ошибка при загрузке курса", e); }
 
                     try {
                         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'activated_users', user.uid);
