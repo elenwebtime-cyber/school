@@ -118,6 +118,17 @@
             </div>
         </header>
 
+        <!-- ПЛАШКА ПРИВЕТСТВИЯ -->
+        <div id="greeting-container" class="hidden mb-6 glass-card p-4 border border-purple-500/20 bg-purple-500/5 flex items-center gap-4 transition-all">
+            <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-2xl shrink-0 border border-purple-500/30">
+                👋
+            </div>
+            <div>
+                <h2 id="greeting-text" class="text-sm font-bold text-white tracking-wide"></h2>
+                <p class="text-[10px] text-purple-300 font-bold uppercase tracking-wider mt-1">У тебя еще есть время до дедлайна, жми на газ! 🏎️</p>
+            </div>
+        </div>
+
         <div id="modules-container" class="space-y-4 flex-1 w-full box-border"></div>
     </div>
 
@@ -186,13 +197,19 @@
                         <p id="lesson-deadline-timer" class="text-lg font-mono tracking-wider font-bold text-white transition-all">00:00:00</p>
                     </div>
                     
-                    <div class="space-y-2 box-border w-full">
-                        <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Ссылка на домашнее задание</label>
-                        <input type="url" id="hw-input" placeholder="https://..." class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
+                    <!-- Блок статуса проверки ДЗ -->
+                    <div id="hw-status-container" class="hidden box-border w-full transition-all"></div>
+
+                    <!-- Обертка формы отправки ДЗ -->
+                    <div id="hw-form-wrapper" class="space-y-4 box-border w-full">
+                        <div class="space-y-2 box-border w-full">
+                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Ссылка на домашнее задание</label>
+                            <input type="url" id="hw-input" placeholder="https://..." class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
+                        </div>
+                        <button id="lesson-submit-btn" onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2">
+                            Отправить работу
+                        </button>
                     </div>
-                    <button id="lesson-submit-btn" onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2">
-                        Отправить работу
-                    </button>
                 </div>
             </div>
         </div>
@@ -247,7 +264,7 @@
                             </div>
                             <div>
                                 <h3 class="font-bold text-sm">Ученики</h3>
-                                <p class="text-[10px] text-zinc-500 uppercase tracking-tight">Управление доступами</p>
+                                <p class="text-[10px] text-zinc-500 uppercase tracking-tight">Управление доступами и ДЗ</p>
                             </div>
                         </div>
                         <i data-lucide="chevron-right" class="w-5 h-5 text-zinc-500"></i>
@@ -599,6 +616,38 @@
                 pdfBtn.classList.remove('flex');
             }
 
+            // Управление статусом проверки ДЗ
+            const hwData = window.currentUserData?.homeworks?.[idx];
+            const hwStatusContainer = document.getElementById('hw-status-container');
+            const hwFormWrapper = document.getElementById('hw-form-wrapper');
+            const submitBtn = document.getElementById('lesson-submit-btn');
+
+            if (hwData) {
+                hwStatusContainer.classList.remove('hidden');
+                let statusText = '';
+                let statusClass = '';
+                
+                if (hwData.status === 'pending') {
+                    statusText = '👀 На проверке у куратора';
+                    statusClass = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 shadow-[0_0_10px_rgba(234,179,8,0.2)]';
+                    hwFormWrapper.classList.add('hidden');
+                } else if (hwData.status === 'accepted') {
+                    statusText = '✅ Принято, ты супер!';
+                    statusClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]';
+                    hwFormWrapper.classList.add('hidden');
+                } else if (hwData.status === 'rejected') {
+                    statusText = '🔄 Нужно кое-что поправить';
+                    statusClass = 'bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]';
+                    hwFormWrapper.classList.remove('hidden');
+                    submitBtn.innerText = "ОТПРАВИТЬ ИСПРАВЛЕННОЕ";
+                }
+                
+                hwStatusContainer.innerHTML = `<div class="p-4 rounded-xl border-2 font-bold text-sm text-center tracking-wide ${statusClass}">${statusText}</div>`;
+            } else {
+                hwStatusContainer.classList.add('hidden');
+                hwFormWrapper.classList.remove('hidden');
+            }
+
             // Логика живого таймера дедлайна
             if (deadlineInterval) clearInterval(deadlineInterval);
             
@@ -606,13 +655,14 @@
                 const now = new Date();
                 const d = new Date(mod.deadline);
                 const timerEl = document.getElementById('lesson-deadline-timer');
-                const submitBtn = document.getElementById('lesson-submit-btn');
 
                 if (isNaN(d)) {
                     timerEl.innerText = "Не установлен";
                     timerEl.className = "text-lg md:text-xl font-mono tracking-wider font-bold text-white transition-all";
-                    submitBtn.innerText = "ОТПРАВИТЬ РАБОТУ";
-                    submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
+                    if (!hwData || hwData.status === 'rejected') {
+                        submitBtn.innerText = hwData && hwData.status === 'rejected' ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
+                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
+                    }
                     return;
                 }
 
@@ -622,8 +672,11 @@
                     // Время вышло
                     timerEl.innerText = "00:00:00";
                     timerEl.className = "text-2xl md:text-3xl font-mono tracking-widest font-black text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,1)] transition-all";
-                    submitBtn.innerText = "СДАТЬ С ОПОЗДАНИЕМ";
-                    submitBtn.className = "w-full box-border bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
+                    
+                    if (!hwData || hwData.status === 'rejected') {
+                        submitBtn.innerText = "СДАТЬ С ОПОЗДАНИЕМ";
+                        submitBtn.className = "w-full box-border bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
+                    }
                     if (deadlineInterval) clearInterval(deadlineInterval);
                 } else {
                     // Время еще есть
@@ -648,8 +701,11 @@
 
                     timerEl.innerText = timeStr;
                     timerEl.className = `text-lg md:text-xl font-mono tracking-wider font-bold ${colorClass} transition-all`;
-                    submitBtn.innerText = "ОТПРАВИТЬ РАБОТУ";
-                    submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
+                    
+                    if (!hwData || hwData.status === 'rejected') {
+                        submitBtn.innerText = hwData && hwData.status === 'rejected' ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
+                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
+                    }
                 }
             };
             
@@ -716,6 +772,29 @@ ${chatLink}
                 window.sendToTelegram(tgMessage);
             }
 
+            // Сохраняем статус ДЗ в Firebase
+            if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
+                const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+                const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
+                
+                let newProgress = currentLevel;
+                if (currentViewedLesson + 1 === currentLevel) {
+                    newProgress = currentLevel + 1;
+                    currentLevel = newProgress;
+                }
+
+                window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                    progress: newProgress,
+                    homeworks: {
+                        [currentViewedLesson]: { 
+                            link: hwInput, 
+                            status: 'pending', 
+                            timestamp: now.toISOString() 
+                        }
+                    }
+                }, { merge: true });
+            }
+
             if (!isLate) {
                 // Добавляем дофаминовое конфетти!
                 confetti({
@@ -728,27 +807,30 @@ ${chatLink}
                 // Делаем небольшую задержку, чтобы алерт не перекрыл взрыв конфетти
                 setTimeout(() => {
                     alert('Отправлено на проверку куратору');
-                }, 300);
+                    document.getElementById('hw-input').value = '';
+                    closeLesson();
+                    renderModules();
+                }, 500);
             } else {
                 alert('Отправлено с опозданием');
+                document.getElementById('hw-input').value = '';
+                closeLesson();
+                renderModules();
             }
-            
-            if (currentViewedLesson + 1 === currentLevel) {
-                currentLevel++;
-
-                if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
-                    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-                    const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
-                    window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
-                        progress: currentLevel
-                    }, { merge: true });
-                }
-            }
-
-            document.getElementById('hw-input').value = '';
-            closeLesson();
-            renderModules();
         }
+
+        window.updateHWStatus = async function(uid, lessonIdx, newStatus) {
+            try {
+                await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                    homeworks: {
+                        [lessonIdx]: { status: newStatus }
+                    }
+                }, { merge: true });
+            } catch(e) {
+                console.error("Ошибка при обновлении статуса ДЗ", e);
+                alert('Ошибка при обновлении статуса');
+            }
+        };
 
         let tapCount = 0;
         let tapTimer = null;
@@ -1020,6 +1102,28 @@ ${chatLink}
                         ? `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Активен</span>`
                         : `<span class="text-[9px] bg-zinc-500/20 text-zinc-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Ожидает</span>`;
 
+                    let hwHtml = '';
+                    if (data.homeworks && Object.keys(data.homeworks).length > 0) {
+                        hwHtml = '<div class="mt-3 space-y-2 border-t border-zinc-700/50 pt-3">';
+                        for (const [lessonIdx, hw] of Object.entries(data.homeworks)) {
+                            const lessonTitle = window.academyData.modules[lessonIdx]?.title || `Урок ${parseInt(lessonIdx)+1}`;
+                            hwHtml += `
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800">
+                                    <div class="flex flex-col flex-1 min-w-0">
+                                        <span class="text-[10px] text-zinc-400 font-bold truncate">${lessonTitle}</span>
+                                        <a href="${hw.link}" target="_blank" class="text-[10px] text-purple-400 hover:text-purple-300 underline truncate max-w-full">${hw.link}</a>
+                                    </div>
+                                    <select onchange="updateHWStatus('${docSnap.id}', '${lessonIdx}', this.value)" class="text-[10px] bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-md p-2 outline-none focus:border-purple-500 cursor-pointer appearance-none text-center font-bold shrink-0">
+                                        <option value="pending" class="bg-zinc-900 text-yellow-400 font-bold" ${hw.status === 'pending' ? 'selected' : ''}>👀 На проверке</option>
+                                        <option value="accepted" class="bg-zinc-900 text-emerald-400 font-bold" ${hw.status === 'accepted' ? 'selected' : ''}>✅ Принято</option>
+                                        <option value="rejected" class="bg-zinc-900 text-red-400 font-bold" ${hw.status === 'rejected' ? 'selected' : ''}>🔄 Поправить</option>
+                                    </select>
+                                </div>
+                            `;
+                        }
+                        hwHtml += '</div>';
+                    }
+
                     list.innerHTML += `
                         <div class="flex flex-col gap-2.5 bg-zinc-800/50 p-3.5 rounded-lg border border-zinc-700/50">
                             <div class="flex items-start justify-between gap-3">
@@ -1049,6 +1153,7 @@ ${chatLink}
                                     Сохранить
                                 </button>
                             </div>
+                            ${hwHtml}
                         </div>
                     `;
                 });
@@ -1263,6 +1368,15 @@ ${chatLink}
                                 });
                             } else {
                                 const data = docSnap.data();
+                                window.currentUserData = data; // Сохраняем данные локально для быстрого доступа
+                                
+                                // Обновляем плашку приветствия
+                                const greetingContainer = document.getElementById('greeting-container');
+                                const greetingText = document.getElementById('greeting-text');
+                                if (greetingContainer && greetingText) {
+                                    greetingText.innerText = `Привет, ${data.nickname}! Рада тебя видеть.`;
+                                    greetingContainer.classList.remove('hidden');
+                                }
                                 
                                 if (data.platform !== platform || data.nickname !== nickname) {
                                     await updateDoc(docRef, { platform: platform, nickname: nickname });
