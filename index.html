@@ -146,13 +146,14 @@
     <!-- Модалка урока -->
     <div id="lesson-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto overflow-x-hidden">
         <div class="p-4 sm:p-6 min-h-screen flex flex-col max-w-2xl mx-auto w-full relative box-border">
-            <button onclick="closeLesson()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm w-fit mt-4">
+            <button onclick="closeLesson()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm w-fit mt-4 hover:text-white transition-colors">
                 <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад к программе
             </button>
 
-            <div class="glass-card p-4 mb-6 box-border w-full">
+            <!-- Плашка 1: Видео, Заголовок, Подзаголовок (описание) -->
+            <div class="glass-card p-4 mb-4 box-border w-full">
                 <div class="video-container mb-4 relative" oncontextmenu="return false;" ondragstart="return false;">
-                    <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black" allowfullscreen></iframe>
+                    <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black"></iframe>
                     
                     <div class="absolute top-0 left-0 w-[70%] h-[45px] z-10 bg-transparent"></div>
                     <div class="absolute top-0 right-0 w-[100px] h-[45px] z-10 bg-transparent"></div>
@@ -160,28 +161,34 @@
                     <div class="absolute bottom-[230px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent hidden sm:block"></div>
                     <div class="absolute top-[10px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent sm:hidden"></div>
                 </div>
-                <h2 id="lesson-title" class="text-xl font-bold mb-2 break-words"></h2>
-                <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4 break-words"></p>
-                <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full box-border bg-zinc-800 hover:bg-zinc-700 text-sm font-bold py-3 rounded-xl transition-all">
-                    <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i> Открыть материалы
-                </a>
+                <h2 id="lesson-title" class="text-xl font-bold mb-3 break-words"></h2>
+                
+                <div class="pl-3 border-l-2 border-purple-500/50">
+                    <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed break-words"></p>
+                </div>
             </div>
 
+            <!-- Плашка 2: Материалы к уроку -->
+            <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 mb-6 hover:border-purple-500 text-sm font-bold transition-all">
+                <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Материалы к уроку
+            </a>
+
+            <!-- Плашка 3: Дедлайн и Домашнее задание -->
             <div class="mt-auto pt-2 pb-6 box-border w-full">
-                <div class="glass-card p-4 space-y-4 border border-purple-500/10 bg-purple-500/5 box-border w-full">
-                    <div class="flex justify-between items-center pb-3 border-b border-purple-500/10">
+                <div class="glass-card p-4 sm:p-5 space-y-4 border border-purple-500/10 bg-purple-500/5 box-border w-full">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-purple-500/10">
                         <div class="flex items-center gap-2">
-                            <i data-lucide="alert-circle" class="text-purple-500 w-4 h-4"></i>
-                            <span class="text-[10px] text-purple-300 font-bold uppercase tracking-widest">Дедлайн сдачи:</span>
+                            <i data-lucide="alert-circle" class="text-purple-500 w-5 h-5"></i>
+                            <span class="text-xs text-purple-300 font-bold uppercase tracking-widest">Дедлайн сдачи:</span>
                         </div>
-                        <p id="lesson-deadline-timer" class="text-sm font-mono font-bold text-white transition-all">00:00:00</p>
+                        <p id="lesson-deadline-timer" class="text-lg font-mono tracking-wider font-bold text-white transition-all">00:00:00</p>
                     </div>
                     
                     <div class="space-y-2 box-border w-full">
                         <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Ссылка на домашнее задание</label>
-                        <input type="url" id="hw-input" placeholder="https://..." class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                        <input type="url" id="hw-input" placeholder="https://..." class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm outline-none focus:border-purple-500 transition-all">
                     </div>
-                    <button id="lesson-submit-btn" onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all">
+                    <button id="lesson-submit-btn" onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2">
                         Отправить работу
                     </button>
                 </div>
@@ -297,7 +304,7 @@
                     <div class="space-y-1.5 box-border w-full">
                         <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Предпросмотр плеера</label>
                         <div class="video-container relative rounded-lg border border-zinc-800 overflow-hidden w-full">
-                            <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full bg-black" allowfullscreen></iframe>
+                            <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" class="absolute top-0 left-0 w-full h-full bg-black"></iframe>
                             <div class="absolute top-0 right-0 w-[50px] h-[50px] z-10 bg-transparent"></div>
                         </div>
                     </div>
@@ -584,8 +591,10 @@
             if (mod.pdfUrl) {
                 pdfBtn.href = mod.pdfUrl;
                 pdfBtn.classList.remove('hidden');
+                pdfBtn.classList.add('flex');
             } else {
                 pdfBtn.classList.add('hidden');
+                pdfBtn.classList.remove('flex');
             }
 
             // Логика живого таймера дедлайна
@@ -599,9 +608,9 @@
 
                 if (isNaN(d)) {
                     timerEl.innerText = "Не установлен";
-                    timerEl.className = "text-sm font-mono font-bold text-white transition-all";
+                    timerEl.className = "text-lg md:text-xl font-mono tracking-wider font-bold text-white transition-all";
                     submitBtn.innerText = "ОТПРАВИТЬ РАБОТУ";
-                    submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all";
+                    submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
                     return;
                 }
 
@@ -610,9 +619,9 @@
                 if (diff <= 0) {
                     // Время вышло
                     timerEl.innerText = "00:00:00";
-                    timerEl.className = "text-xl font-mono font-bold text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,1)] transition-all";
+                    timerEl.className = "text-2xl md:text-3xl font-mono tracking-widest font-black text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,1)] transition-all";
                     submitBtn.innerText = "СДАТЬ С ОПОЗДАНИЕМ";
-                    submitBtn.className = "w-full box-border bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all";
+                    submitBtn.className = "w-full box-border bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
                     if (deadlineInterval) clearInterval(deadlineInterval);
                 } else {
                     // Время еще есть
@@ -626,9 +635,9 @@
                     timeStr += String(hours).padStart(2, '0') + ":" + String(mins).padStart(2, '0') + ":" + String(secs).padStart(2, '0');
 
                     timerEl.innerText = timeStr;
-                    timerEl.className = "text-sm font-mono font-bold text-white transition-all";
+                    timerEl.className = "text-lg md:text-xl font-mono tracking-wider font-bold text-white transition-all";
                     submitBtn.innerText = "ОТПРАВИТЬ РАБОТУ";
-                    submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all";
+                    submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
                 }
             };
             
