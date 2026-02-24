@@ -6,19 +6,18 @@
     <title>Cyber Academy</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Удалили Google Font: Apple стиль использует системные шрифты устройства -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
         :root {
             --accent: #a855f7;
             --bg: #09090b;
-            --card-bg: rgba(24, 24, 27, 0.6); /* Чуть прозрачнее для эффекта стекла */
+            --card-bg: rgba(24, 24, 27, 0.6); 
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-            letter-spacing: 0.015em; /* Изящный отступ между буквами */
+            letter-spacing: 0.015em; 
             background-color: var(--bg);
             background-image: 
                 radial-gradient(circle at 0% 0%, rgba(168, 85, 247, 0.15) 0%, transparent 25%),
@@ -60,7 +59,6 @@
             top: 0; left: 0; width: 100%; height: 100%;
         }
 
-        /* Apple Style: Полустеклянные кнопки */
         .btn-primary {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(12px);
@@ -77,7 +75,6 @@
             transform: translateY(-1px);
         }
 
-        /* Изящные шрифты для заголовков, чтобы не сливались */
         h1, h2, h3, .tracking-tight {
             letter-spacing: 0.03em !important;
             font-weight: 600;
@@ -144,23 +141,18 @@
 
             <div class="glass-card p-4 mb-6">
                 <div class="video-container mb-4 relative" oncontextmenu="return false;" ondragstart="return false;">
-                    <!-- Sandbox строго блокирует скачивание (нет allow-downloads) и переходы (нет allow-popups) -->
                     <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black" allowfullscreen></iframe>
                     
-                    <!-- Точечная защита: только самые верхние углы -->
                     <div class="absolute top-0 left-0 w-[70%] h-[45px] z-10 bg-transparent"></div>
                     <div class="absolute top-0 right-0 w-[100px] h-[45px] z-10 bg-transparent"></div>
 
-                    <!-- Умная защита вкладки "Ещё" (Rutube) -->
                     <div class="absolute bottom-[230px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent hidden sm:block"></div>
                     <div class="absolute top-[10px] right-[10px] w-[100px] h-[45px] z-10 bg-transparent sm:hidden"></div>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
-                <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
-                    В этом уроке мы изучим основы работы с нейросетями и разберем первые шаги.
-                </p>
+                <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4"></p>
                 <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full bg-zinc-800 hover:bg-zinc-700 text-sm font-bold py-3 rounded-xl mb-4 transition-all">
-                    <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i> Открыть материалы (Google Drive)
+                    <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i> Открыть материалы
                 </a>
                 <div class="flex items-center gap-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl">
                     <i data-lucide="alert-circle" class="text-purple-500 w-5 h-5"></i>
@@ -183,130 +175,138 @@
         </div>
     </div>
 
+    <!-- АДМИН ПАНЕЛЬ -->
     <div id="admin-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
-        <div class="p-6 min-h-screen flex flex-col">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold">Админ-панель</h2>
+        <div class="p-4 min-h-screen flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">Админ-панель</h2>
                 <button onclick="closeAdmin()" class="text-zinc-500 hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <!-- Основной вид админки -->
             <div id="admin-main-view" class="flex-1 flex flex-col">
-                <div class="space-y-6">
-                    <div class="glass-card p-4 space-y-4">
-                        <div class="space-y-2">
-                            <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Название курса</label>
-                            <input type="text" id="admin-academy-name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                <div class="space-y-3">
+                    <div class="glass-card p-3 space-y-3" style="border-radius: 16px;">
+                        <div class="space-y-1">
+                            <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Название курса</label>
+                            <input type="text" id="admin-academy-name" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Мастер-код доступа (глобальный)</label>
-                            <input type="text" id="admin-secret-code" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                        <div class="space-y-1">
+                            <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Мастер-код доступа (глобальный)</label>
+                            <input type="text" id="admin-secret-code" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
                         </div>
                     </div>
 
-                    <div class="glass-card p-4 space-y-4">
+                    <div class="glass-card p-3 space-y-3" style="border-radius: 16px;">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-bold text-sm text-purple-400 uppercase tracking-widest">Модули</h3>
-                            <button onclick="adminAddModule()" class="text-xs bg-purple-500/10 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-500/20 hover:bg-purple-500/20 transition-all flex items-center gap-1">
+                            <h3 class="font-bold text-[10px] text-purple-400 uppercase tracking-widest">Модули</h3>
+                            <button onclick="adminAddModule()" class="text-[9px] bg-purple-500/10 text-purple-400 px-2 py-1.5 rounded-md border border-purple-500/20 hover:bg-purple-500/20 transition-all flex items-center gap-1 font-bold uppercase tracking-widest">
                                 <i data-lucide="plus" class="w-3 h-3"></i> Добавить
                             </button>
                         </div>
                         
-                        <!-- Глобальный тумблер переключения режима открытия уроков -->
-                        <div class="flex justify-between items-center p-3 bg-zinc-900/50 border border-zinc-800/50 rounded-xl">
-                            <span class="text-[10px] uppercase text-zinc-400 font-bold">Открывать уроки по дате (не по очереди)</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
+                        <div class="flex justify-between items-center p-2 bg-zinc-900/50 border border-zinc-800/50 rounded-lg">
+                            <span class="text-[9px] uppercase text-zinc-400 font-bold tracking-tight">Открывать уроки по дате (не по очереди)</span>
+                            <label class="relative inline-flex items-center cursor-pointer ml-2">
                                 <input type="checkbox" id="admin-global-unlock-toggle" class="sr-only peer" onchange="toggleGlobalUnlockMode()">
-                                <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                                <div class="w-7 h-4 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500"></div>
                             </label>
                         </div>
 
-                        <div id="admin-modules-list" class="space-y-2"></div>
+                        <div id="admin-modules-list" class="space-y-1.5"></div>
                     </div>
 
-                    <div class="glass-card p-4 flex justify-between items-center cursor-pointer hover:border-purple-500 transition-all" onclick="openAdminUsers()">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                                <i data-lucide="users" class="w-5 h-5 text-purple-400"></i>
+                    <div class="glass-card p-3 flex justify-between items-center cursor-pointer hover:border-purple-500 transition-all" style="border-radius: 16px;" onclick="openAdminUsers()">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                                <i data-lucide="users" class="w-4 h-4 text-purple-400"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-sm">Ученики</h3>
-                                <p class="text-[10px] text-zinc-500 uppercase">Управление доступами</p>
+                                <h3 class="font-bold text-xs">Ученики</h3>
+                                <p class="text-[9px] text-zinc-500 uppercase tracking-tight">Управление доступами</p>
                             </div>
                         </div>
-                        <i data-lucide="chevron-right" class="w-5 h-5 text-zinc-500"></i>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-500"></i>
                     </div>
                 </div>
 
-                <div class="mt-auto pt-6">
-                    <button onclick="saveAdminChanges()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm">
+                <div class="mt-auto pt-4">
+                    <button id="btn-save-admin" onclick="saveAdminChanges()" class="w-full bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors duration-300">
                         Сохранить изменения
                     </button>
                 </div>
             </div>
 
-            <!-- Вид со списком учеников (внутри той же страницы) -->
             <div id="admin-users-view" class="hidden flex-1 flex flex-col">
-                <button onclick="closeAdminUsers()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
-                    <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад к настройкам
+                <button onclick="closeAdminUsers()" class="flex items-center gap-1 text-zinc-400 mb-4 text-xs font-bold uppercase tracking-widest">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i> Назад
                 </button>
-                <div id="admin-users-list" class="space-y-3"></div>
+                <div id="admin-users-list" class="space-y-2"></div>
             </div>
         </div>
     </div>
 
+    <!-- РЕДАКТОР УРОКА -->
     <div id="admin-module-edit-modal" class="fixed inset-0 z-50 bg-black/95 hidden overflow-y-auto">
-        <div class="p-6 min-h-screen flex flex-col">
-            <button onclick="closeAdminModuleEdit()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm">
-                <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад к админке
+        <div class="p-4 min-h-screen flex flex-col">
+            <button onclick="closeAdminModuleEdit()" class="flex items-center gap-1 text-zinc-400 mb-4 text-xs font-bold uppercase tracking-widest">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i> Назад
             </button>
 
-            <h2 class="text-xl font-bold mb-6">Редактирование урока</h2>
+            <h2 class="text-lg font-bold mb-4">Редактирование урока</h2>
             
             <input type="hidden" id="edit-mod-idx">
 
-            <div class="space-y-4 mb-6">
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Название урока</label>
-                    <input type="text" id="edit-mod-title" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+            <div class="space-y-3 mb-6">
+                <!-- 1. Заголовок -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Заголовок урока</label>
+                    <input type="text" id="edit-mod-title" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
                 </div>
 
-                <!-- Поле ввода даты (показывается только если включен тумблер "По дате" на главной) -->
-                <div class="space-y-2 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl" id="unlock-date-container" style="display: none;">
-                    <label class="text-[10px] uppercase text-purple-400 font-bold">Укажите дату и время открытия</label>
-                    <input type="datetime-local" id="edit-mod-unlock-date" class="w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
+                <!-- 2. Подзаголовок / Описание -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Подзаголовок / Описание</label>
+                    <textarea id="edit-mod-desc" rows="2" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all"></textarea>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Описание</label>
-                    <textarea id="edit-mod-desc" rows="3" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all"></textarea>
+                <!-- 3. Время открытия -->
+                <div class="space-y-1 p-2 bg-purple-500/5 border border-purple-500/20 rounded-lg" id="unlock-date-container" style="display: none;">
+                    <label class="text-[9px] uppercase text-purple-400 font-bold">Время для открытия урока</label>
+                    <input type="datetime-local" id="edit-mod-unlock-date" class="w-full mt-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
                 </div>
 
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Google Drive)</label>
-                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
-                    <div class="video-container mt-2 relative">
-                        <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full rounded-xl bg-black" allowfullscreen></iframe>
-                        <!-- Невидимый щит в правом верхнем углу -->
+                <!-- 4. Видеоплеер (Превью) -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Видеоплеер</label>
+                    <div class="video-container relative rounded-lg border border-zinc-800 overflow-hidden">
+                        <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" class="absolute top-0 left-0 w-full h-full bg-black" allowfullscreen></iframe>
                         <div class="absolute top-0 right-0 w-[50px] h-[50px] z-10 bg-transparent"></div>
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (Google Drive / PDF)</label>
-                    <input type="url" id="edit-mod-pdf" placeholder="https://drive.google.com/..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                <!-- 5. Ссылка на видео -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Drive)</label>
+                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
                 </div>
 
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Дедлайн сдачи</label>
-                    <input type="datetime-local" id="edit-mod-deadline" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
+                <!-- 6. Ссылка на документ -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (PDF / Drive)</label>
+                    <input type="url" id="edit-mod-pdf" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all">
+                </div>
+
+                <!-- 7. Дедлайн сдачи -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase text-zinc-500 ml-1 font-bold">Дедлайн сдачи</label>
+                    <input type="datetime-local" id="edit-mod-deadline" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
                 </div>
             </div>
 
             <div class="mt-auto">
-                <button onclick="saveAdminModuleEdit()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm">
+                <button id="btn-save-module" onclick="saveAdminModuleEdit()" class="w-full bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors duration-300">
                     Сохранить урок
                 </button>
             </div>
@@ -314,11 +314,30 @@
     </div>
 
     <script>
-        // Разворачиваем Telegram Mini App на весь экран при запуске
+        // Функция для красивой подсветки кнопки "Сохранить"
+        function animateSaveButton(btnId, callback) {
+            const btn = document.getElementById(btnId);
+            if (!btn) {
+                if(callback) callback();
+                return;
+            }
+            const originalText = btn.innerText;
+            
+            btn.classList.add('!bg-emerald-500/20', '!border-emerald-500/30', '!text-emerald-300');
+            btn.innerText = "СОХРАНЕНО!";
+            
+            setTimeout(() => {
+                if(callback) callback();
+                setTimeout(() => {
+                    btn.classList.remove('!bg-emerald-500/20', '!border-emerald-500/30', '!text-emerald-300');
+                    btn.innerText = originalText;
+                }, 300);
+            }, 500);
+        }
+
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.expand();
             
-            // Защита от открытия вне Telegram (в обычном браузере)
             if (window.Telegram.WebApp.platform === 'unknown') {
                 document.body.innerHTML = `
                     <div class="min-h-screen flex items-center justify-center p-6 text-center bg-black">
@@ -367,7 +386,6 @@
             currentLevel = level;
             isAccessGranted = access;
             if (!access) {
-                // Если доступ аннулирован (удалили ученика), принудительно закрываем урок
                 document.getElementById('lesson-modal').classList.add('hidden');
                 document.getElementById('lesson-video').src = '';
             }
@@ -393,14 +411,12 @@
             academyData.modules.forEach((mod, idx) => {
                 let isLocked = false;
                 
-                // Проверка глобального условия открытия
                 if (isGlobalDateMode && mod.unlockDate) {
                     isLocked = new Date() < new Date(mod.unlockDate);
                 } else if (!isGlobalDateMode) {
                     isLocked = (idx + 1) > currentLevel;
                 }
 
-                // Жесткая блокировка, если не введен базовый пароль курса
                 if (!isAccessGranted && idx !== 0) {
                     isLocked = true;
                 }
@@ -464,7 +480,7 @@
                     }
                 } catch (e) { console.error(e); }
 
-                if (existingProgress === 0) existingProgress = 1; // Устанавливаем прогресс 1 (активирован)
+                if (existingProgress === 0) existingProgress = 1; 
                 currentLevel = existingProgress;
 
                 await window.setDoc(docRef, {
@@ -482,13 +498,11 @@
         async function checkAccessCode() {
             const inputCode = document.getElementById('access-code-input').value.trim();
             
-            // Проверка на мастер-код (остается на всякий случай)
             if (inputCode === academyData.secretCode) {
                 await grantAccess();
                 return;
             }
 
-            // Проверка на личный секретный код ученика из базы данных
             if (window.auth && window.auth.currentUser && window.db) {
                 const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
                 const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
@@ -510,7 +524,6 @@
         }
 
         function openLesson(idx) {
-            // Если курс закрыт, отправляем на ввод пароля
             if (idx === 0 && !isAccessGranted) {
                 document.getElementById('access-code-input').value = '';
                 document.getElementById('access-modal').classList.remove('hidden');
@@ -561,7 +574,6 @@
                 return;
             }
 
-            // --- Отправка данных в Telegram-бот ---
             if (window.sendToTelegram) {
                 const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
                 const firstName = tgUser.first_name || "Неизвестный";
@@ -623,10 +635,9 @@ ${chatLink}
         let tapTimer = null;
 
         function handleAdminTrigger() {
-            // Строгая проверка по вашему личному Telegram ID
             const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
             if (tgUser.id !== 758556732) {
-                return; // Игнорируем нажатия для всех остальных
+                return; 
             }
 
             tapCount++;
@@ -663,13 +674,13 @@ ${chatLink}
             const list = document.getElementById('admin-modules-list');
             list.innerHTML = '';
             academyData.modules.forEach((mod, idx) => {
-                const typeIcon = academyData.globalUnlockMode === 'date' ? '<i data-lucide="calendar" class="w-4 h-4 text-purple-400" title="По дате"></i>' : '<i data-lucide="link" class="w-4 h-4 text-emerald-400" title="Последовательно"></i>';
+                const typeIcon = academyData.globalUnlockMode === 'date' ? '<i data-lucide="calendar" class="w-3 h-3 text-purple-400" title="По дате"></i>' : '<i data-lucide="link" class="w-3 h-3 text-emerald-400" title="Последовательно"></i>';
                 list.innerHTML += `
-                    <div onclick="openAdminModuleEdit(${idx})" class="flex items-center gap-3 bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50 cursor-pointer hover:border-purple-500 transition-all">
-                        <span class="text-zinc-500 text-sm font-bold w-4">${idx + 1}.</span>
-                        <span class="flex-1 text-sm truncate">${mod.title}</span>
+                    <div onclick="openAdminModuleEdit(${idx})" class="flex items-center gap-2 bg-zinc-800/50 p-2.5 rounded-lg border border-zinc-700/50 cursor-pointer hover:border-purple-500 transition-all">
+                        <span class="text-zinc-500 text-xs font-bold w-4">${idx + 1}.</span>
+                        <span class="flex-1 text-xs truncate">${mod.title}</span>
                         ${typeIcon}
-                        <i data-lucide="edit-3" class="w-4 h-4 text-zinc-400"></i>
+                        <i data-lucide="edit-3" class="w-3 h-3 text-zinc-400"></i>
                     </div>
                 `;
             });
@@ -692,17 +703,19 @@ ${chatLink}
         }
 
         function saveAdminChanges() {
-            const newName = document.getElementById('admin-academy-name').value;
-            if (newName) {
-                academyData.name = newName;
-                document.getElementById('academy-name').innerText = newName;
-            }
+            animateSaveButton('btn-save-admin', () => {
+                const newName = document.getElementById('admin-academy-name').value;
+                if (newName) {
+                    academyData.name = newName;
+                    document.getElementById('academy-name').innerText = newName;
+                }
 
-            academyData.secretCode = document.getElementById('admin-secret-code').value.trim();
+                academyData.secretCode = document.getElementById('admin-secret-code').value.trim();
 
-            renderModules();
-            closeAdmin();
-            window.saveAcademyDataToCloud();
+                renderModules();
+                closeAdmin();
+                window.saveAcademyDataToCloud();
+            });
         }
 
         function closeAdmin() {
@@ -725,7 +738,6 @@ ${chatLink}
             if (!url) return '';
             let formattedUrl = url.trim();
             
-            // Если вставили код <iframe>
             if (formattedUrl.toLowerCase().includes('<iframe') && formattedUrl.toLowerCase().includes('src=')) {
                 const match = formattedUrl.match(/src=["'](.*?)["']/);
                 if (match) {
@@ -733,7 +745,6 @@ ${chatLink}
                 }
             }
             
-            // YouTube
             if (formattedUrl.includes('youtube.com/') || formattedUrl.includes('youtu.be/')) {
                 let videoId = '';
                 if (formattedUrl.includes('youtu.be/')) {
@@ -748,7 +759,6 @@ ${chatLink}
                 }
             }
             
-            // Rutube
             if (formattedUrl.includes('rutube.ru/')) {
                 try {
                     const urlObj = new URL(formattedUrl.startsWith('http') ? formattedUrl : 'https://' + formattedUrl);
@@ -764,7 +774,6 @@ ${chatLink}
                 } catch(e) { console.error(e); }
             }
 
-            // Google Drive
             if (formattedUrl.includes('drive.google.com/')) {
                 const driveMatch = formattedUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 if (driveMatch) {
@@ -807,20 +816,22 @@ ${chatLink}
         }
 
         function saveAdminModuleEdit() {
-            const idx = document.getElementById('edit-mod-idx').value;
-            const mod = academyData.modules[idx];
-            
-            const rawVideo = document.getElementById('edit-mod-video').value;
+            animateSaveButton('btn-save-module', () => {
+                const idx = document.getElementById('edit-mod-idx').value;
+                const mod = academyData.modules[idx];
+                
+                const rawVideo = document.getElementById('edit-mod-video').value;
 
-            mod.title = document.getElementById('edit-mod-title').value;
-            mod.desc = document.getElementById('edit-mod-desc').value;
-            mod.video = formatVideoUrl(rawVideo);
-            mod.pdfUrl = document.getElementById('edit-mod-pdf').value;
-            mod.deadline = document.getElementById('edit-mod-deadline').value;
-            mod.unlockDate = document.getElementById('edit-mod-unlock-date').value;
+                mod.title = document.getElementById('edit-mod-title').value;
+                mod.desc = document.getElementById('edit-mod-desc').value;
+                mod.video = formatVideoUrl(rawVideo);
+                mod.pdfUrl = document.getElementById('edit-mod-pdf').value;
+                mod.deadline = document.getElementById('edit-mod-deadline').value;
+                mod.unlockDate = document.getElementById('edit-mod-unlock-date').value;
 
-            closeAdminModuleEdit();
-            window.saveAcademyDataToCloud();
+                closeAdminModuleEdit();
+                window.saveAcademyDataToCloud();
+            });
         }
 
         function closeAdminModuleEdit() {
@@ -860,13 +871,13 @@ ${chatLink}
                 list.innerHTML = '<div class="text-sm text-red-500">Нет связи с БД</div>';
                 return;
             }
-            list.innerHTML = '<div class="text-sm text-zinc-500">Загрузка...</div>';
+            list.innerHTML = '<div class="text-xs text-zinc-500">Загрузка...</div>';
             
             const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users'));
             window.adminUsersUnsubscribe = window.onSnapshot(q, (snapshot) => {
                 list.innerHTML = '';
                 if (snapshot.empty) {
-                    list.innerHTML = '<div class="text-sm text-zinc-500">Пока никто не зашел в бота</div>';
+                    list.innerHTML = '<div class="text-xs text-zinc-500">Пока никто не зашел в бота</div>';
                     return;
                 }
                 snapshot.forEach(docSnap => {
@@ -877,31 +888,31 @@ ${chatLink}
                         : `<span class="text-[8px] bg-zinc-500/20 text-zinc-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest font-bold">Ожидает</span>`;
 
                     list.innerHTML += `
-                        <div class="flex flex-col gap-3 bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50">
+                        <div class="flex flex-col gap-2 bg-zinc-800/50 p-3 rounded-lg border border-zinc-700/50">
                             <div class="flex items-start justify-between gap-2">
                                 <div class="flex-1 min-w-0">
-                                    <div class="flex items-center mb-1">
-                                        <p class="text-sm font-bold text-white truncate">${data.nickname || 'Неизвестный'}</p>
+                                    <div class="flex items-center mb-0.5">
+                                        <p class="text-xs font-bold text-white truncate">${data.nickname || 'Неизвестный'}</p>
                                         ${statusBadge}
                                     </div>
-                                    <p class="text-[10px] text-zinc-400">Пройдено модулей: ${data.progress ? data.progress - 1 : 0}</p>
-                                    <p class="text-[10px] text-zinc-500 flex items-center gap-1 mt-1">
+                                    <p class="text-[9px] text-zinc-400">Пройдено модулей: ${data.progress ? data.progress - 1 : 0}</p>
+                                    <p class="text-[9px] text-zinc-500 flex items-center gap-1 mt-1">
                                         <i data-lucide="${getPlatformIcon(data.platform)}" class="w-3 h-3"></i> ${getPlatformName(data.platform)}
                                     </p>
                                 </div>
-                                <div class="flex flex-col gap-2 shrink-0">
-                                    <button onclick="resetUserProgress('${docSnap.id}')" class="text-[10px] bg-zinc-500/10 text-zinc-400 px-2 py-1.5 rounded-lg border border-zinc-500/20 hover:bg-zinc-500/20 transition-all text-center">
+                                <div class="flex flex-col gap-1.5 shrink-0">
+                                    <button onclick="resetUserProgress('${docSnap.id}')" class="text-[9px] bg-zinc-500/10 text-zinc-400 px-2 py-1.5 rounded-md border border-zinc-500/20 hover:bg-zinc-500/20 transition-all text-center">
                                         Сбросить
                                     </button>
-                                    <button onclick="deleteAdminUser('${docSnap.id}')" class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-all text-center">
+                                    <button onclick="deleteAdminUser('${docSnap.id}')" class="text-[9px] bg-red-500/10 text-red-400 px-2 py-1.5 rounded-md border border-red-500/20 hover:bg-red-500/20 transition-all text-center">
                                         Удалить
                                     </button>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2 pt-3 border-t border-zinc-700/50">
-                                <label class="text-[10px] uppercase text-zinc-500 font-bold shrink-0">Код:</label>
-                                <input type="text" id="admin-user-code-${docSnap.id}" value="${data.secretCode || ''}" class="w-24 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-purple-500 text-white font-mono text-center">
-                                <button onclick="saveUserSecretCode('${docSnap.id}')" class="text-[10px] bg-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 transition-all font-bold flex-1">
+                            <div class="flex items-center gap-2 pt-2 border-t border-zinc-700/50">
+                                <label class="text-[9px] uppercase text-zinc-500 font-bold shrink-0">Код:</label>
+                                <input type="text" id="admin-user-code-${docSnap.id}" value="${data.secretCode || ''}" class="w-20 bg-zinc-900 border border-zinc-700 rounded-md px-2 py-1.5 text-[10px] outline-none focus:border-purple-500 text-white font-mono text-center">
+                                <button id="btn-save-user-${docSnap.id}" onclick="saveUserSecretCode('${docSnap.id}')" class="text-[9px] bg-purple-500/20 text-purple-300 px-3 py-1.5 rounded-md border border-purple-500/30 hover:bg-purple-500/30 transition-colors duration-300 font-bold flex-1 uppercase tracking-widest">
                                     Сохранить
                                 </button>
                             </div>
@@ -911,17 +922,28 @@ ${chatLink}
                 lucide.createIcons();
             }, (error) => {
                 console.error("Ошибка загрузки юзеров", error);
-                list.innerHTML = '<div class="text-sm text-red-500">Ошибка загрузки</div>';
+                list.innerHTML = '<div class="text-xs text-red-500">Ошибка загрузки</div>';
             });
         };
 
         window.saveUserSecretCode = async function(uid) {
             const newCode = document.getElementById(`admin-user-code-${uid}`).value.trim();
+            const btnId = `btn-save-user-${uid}`;
             try {
                 await window.updateDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
                     secretCode: newCode
                 });
-                alert("Секретный код ученика успешно обновлен!");
+                // Плавная подсветка без вызова alert
+                const btn = document.getElementById(btnId);
+                if(btn) {
+                    const orig = btn.innerText;
+                    btn.classList.add('!bg-emerald-500/20', '!border-emerald-500/30', '!text-emerald-300');
+                    btn.innerText = "✓ СОХРАНЕНО";
+                    setTimeout(() => {
+                        btn.classList.remove('!bg-emerald-500/20', '!border-emerald-500/30', '!text-emerald-300');
+                        btn.innerText = orig;
+                    }, 1500);
+                }
             } catch(e) {
                 console.error("Ошибка при сохранении кода", e);
                 alert("Произошла ошибка при сохранении");
@@ -1062,7 +1084,6 @@ ${chatLink}
                     updateCloudIndicator(true);
 
                     try {
-                        // Загружаем глобальные настройки курса из базы
                         const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'academy_info');
                         const configSnap = await getDoc(configRef);
                         if (configSnap.exists()) {
@@ -1084,7 +1105,6 @@ ${chatLink}
                         const docSnap = await getDoc(docRef);
                         const platform = window.Telegram?.WebApp?.platform || 'unknown';
                         
-                        // Собираем правильный никнейм (приоритет: @username -> Имя Фамилия -> ID)
                         let nickname = "Гость " + stableUid.substring(0, 4);
                         if (tgUser.username) {
                             nickname = "@" + tgUser.username;
@@ -1092,16 +1112,14 @@ ${chatLink}
                             nickname = tgUser.first_name + (tgUser.last_name ? " " + tgUser.last_name : "");
                         }
                         
-                        // Заменяем единоразовую проверку на прослушивание профиля в реальном времени
                         onSnapshot(docRef, async (docSnap) => {
                             if (!docSnap.exists()) {
-                                // Профиль удален администратором или первый вход
                                 localStorage.removeItem('academy_access_granted');
                                 if (typeof window.syncCloudData === 'function') {
                                     window.syncCloudData(1, false);
                                 }
 
-                                const randomCode = Math.floor(1000 + Math.random() * 9000).toString(); // Генерируем код
+                                const randomCode = Math.floor(1000 + Math.random() * 9000).toString(); 
                                 
                                 await setDoc(docRef, {
                                     nickname: nickname,
@@ -1113,7 +1131,6 @@ ${chatLink}
                             } else {
                                 const data = docSnap.data();
                                 
-                                // Обновляем платформу и никнейм
                                 if (data.platform !== platform || data.nickname !== nickname) {
                                     await updateDoc(docRef, { platform: platform, nickname: nickname });
                                 }
@@ -1124,7 +1141,6 @@ ${chatLink}
                                         window.syncCloudData(data.progress, true);
                                     }
                                 } else {
-                                    // Прогресс сброшен на 0 (доступ закрыт)
                                     localStorage.removeItem('academy_access_granted');
                                     if (typeof window.syncCloudData === 'function') {
                                         window.syncCloudData(1, false);
@@ -1164,7 +1180,6 @@ ${chatLink}
     window.onSnapshot = onSnapshot;
     window.currentUser = currentUser;
 
-    // Строгая блокировка базы данных: не запускаем Firebase, если это обычный браузер
     const platform = window.Telegram?.WebApp?.platform || 'unknown';
     if (platform !== 'unknown') {
         startApp();
