@@ -1155,7 +1155,13 @@ ${chatLink}
     window.onSnapshot = onSnapshot;
     window.currentUser = currentUser;
 
-    startApp();
+    // Строгая блокировка базы данных: не запускаем Firebase, если это обычный браузер
+    const platform = window.Telegram?.WebApp?.platform || 'unknown';
+    if (platform !== 'unknown') {
+        startApp();
+    } else {
+        console.warn("Браузер заблокирован. Учетная запись не создана.");
+    }
 </script>
 </body>
 </html>
