@@ -148,19 +148,11 @@
                     <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
                     
                     <!-- Защитный слой сверху (скрывает названия и кнопку Поделиться) -->
-                    <div class="absolute top-0 left-0 w-full h-[60px] z-10 bg-transparent"></div>
+                    <div class="absolute top-0 left-0 w-full h-[70px] z-10 bg-transparent"></div>
+                    <!-- Защитный слой правый верхний угол (глушит кнопку "Еще" и меню в Rutube) -->
+                    <div class="absolute top-0 right-0 w-[120px] h-[100px] z-10 bg-transparent"></div>
                     <!-- Защитный слой правый нижний угол (скрывает логотип YouTube над панелью управления) -->
                     <div class="absolute bottom-[40px] right-0 w-[90px] h-[50px] z-10 bg-transparent"></div>
-
-                    <!-- Специальный экран для закрытых ссылок Яндекс.Диска -->
-                    <div id="yandex-fallback" class="absolute inset-0 z-20 bg-zinc-900 flex flex-col items-center justify-center hidden rounded-2xl border border-zinc-800">
-                        <i data-lucide="video" class="w-12 h-12 text-purple-500 mb-3"></i>
-                        <p class="text-sm font-bold text-white mb-1">Закрытое видео Яндекс.Диск</p>
-                        <p class="text-[10px] text-zinc-400 mb-4 text-center px-4">Сам Яндекс запрещает встраивать такие ссылки в плееры.<br>Нажми кнопку, чтобы посмотреть его безопасно.</p>
-                        <a id="yandex-link-btn" href="#" target="_blank" class="bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 text-xs font-bold py-2.5 px-5 rounded-xl transition-all flex items-center gap-2">
-                            Смотреть видео <i data-lucide="external-link" class="w-3 h-3"></i>
-                        </a>
-                    </div>
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-2"></h2>
                 <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed mb-4">
@@ -257,10 +249,9 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast, Яндекс Диск)</label>
-                    <input type="url" id="edit-mod-video" placeholder="https://... или код <iframe> с Яндекс Диска" oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
+                    <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на видео (YouTube, Rutube, Berrycast)</label>
+                    <input type="url" id="edit-mod-video" placeholder="https://..." oninput="updateAdminVideoPreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-purple-500 transition-all">
                     <div class="video-container mt-2 relative">
-                        <!-- Удалили sandbox для корректной работы Яндекс Диска и других плееров -->
                         <iframe id="edit-mod-video-preview" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen></iframe>
                     </div>
                 </div>
@@ -437,18 +428,9 @@
             document.getElementById('lesson-desc').innerText = mod.desc;
             
             const finalUrl = formatVideoUrl(mod.video) || '';
-            const yandexFallback = document.getElementById('yandex-fallback');
             const videoIframe = document.getElementById('lesson-video');
             
-            // Если это ссылка Яндекс.Диска, показываем красивую кнопку вместо сломанного плеера
-            if (finalUrl.includes('disk.yandex.ru')) {
-                yandexFallback.classList.remove('hidden');
-                document.getElementById('yandex-link-btn').href = finalUrl;
-                videoIframe.src = '';
-            } else {
-                yandexFallback.classList.add('hidden');
-                videoIframe.src = finalUrl;
-            }
+            videoIframe.src = finalUrl;
             
             const pdfBtn = document.getElementById('lesson-pdf-btn');
             if (mod.pdfUrl) {
@@ -467,7 +449,6 @@
         function closeLesson() {
             document.getElementById('lesson-modal').classList.add('hidden');
             document.getElementById('lesson-video').src = '';
-            document.getElementById('yandex-fallback').classList.add('hidden');
         }
 
         function submitHomework() {
@@ -612,11 +593,11 @@ ${chatLink}
             if (!url) return '';
             let formattedUrl = url.trim();
             
-            // Если вставили код <iframe> (например, из Яндекс Диска)
+            // Если вставили код <iframe>
             if (formattedUrl.toLowerCase().includes('<iframe') && formattedUrl.toLowerCase().includes('src=')) {
                 const match = formattedUrl.match(/src=["'](.*?)["']/);
                 if (match) {
-                    formattedUrl = match[1].replace(/&amp;/g, '&');
+                    formattedUrl = match[1];
                 }
             }
             
@@ -656,7 +637,7 @@ ${chatLink}
                 }
             }
 
-            // Berrycast и Яндекс Диск теперь возвращаются "как есть", чтобы не ломать их закрытые ссылки
+            // Все остальные ссылки отдаем "как есть"
             return formattedUrl;
         }
 
