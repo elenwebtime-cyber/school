@@ -119,14 +119,9 @@
         </header>
 
         <!-- ПЛАШКА ПРИВЕТСТВИЯ -->
-        <div id="greeting-container" class="hidden mb-6 glass-card p-4 border border-purple-500/20 bg-purple-500/5 flex items-center gap-4 transition-all">
-            <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-2xl shrink-0 border border-purple-500/30">
-                👋
-            </div>
-            <div>
-                <h2 id="greeting-text" class="text-sm font-bold text-white tracking-wide"></h2>
-                <p class="text-[10px] text-purple-300 font-bold uppercase tracking-wider mt-1">У тебя еще есть время до дедлайна, жми на газ! 🏎️</p>
-            </div>
+        <div id="greeting-container" class="hidden mb-6 px-2 transition-all">
+            <h2 id="greeting-text" class="text-lg font-serif italic text-zinc-300 tracking-wide"></h2>
+            <p class="text-xs font-serif italic text-zinc-500 mt-1">У тебя еще есть время до дедлайна, жми на газ! 🏎️</p>
         </div>
 
         <div id="modules-container" class="space-y-4 flex-1 w-full box-border"></div>
@@ -181,10 +176,15 @@
                 </div>
             </div>
 
-            <!-- Плашка 2: Материалы к уроку -->
-            <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden relative z-40 flex items-center justify-center gap-2 w-full box-border glass-card p-4 mb-6 hover:border-purple-500 text-sm font-bold transition-all">
-                <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Материалы к уроку
-            </a>
+            <!-- Плашка 2: Материалы к уроку (может быть несколько кнопок) -->
+            <div id="lesson-materials-container" class="hidden flex-col gap-2 w-full mb-6 relative z-40 box-border">
+                <a id="lesson-pdf-btn" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all">
+                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Материалы к уроку
+                </a>
+                <a id="lesson-pdf-btn2" href="#" target="_blank" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all">
+                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Дополнительные материалы
+                </a>
+            </div>
 
             <!-- Плашка 3: Дедлайн и Домашнее задание -->
             <div class="mt-auto pt-2 pb-6 box-border w-full relative z-40">
@@ -334,11 +334,15 @@
                     </div>
                 </div>
 
-                <!-- ПЛАШКА 3: Ссылка на документ -->
-                <div class="glass-card p-4 box-border w-full">
+                <!-- ПЛАШКА 3: Ссылки на документы -->
+                <div class="glass-card p-4 box-border w-full space-y-4">
                     <div class="space-y-1.5 box-border w-full">
-                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ (PDF)</label>
+                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ 1 (PDF)</label>
                         <input type="url" id="edit-mod-pdf" placeholder="https://..." class="w-full box-border block bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
+                    </div>
+                    <div class="space-y-1.5 box-border w-full">
+                        <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на документ 2 (дополнительно)</label>
+                        <input type="url" id="edit-mod-pdf2" placeholder="https://..." class="w-full box-border block bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 transition-all">
                     </div>
                 </div>
 
@@ -406,10 +410,10 @@
             secretCode: "VIP2026",
             globalUnlockMode: "sequential",
             modules: [
-                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", unlockDate: "" },
-                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", unlockDate: "" },
-                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "", unlockDate: "" },
-                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "", unlockDate: "" }
+                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" },
+                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" },
+                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" },
+                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" }
             ]
         };
 
@@ -602,14 +606,38 @@
             
             videoIframe.src = finalUrl;
             
+            const materialsContainer = document.getElementById('lesson-materials-container');
             const pdfBtn = document.getElementById('lesson-pdf-btn');
+            const pdfBtn2 = document.getElementById('lesson-pdf-btn2');
+
+            let hasMaterials = false;
+            
             if (mod.pdfUrl) {
                 pdfBtn.href = mod.pdfUrl;
                 pdfBtn.classList.remove('hidden');
                 pdfBtn.classList.add('flex');
+                hasMaterials = true;
             } else {
                 pdfBtn.classList.add('hidden');
                 pdfBtn.classList.remove('flex');
+            }
+
+            if (mod.pdfUrl2) {
+                pdfBtn2.href = mod.pdfUrl2;
+                pdfBtn2.classList.remove('hidden');
+                pdfBtn2.classList.add('flex');
+                hasMaterials = true;
+            } else {
+                pdfBtn2.classList.add('hidden');
+                pdfBtn2.classList.remove('flex');
+            }
+
+            if (hasMaterials) {
+                materialsContainer.classList.remove('hidden');
+                materialsContainer.classList.add('flex');
+            } else {
+                materialsContainer.classList.add('hidden');
+                materialsContainer.classList.remove('flex');
             }
 
             // Инициализация летающего водяного знака (Анти-пиратство)
@@ -618,14 +646,14 @@
                 wm = document.createElement('div');
                 wm.id = 'global-watermark';
                 wm.style.position = 'fixed';
-                wm.style.color = 'rgba(255, 255, 255, 0.06)'; // полупрозрачный
+                wm.style.color = 'rgba(255, 255, 255, 0.3)'; // Сделали более видимым
                 wm.style.fontSize = '24px';
                 wm.style.fontWeight = '900';
                 wm.style.pointerEvents = 'none';
                 wm.style.whiteSpace = 'nowrap';
-                wm.style.zIndex = '9999'; // поверх всего, даже модалок
+                wm.style.zIndex = '2147483647'; // Абсолютно поверх всего !important
                 wm.style.userSelect = 'none';
-                wm.style.textShadow = '0 0 4px rgba(0,0,0,0.5)';
+                wm.style.textShadow = '1px 1px 3px rgba(0,0,0,0.8)';
                 document.body.appendChild(wm);
             }
             
@@ -678,7 +706,11 @@
                     statusClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]';
                     hwFormWrapper.classList.add('hidden');
                 } else if (hwData.status === 'rejected') {
-                    statusText = '🔄 Нужно кое-что поправить';
+                    let commentHtml = '';
+                    if (hwData.comment) {
+                        commentHtml = `<div class="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-left text-xs font-normal text-red-300"><b>Комментарий куратора:</b><br>${hwData.comment}</div>`;
+                    }
+                    statusText = '🔄 Нужно кое-что поправить' + commentHtml;
                     statusClass = 'bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]';
                     hwFormWrapper.classList.remove('hidden');
                     submitBtn.innerText = "ОТПРАВИТЬ ИСПРАВЛЕННОЕ";
@@ -740,12 +772,12 @@
 
                     // Логика смены цвета таймера
                     let colorClass = "text-white";
-                    if (diff > 48 * 60 * 60 * 1000) {
-                        colorClass = "text-emerald-400"; // Больше 2 дней - спокойный зеленый
-                    } else if (diff <= 3 * 60 * 60 * 1000) {
-                        colorClass = "text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"; // Осталось 3 часа - красный и пульсирует
-                    } else if (diff <= 24 * 60 * 60 * 1000) {
-                        colorClass = "text-yellow-400"; // Остались сутки - желтый
+                    if (diff >= 24 * 60 * 60 * 1000) {
+                        colorClass = "text-emerald-400"; // 1 день и более - зеленый
+                    } else if (diff < 24 * 60 * 60 * 1000 && diff >= 6 * 60 * 60 * 1000) {
+                        colorClass = "text-yellow-400"; // менее 1 дня, но больше 6 часов - желтый
+                    } else if (diff < 6 * 60 * 60 * 1000) {
+                        colorClass = "text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"; // менее 6 часов - красный пульс
                     }
 
                     timerEl.innerText = timeStr;
@@ -884,7 +916,7 @@ ${chatLink}
             }
         }
 
-        // Обновление статуса из админки
+        // Обновление статуса из админки + запрос комментария при отклонении
         window.updateHWStatus = async function(uid, lessonIdx, newStatus) {
             try {
                 const userDocRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
@@ -892,7 +924,19 @@ ${chatLink}
                 if (userSnap.exists()) {
                     const data = userSnap.data();
                     const existingHw = data.homeworks?.[lessonIdx] || {};
-                    const updatedHw = { ...existingHw, status: newStatus };
+                    let updatedHw = { ...existingHw, status: newStatus };
+                    
+                    if (newStatus === 'rejected') {
+                        const comment = prompt('Введите комментарий для ученика (что нужно исправить):', existingHw.comment || '');
+                        if (comment !== null) {
+                            updatedHw.comment = comment;
+                        } else {
+                            // Если нажали отмену - не меняем статус
+                            loadAdminUsers(); 
+                            return; 
+                        }
+                    }
+
                     await window.setDoc(userDocRef, {
                         homeworks: {
                             [lessonIdx]: updatedHw
@@ -1021,6 +1065,7 @@ ${chatLink}
                 desc: "Описание модуля...",
                 deadline: "2026-12-31T23:59",
                 pdfUrl: "",
+                pdfUrl2: "",
                 unlockDate: ""
             });
             renderAdminModules();
@@ -1116,6 +1161,7 @@ ${chatLink}
             document.getElementById('edit-mod-desc').value = mod.desc || '';
             document.getElementById('edit-mod-video').value = mod.video || '';
             document.getElementById('edit-mod-pdf').value = mod.pdfUrl || '';
+            document.getElementById('edit-mod-pdf2').value = mod.pdfUrl2 || '';
             document.getElementById('edit-mod-deadline').value = mod.deadline || '';
             document.getElementById('edit-mod-unlock-date').value = mod.unlockDate || '';
             
@@ -1151,6 +1197,7 @@ ${chatLink}
                 mod.desc = document.getElementById('edit-mod-desc').value;
                 mod.video = formatVideoUrl(rawVideo);
                 mod.pdfUrl = document.getElementById('edit-mod-pdf').value;
+                mod.pdfUrl2 = document.getElementById('edit-mod-pdf2').value;
                 mod.deadline = document.getElementById('edit-mod-deadline').value;
                 mod.unlockDate = document.getElementById('edit-mod-unlock-date').value;
 
