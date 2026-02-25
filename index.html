@@ -290,6 +290,13 @@
 
             <div class="glass-card p-4 mb-4 box-border w-full relative z-40">
                 <div class="video-container mb-4 relative" oncontextmenu="return false;" ondragstart="return false;">
+                    
+                    <!-- Плейсхолдер для пустого видео -->
+                    <div id="lesson-video-placeholder" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#09090b] rounded-2xl hidden">
+                        <i data-lucide="video-off" class="w-8 h-8 text-zinc-600 mb-3 opacity-50"></i>
+                        <span class="text-zinc-400 font-medium text-sm text-center px-4">Видео будет доступно после онлайн урока</span>
+                    </div>
+
                     <iframe id="lesson-video" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" class="absolute top-0 left-0 w-full h-full rounded-2xl bg-black"></iframe>
                     
                     <div class="absolute top-0 left-0 w-[70%] h-[45px] z-10 bg-transparent"></div>
@@ -664,6 +671,13 @@
                     <div class="space-y-1.5 box-border w-full">
                         <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Предпросмотр плеера</label>
                         <div class="video-container relative rounded-xl border border-white/10 overflow-hidden w-full shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                            
+                            <!-- Плейсхолдер для пустого видео в админке -->
+                            <div id="admin-video-placeholder" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#09090b]/80 backdrop-blur-md hidden">
+                                <i data-lucide="video-off" class="w-6 h-6 text-zinc-500 mb-2 opacity-50"></i>
+                                <span class="text-zinc-400 font-medium text-[10px] uppercase tracking-widest text-center px-4">Видео будет доступно после онлайн урока</span>
+                            </div>
+                            
                             <iframe id="edit-mod-video-preview" src="" frameborder="0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" class="absolute top-0 left-0 w-full h-full bg-black"></iframe>
                             <div class="absolute top-0 right-0 w-[50px] h-[50px] z-10 bg-transparent"></div>
                         </div>
@@ -902,7 +916,7 @@
                     <div class="min-h-screen flex items-center justify-center p-6 text-center bg-black">
                         <div class="glass-card p-8 max-w-sm w-full space-y-4">
                             <div class="w-16 h-16 bg-red-500/10 rounded-2xl mx-auto flex items-center justify-center border border-red-500/20">
-                                <svg class="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                <svg class="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77-1.333.192 3 1.732 3z"></path></svg>
                             </div>
                             <h2 class="text-xl font-bold text-white">Доступ запрещен</h2>
                             <p class="text-sm text-zinc-400">Пожалуйста, откройте это приложение через официального Telegram-бота.</p>
@@ -1177,9 +1191,6 @@
 
                 await window.setDoc(docRef, {
                     nickname: nickname,
-                    tgFirstName: tgUser.first_name || "",
-                    tgLastName: tgUser.last_name || "",
-                    tgUsername: tgUser.username || "",
                     progress: currentLevel,
                     activatedAt: new Date().toISOString()
                 }, { merge: true });
@@ -1505,9 +1516,17 @@
             
             const finalUrl = formatVideoUrl(mod.video) || '';
             const videoIframe = document.getElementById('lesson-video');
+            const videoPlaceholder = document.getElementById('lesson-video-placeholder');
             
             videoIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
-            videoIframe.src = finalUrl;
+            
+            if (finalUrl) {
+                videoIframe.src = finalUrl;
+                if(videoPlaceholder) videoPlaceholder.classList.add('hidden');
+            } else {
+                videoIframe.src = '';
+                if(videoPlaceholder) videoPlaceholder.classList.remove('hidden');
+            }
             
             const materialsContainer = document.getElementById('lesson-materials-container');
             const pdfBtn = document.getElementById('lesson-pdf-btn');
@@ -1842,6 +1861,25 @@ ${chatLink}
                 submitBtn.classList.remove('opacity-50', 'pointer-events-none');
             }
         }
+
+        window.openAdminPhoto = function(uid, idx, photoIdx = 0) {
+            haptic('light');
+            const dataUrl = window._adminPhotos[`${uid}_${idx}_${photoIdx}`] || window._adminPhotos[`${uid}_${idx}`];
+            if (dataUrl) {
+                const newTab = window.open();
+                if (newTab) {
+                    newTab.document.body.innerHTML = `
+                        <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;min-height:100vh;">
+                            <img src="${dataUrl}" style="max-width:100%;max-height:100vh;object-fit:contain;">
+                        </body>`;
+                } else {
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = `homework_${parseInt(idx)+1}_${parseInt(photoIdx)+1}.jpg`;
+                    a.click();
+                }
+            }
+        };
 
         window.updateHWStatus = async function(uid, lessonIdx, newStatus) {
             try {
@@ -2390,9 +2428,17 @@ ${chatLink}
         function updateAdminVideoPreview() {
             const videoUrl = formatVideoUrl(document.getElementById('edit-mod-video').value);
             const previewIframe = document.getElementById('edit-mod-video-preview');
+            const placeholder = document.getElementById('admin-video-placeholder');
             
             previewIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
-            previewIframe.src = videoUrl;
+            
+            if (videoUrl) {
+                previewIframe.src = videoUrl;
+                if(placeholder) placeholder.classList.add('hidden');
+            } else {
+                previewIframe.src = '';
+                if(placeholder) placeholder.classList.remove('hidden');
+            }
         }
 
         function saveAdminModuleEdit() {
@@ -2454,6 +2500,8 @@ ${chatLink}
             }
 
             const list = document.getElementById('admin-users-list');
+            const adminModal = document.getElementById('admin-modal');
+            
             if (!window.db || !window.query || !window.collection || !window.onSnapshot) {
                 list.innerHTML = '<div class="text-sm text-red-500 font-bold">Нет связи с БД</div>';
                 return;
@@ -2462,11 +2510,17 @@ ${chatLink}
             
             const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users'));
             window.adminUsersUnsubscribe = window.onSnapshot(q, (snapshot) => {
+                // Запоминаем текущую позицию скролла, чтобы экран не прыгал
+                const currentScroll = adminModal ? adminModal.scrollTop : 0;
+                
                 list.innerHTML = '';
                 if (snapshot.empty) {
                     list.innerHTML = '<div class="text-sm text-zinc-500 font-medium">Пока никто не зашел в бота</div>';
                     return;
                 }
+                
+                // Очищаем кэш фото при новой загрузке
+                window._adminPhotos = {};
 
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
@@ -2487,6 +2541,13 @@ ${chatLink}
                         const fbHtml = hw.feedback ? `<span class="text-xs ml-1" title="Оценка урока">${hw.feedback}</span>` : '';
                         
                         const hasAnyHw = hw.link || hw.photoUrls || hw.photoUrl;
+                        
+                        // Обработка массива фото или одного старого фото чисто для сохранения в память (кнопки убраны)
+                        let photosArray = hw.photoUrls || (hw.photoUrl ? [hw.photoUrl] : []);
+                        photosArray.forEach((pUrl, pIdx) => {
+                            window._adminPhotos[`${docSnap.id}_${i}_${pIdx}`] = pUrl;
+                        });
+
                         let hwStatusIndicator = hasAnyHw ? `<span class="text-[10px] text-purple-400 font-medium flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3"></i> Материалы отправлены</span>` : `<span class="text-[10px] text-zinc-600 italic font-medium">ДЗ не сдано</span>`;
                         
                         const statusSelect = hasAnyHw ? `
@@ -2555,20 +2616,23 @@ ${chatLink}
                         </div>
                     ` : '';
 
-                    // Красивый вывод Имени и Никнейма
+                    // Красивый вывод Имени и Никнейма (Столбиком)
                     let rawNickname = data.nickname || 'Неизвестный';
                     let displayHtml = '';
                     
                     if (data.tgFirstName !== undefined || data.tgUsername !== undefined) {
                         let fName = escapeHTML((data.tgFirstName || '') + ' ' + (data.tgLastName || '')).trim() || 'Без имени';
                         let uName = data.tgUsername ? escapeHTML('@' + data.tgUsername) : 'Без ника';
-                        displayHtml = `<span class="text-white">${fName}</span> <span class="text-zinc-400 font-medium ml-1.5 text-xs truncate">${uName}</span>`;
+                        displayHtml = `<div class="flex flex-col min-w-0"><span class="text-white text-sm font-bold truncate">${fName}</span><span class="text-zinc-400 font-medium text-xs truncate mt-0.5">${uName}</span></div>`;
                     } else {
                         // Фолбэк для старых записей
                         if (rawNickname.includes('(@')) {
-                            displayHtml = escapeHTML(rawNickname).replace(/\s\((@[^)]+)\)/, ' <span class="text-zinc-400 font-medium ml-1.5 text-xs truncate">$1</span>');
+                            let parts = rawNickname.split(' (@');
+                            let fName = escapeHTML(parts[0]);
+                            let uName = escapeHTML('@' + parts[1].replace(')', ''));
+                            displayHtml = `<div class="flex flex-col min-w-0"><span class="text-white text-sm font-bold truncate">${fName}</span><span class="text-zinc-400 font-medium text-xs truncate mt-0.5">${uName}</span></div>`;
                         } else {
-                            displayHtml = `<span class="text-white">${escapeHTML(rawNickname)}</span>`;
+                            displayHtml = `<div class="flex flex-col min-w-0"><span class="text-white text-sm font-bold truncate">${escapeHTML(rawNickname)}</span><span class="text-zinc-400 font-medium text-xs truncate mt-0.5">Без ника</span></div>`;
                         }
                     }
 
@@ -2576,8 +2640,8 @@ ${chatLink}
                         <div class="flex flex-col bg-white/[0.03] p-4 sm:p-5 rounded-2xl border border-white/10 shadow-lg backdrop-blur-md">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex-1 min-w-0">
-                                    <div class="flex items-center mb-1.5">
-                                        <p class="text-sm font-bold flex items-baseline truncate">${displayHtml}</p>
+                                    <div class="flex items-start justify-between gap-2 mb-1.5">
+                                        ${displayHtml}
                                         ${statusBadge}
                                     </div>
                                     <p class="text-[11px] text-zinc-400 font-medium">Пройдено модулей: <span class="text-white font-bold">${data.progress ? data.progress - 1 : 0}</span></p>
@@ -2593,6 +2657,12 @@ ${chatLink}
                     `;
                 });
                 lucide.createIcons();
+                
+                // Возвращаем скролл на место (без прыжка)
+                if (adminModal) {
+                    setTimeout(() => { adminModal.scrollTop = currentScroll; }, 0);
+                }
+
             }, (error) => {
                 console.error("Ошибка загрузки юзеров", error);
                 list.innerHTML = '<div class="text-sm text-red-500 font-bold">Ошибка загрузки данных</div>';
@@ -2764,7 +2834,8 @@ ${chatLink}
                         body: JSON.stringify({
                             chat_id: chatId.toString(),
                             text: messageText,
-                            parse_mode: "HTML"
+                            parse_mode: "HTML",
+                            disable_web_page_preview: true
                         })
                     });
                 }
