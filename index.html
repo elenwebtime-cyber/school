@@ -29,6 +29,17 @@
             min-height: 100dvh;
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: none; /* Запрет системного свайпа браузера */
+            
+            /* Запрет выделения текста для всех пользователей */
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* Разрешаем выделение текста только в полях ввода и текстовых областях */
+        input, textarea {
+            user-select: auto;
+            -webkit-user-select: auto;
         }
 
         /* Luxury Glassmorphism */
@@ -105,7 +116,7 @@
         }
     </style>
 </head>
-<body class="overflow-x-hidden" oncontextmenu="return false;">
+<body class="overflow-x-hidden" oncontextmenu="return false;" oncopy="return false;" oncut="return false;" ondragstart="return false;">
 
     <!-- ============================================================================== -->
     <!-- ⬇️ НАСТРОЙКИ КУРСА (ИЗМЕНИТЕ ЭТИ ДАННЫЕ ПЕРЕД ЗАПУСКОМ ИЛИ ПРИ ПРОДАЖЕ) ⬇️ -->
@@ -115,14 +126,18 @@
             // 1. Уникальный ID вашего проекта (чтобы базы разных курсов не перемешались)
             APP_ID: "my-awesome-school-project",
 
-            // 2. Ваш личный Telegram ID (для доступа в админку и получения уведомлений)
+            // 2. Ваш личный Telegram ID (Создатель: Полный доступ ко всем функциям и настройкам)
             ADMIN_TELEGRAM_ID: 758556732,
 
-            // 3. Токен вашего Telegram-бота (разделен на две части для защиты от сканеров)
+            // 3. Telegram ID Куратора (Помощник: Доступ только к урокам, текстам и проверке ДЗ учеников).
+            // Оставьте пустым (например: ""), если куратора пока нет.
+            CURATOR_TELEGRAM_ID: 123456789,
+
+            // 4. Токен вашего Telegram-бота (разделен на две части для защиты от сканеров)
             TELEGRAM_BOT_TOKEN_P1: "8687065026",
             TELEGRAM_BOT_TOKEN_P2: "AAEUscKh61KjqLvo5fLgJf7yRec1NIl-R_o",
 
-            // 4. Настройки подключения к вашей базе данных Firebase (Ключ тоже разделен)
+            // 5. Настройки подключения к вашей базе данных Firebase
             FIREBASE_CONFIG: {
                 apiKey_P1: "AIzaSyCfUl6ZUnzhS-",
                 apiKey_P2: "kwgHva9xEoct2Br8pfRQ8",
@@ -133,6 +148,10 @@
                 appId: "1:404605437857:web:c265735350cbed0d492de0"
             }
         };
+
+        // Глобальные флаги ролей
+        window.isAdmin = false;
+        window.isCurator = false;
     </script>
     <!-- ============================================================================== -->
     <!-- ⬆️ КОНЕЦ БЛОКА НАСТРОЕК ⬆️ -->
@@ -151,14 +170,16 @@
         <header class="flex justify-between items-center mb-8 pt-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <h1 id="academy-name" class="text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-500 to-pink-500 drop-shadow-sm cursor-pointer" onclick="handleAdminTrigger()">Cyber Academy</h1>
+                    <h1 id="academy-name" class="text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-500 to-pink-500 drop-shadow-sm cursor-pointer select-none" onclick="handleAdminTrigger()">Cyber Academy</h1>
                     <div id="cloud-indicator" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-colors duration-500" title="Нет связи с облаком"></div>
                 </div>
-                <div class="flex items-center gap-2 mt-2">
+                <!-- Зона для кликов Куратора (полоска прогресса) -->
+                <div class="flex items-center gap-2 mt-2 cursor-pointer">
                     <div class="h-1.5 w-24 bg-white/10 rounded-full overflow-hidden shadow-inner">
                         <div id="progress-bar" class="h-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.8)] transition-all duration-500" style="width: 0%"></div>
                     </div>
-                    <span id="progress-text" class="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">0% Пройдено</span>
+                    <!-- Добавлено 3-секундное зажатие для куратора -->
+                    <span id="progress-text" class="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter select-none" onpointerdown="startCuratorHold(event)" onpointerup="cancelCuratorHold(event)" onpointerleave="cancelCuratorHold(event)" onpointercancel="cancelCuratorHold(event)">0% Пройдено</span>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -285,10 +306,10 @@
 
             <div id="lesson-materials-container" class="hidden flex-col gap-2 w-full mb-6 relative z-40 box-border">
                 <button type="button" id="lesson-pdf-btn" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
-                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Материалы к уроку
+                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Материалы урока (PDF)
                 </button>
                 <button type="button" id="lesson-pdf-btn2" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
-                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Дополнительные материалы
+                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Дополнительные материалы (PDF)
                 </button>
             </div>
 
@@ -318,8 +339,8 @@
         </div>
     </div>
 
-    <!-- Модалка просмотра PDF -->
-    <div id="pdf-modal" class="fixed inset-0 z-[70] bg-[#09090b]/95 backdrop-blur-xl hidden flex-col box-border">
+    <!-- Модалка просмотра PDF (Добавлены классы для плавного появления opacity) -->
+    <div id="pdf-modal" class="fixed inset-0 z-[70] bg-[#09090b]/95 backdrop-blur-xl hidden flex-col box-border transition-opacity duration-300 opacity-0">
         <div class="flex items-center justify-between p-4 border-b border-white/10 shadow-lg relative z-20" style="padding-top: max(1rem, env(safe-area-inset-top));">
             <h2 id="pdf-modal-title" class="text-white font-bold text-sm tracking-wide truncate pr-4">Документ</h2>
             <button onclick="closePdfModal()" class="text-zinc-400 hover:text-white transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-full shrink-0">
@@ -367,7 +388,9 @@
 
             <div id="admin-main-view" class="flex-1 flex flex-col box-border w-full">
                 <div class="space-y-4 box-border w-full">
-                    <div class="glass-card p-5 space-y-4 box-border w-full" style="border-radius: 20px;">
+                    
+                    <!-- ГЛОБАЛЬНЫЕ НАСТРОЙКИ (СКРЫТО ДЛЯ КУРАТОРА) -->
+                    <div id="admin-global-settings-block" class="glass-card p-5 space-y-4 box-border w-full" style="border-radius: 20px;">
                         <div class="space-y-1.5 box-border w-full">
                             <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Название курса</label>
                             <input type="text" id="admin-academy-name" class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
@@ -382,8 +405,8 @@
                         </div>
                     </div>
 
-                    <!-- БЛОК ПРИВЕТСТВИЯ -->
-                    <div class="glass-card p-5 space-y-4 box-border w-full" style="border-radius: 20px;">
+                    <!-- БЛОК ПРИВЕТСТВИЯ (СКРЫТО ДЛЯ КУРАТОРА) -->
+                    <div id="admin-greeting-block" class="glass-card p-5 space-y-4 box-border w-full" style="border-radius: 20px;">
                         <h3 class="font-bold text-xs text-purple-400 uppercase tracking-widest mb-1">Блок: Приветствие</h3>
                         <div class="space-y-1.5 box-border w-full">
                             <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Заголовок (используйте {name} для имени)</label>
@@ -1158,23 +1181,49 @@
             document.getElementById('pdf-modal-title').innerText = title;
             const iframe = document.getElementById('pdf-iframe');
             
-            // Если ссылка с гугл диска уже с /preview, используем ее, иначе прогоняем через просмотрщик Google
-            if (url.includes('drive.google.com') && url.includes('/preview')) {
-                iframe.src = url;
-            } else {
-                iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+            let finalUrl = url;
+            
+            // Если ссылка с гугл диска, принудительно делаем режим preview
+            if (url.includes('drive.google.com')) {
+                const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (driveMatch) {
+                    finalUrl = `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+                } else {
+                    finalUrl = url.replace(/\/view.*/, '/preview');
+                }
+            } else if (!url.includes('docs.google.com/viewer')) {
+                // Для всех остальных ссылок на PDF используем надежный вьюер Google без скачивания
+                finalUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
             }
             
-            document.getElementById('pdf-modal').classList.remove('hidden');
-            document.getElementById('pdf-modal').classList.add('flex');
+            iframe.src = finalUrl;
+            
+            const modal = document.getElementById('pdf-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Запускаем плавное появление
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+            }, 10);
+
             lucide.createIcons();
         }
 
         function closePdfModal() {
             haptic('light');
-            document.getElementById('pdf-modal').classList.add('hidden');
-            document.getElementById('pdf-modal').classList.remove('flex');
-            document.getElementById('pdf-iframe').src = '';
+            const modal = document.getElementById('pdf-modal');
+            
+            // Плавное затухание
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.getElementById('pdf-iframe').src = '';
+            }, 300); // Соответствует transition-opacity duration-300
         }
         // ------------------------------------------
 
@@ -1205,7 +1254,7 @@
             let hasMaterials = false;
             
             if (mod.pdfUrl) {
-                pdfBtn.onclick = () => openPdfModal(mod.pdfUrl, 'Материалы к уроку');
+                pdfBtn.onclick = () => openPdfModal(mod.pdfUrl, 'Материалы урока (PDF)');
                 pdfBtn.classList.remove('hidden');
                 pdfBtn.classList.add('flex');
                 hasMaterials = true;
@@ -1215,7 +1264,7 @@
             }
 
             if (mod.pdfUrl2) {
-                pdfBtn2.onclick = () => openPdfModal(mod.pdfUrl2, 'Дополнительные материалы');
+                pdfBtn2.onclick = () => openPdfModal(mod.pdfUrl2, 'Дополнительные материалы (PDF)');
                 pdfBtn2.classList.remove('hidden');
                 pdfBtn2.classList.add('flex');
                 hasMaterials = true;
@@ -1539,6 +1588,7 @@ ${chatLink}
         let tapCount = 0;
         let tapTimer = null;
 
+        // Вход для Админа (5 кликов по заголовку)
         function handleAdminTrigger() {
             const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
             if (tgUser.id !== window.APP_CONFIG.ADMIN_TELEGRAM_ID) {
@@ -1552,11 +1602,52 @@ ${chatLink}
             if (tapCount >= 5) {
                 clearTimeout(tapTimer);
                 tapCount = 0;
+                
+                window.isAdmin = true;
+                window.isCurator = false;
+                
                 const adminBtn = document.getElementById('admin-btn');
                 adminBtn.classList.remove('hidden');
                 lucide.createIcons();
                 haptic('medium');
             }
+        }
+        
+        // Вход для Куратора (Удержание 3 секунды на слове "Пройдено")
+        let curatorHoldTimer = null;
+
+        window.startCuratorHold = function(e) {
+            // Запускаем таймер на 3 секунды
+            curatorHoldTimer = setTimeout(() => {
+                activateCurator();
+            }, 3000);
+        };
+
+        window.cancelCuratorHold = function(e) {
+            // Если отпустили или убрали палец до истечения 3 секунд - отменяем
+            if (curatorHoldTimer) {
+                clearTimeout(curatorHoldTimer);
+                curatorHoldTimer = null;
+            }
+        };
+
+        function activateCurator() {
+            const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+            const curatorId = window.APP_CONFIG.CURATOR_TELEGRAM_ID;
+            
+            // Если чужой пользователь или нет айди куратора — игнор
+            if (!curatorId || tgUser.id !== curatorId) {
+                return; 
+            }
+
+            window.isAdmin = false;
+            window.isCurator = true;
+            
+            const adminBtn = document.getElementById('admin-btn');
+            adminBtn.classList.remove('hidden');
+            lucide.createIcons();
+            haptic('medium');
+            showToast('Режим Куратора активирован', 'success');
         }
 
         window.updateFaqQ = function(idx, val) { academyData.faqContent.faq[idx].q = val; }
@@ -1593,13 +1684,15 @@ ${chatLink}
         }
 
         function syncAdminInputsToData() {
-            academyData.name = document.getElementById('admin-academy-name').value;
-            academyData.secretCode = safeString(document.getElementById('admin-secret-code').value).trim();
-            academyData.supportLink = safeString(document.getElementById('admin-support-link').value).trim();
-            
-            if (!academyData.greetingConfig) academyData.greetingConfig = {};
-            academyData.greetingConfig.titleTemplate = safeString(document.getElementById('admin-greeting-title').value).trim();
-            academyData.greetingConfig.subtitle = safeString(document.getElementById('admin-greeting-subtitle').value).trim();
+            if (window.isAdmin) {
+                academyData.name = document.getElementById('admin-academy-name').value;
+                academyData.secretCode = safeString(document.getElementById('admin-secret-code').value).trim();
+                academyData.supportLink = safeString(document.getElementById('admin-support-link').value).trim();
+                
+                if (!academyData.greetingConfig) academyData.greetingConfig = {};
+                academyData.greetingConfig.titleTemplate = safeString(document.getElementById('admin-greeting-title').value).trim();
+                academyData.greetingConfig.subtitle = safeString(document.getElementById('admin-greeting-subtitle').value).trim();
+            }
         }
 
         function renderAdminLayout() {
@@ -1665,6 +1758,15 @@ ${chatLink}
             
             document.getElementById('admin-greeting-title').value = academyData.greetingConfig?.titleTemplate || '';
             document.getElementById('admin-greeting-subtitle').value = academyData.greetingConfig?.subtitle || '';
+            
+            // Скрываем или показываем глобальные настройки в зависимости от роли
+            if (window.isCurator) {
+                document.getElementById('admin-global-settings-block').style.display = 'none';
+                document.getElementById('admin-greeting-block').style.display = 'none';
+            } else {
+                document.getElementById('admin-global-settings-block').style.display = 'block';
+                document.getElementById('admin-greeting-block').style.display = 'block';
+            }
             
             if(!academyData.homeLayout) {
                 academyData.homeLayout = ['text', 'faq', 'modules'];
@@ -2050,6 +2152,28 @@ ${chatLink}
                     }
                     hwHtml += '</div>';
 
+                    // Разграничение прав: Кнопки удаления и код доступа видны только Главному Админу
+                    const adminControls = window.isAdmin ? `
+                        <div class="flex flex-col gap-2 shrink-0">
+                            <button onclick="resetUserProgress('${docSnap.id}')" class="text-[10px] bg-zinc-500/10 text-zinc-300 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-center font-bold shadow-sm">
+                                Сбросить
+                            </button>
+                            <button onclick="deleteAdminUser('${docSnap.id}')" class="text-[10px] bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 hover:text-red-300 transition-all text-center font-bold shadow-sm">
+                                Удалить
+                            </button>
+                        </div>
+                    ` : '';
+
+                    const accessCodeBlock = window.isAdmin ? `
+                        <div class="flex items-center gap-3 pt-4 mt-1 border-t border-white/5">
+                            <label class="text-[10px] uppercase text-zinc-500 font-bold shrink-0 tracking-wide">Код доступа:</label>
+                            <input type="text" id="admin-user-code-${docSnap.id}" value="${escapeHTML(data.secretCode || '')}" class="w-28 bg-white/[0.05] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-purple-500 text-white font-mono text-center shadow-inner transition-all">
+                            <button id="btn-save-user-${docSnap.id}" onclick="saveUserSecretCode('${docSnap.id}')" class="text-[10px] bg-purple-500/20 text-purple-300 px-4 py-1.5 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 hover:text-white transition-colors duration-300 font-bold flex-1 uppercase tracking-widest shadow-sm">
+                                Сохранить
+                            </button>
+                        </div>
+                    ` : '';
+
                     list.innerHTML += `
                         <div class="flex flex-col bg-white/[0.03] p-4 sm:p-5 rounded-2xl border border-white/10 shadow-lg backdrop-blur-md">
                             <div class="flex items-start justify-between gap-3">
@@ -2063,22 +2187,9 @@ ${chatLink}
                                         <i data-lucide="${getPlatformIcon(data.platform)}" class="w-3.5 h-3.5 opacity-70"></i> ${getPlatformName(data.platform)}
                                     </p>
                                 </div>
-                                <div class="flex flex-col gap-2 shrink-0">
-                                    <button onclick="resetUserProgress('${docSnap.id}')" class="text-[10px] bg-zinc-500/10 text-zinc-300 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-center font-bold shadow-sm">
-                                        Сбросить
-                                    </button>
-                                    <button onclick="deleteAdminUser('${docSnap.id}')" class="text-[10px] bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 hover:text-red-300 transition-all text-center font-bold shadow-sm">
-                                        Удалить
-                                    </button>
-                                </div>
+                                ${adminControls}
                             </div>
-                            <div class="flex items-center gap-3 pt-4 mt-1 border-t border-white/5">
-                                <label class="text-[10px] uppercase text-zinc-500 font-bold shrink-0 tracking-wide">Код доступа:</label>
-                                <input type="text" id="admin-user-code-${docSnap.id}" value="${escapeHTML(data.secretCode || '')}" class="w-28 bg-white/[0.05] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-purple-500 text-white font-mono text-center shadow-inner transition-all">
-                                <button id="btn-save-user-${docSnap.id}" onclick="saveUserSecretCode('${docSnap.id}')" class="text-[10px] bg-purple-500/20 text-purple-300 px-4 py-1.5 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 hover:text-white transition-colors duration-300 font-bold flex-1 uppercase tracking-widest shadow-sm">
-                                    Сохранить
-                                </button>
-                            </div>
+                            ${accessCodeBlock}
                             ${hwHtml}
                         </div>
                     `;
@@ -2091,6 +2202,7 @@ ${chatLink}
         };
 
         window.saveUserSecretCode = async function(uid) {
+            if (!window.isAdmin) return; // Защита от куратора
             haptic('medium');
             const newCode = document.getElementById(`admin-user-code-${uid}`).value.trim();
             const btnId = `btn-save-user-${uid}`;
@@ -2116,6 +2228,7 @@ ${chatLink}
         };
 
         window.resetUserProgress = async function(uid) {
+            if (!window.isAdmin) return; // Защита от куратора
             if (confirm("Точно сбросить прогресс этому студенту? Это также удалит все его сданные работы.")) {
                 try {
                     await window.updateDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
@@ -2140,6 +2253,7 @@ ${chatLink}
         };
 
         window.deleteAdminUser = async function(uid) {
+            if (!window.isAdmin) return; // Защита от куратора
             if (confirm("Точно удалить этого ученика из списка? (Это обнулит его аккаунт)")) {
                 try {
                     await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid));
@@ -2181,8 +2295,6 @@ ${chatLink}
     delete firebaseConfig.apiKey_P2;
 
     const appId = window.APP_CONFIG.APP_ID;
-    const TG_BOT_TOKEN = window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P1 + ":" + window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P2;
-    const TG_CHAT_ID = window.APP_CONFIG.ADMIN_TELEGRAM_ID.toString();
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -2190,30 +2302,35 @@ ${chatLink}
 
     let currentUser = null;
 
+    // Обновленная функция отправки (Отправляет и Админу, и Куратору)
     window.sendToTelegram = async function(messageText) {
-        if (!TG_BOT_TOKEN || !TG_CHAT_ID || TG_BOT_TOKEN === ":") {
-            console.warn("Не задан TG_BOT_TOKEN или TG_CHAT_ID");
+        const botToken = window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P1 + ":" + window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P2;
+        if (!botToken || botToken === ":") {
+            console.warn("Не задан токен бота");
             return;
         }
 
-        const url = `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`;
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: TG_CHAT_ID,
-                    text: messageText,
-                    parse_mode: "HTML"
-                })
-            });
+        const chatIds = [];
+        if (window.APP_CONFIG.ADMIN_TELEGRAM_ID) chatIds.push(window.APP_CONFIG.ADMIN_TELEGRAM_ID);
+        if (window.APP_CONFIG.CURATOR_TELEGRAM_ID) chatIds.push(window.APP_CONFIG.CURATOR_TELEGRAM_ID);
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Ошибка отправки в Telegram:", errorText);
+        const uniqueChats = [...new Set(chatIds)];
+
+        for (const chatId of uniqueChats) {
+            if (!chatId) continue;
+            try {
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId.toString(),
+                        text: messageText,
+                        parse_mode: "HTML"
+                    })
+                });
+            } catch (error) {
+                console.error(`Ошибка отправки в Telegram (${chatId}):`, error);
             }
-        } catch (error) {
-            console.error("Ошибка отправки в Telegram:", error);
         }
     };
 
