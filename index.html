@@ -28,6 +28,7 @@
             color: #fafafa;
             min-height: 100dvh;
             -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none; /* Запрет системного свайпа браузера */
         }
 
         /* Luxury Glassmorphism */
@@ -250,7 +251,7 @@
                 </div>
                 <div class="space-y-4">
                     <input type="text" id="access-code-input" placeholder="Введите код..." class="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-4 text-center tracking-widest text-lg font-mono outline-none focus:border-purple-500 focus:bg-white/[0.08] text-white transition-all shadow-inner">
-                    <button id="btn-access-submit" onclick="checkAccessCode()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm transition-all">
+                    <button id="btn-access-submit" onclick="checkAccessCode()" class="w-full btn-primary py-4 rounded-2xl font-bold uppercase tracking-widest text-sm transition-all block text-center">
                         Отправить код
                     </button>
                 </div>
@@ -283,12 +284,12 @@
             </div>
 
             <div id="lesson-materials-container" class="hidden flex-col gap-2 w-full mb-6 relative z-40 box-border">
-                <a id="lesson-pdf-btn" href="#" target="_blank" onclick="haptic('light')" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
+                <button type="button" id="lesson-pdf-btn" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
                     <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Материалы к уроку
-                </a>
-                <a id="lesson-pdf-btn2" href="#" target="_blank" onclick="haptic('light')" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
+                </button>
+                <button type="button" id="lesson-pdf-btn2" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
                     <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Дополнительные материалы
-                </a>
+                </button>
             </div>
 
             <div class="mt-auto pt-2 pb-6 box-border w-full relative z-40">
@@ -308,12 +309,29 @@
                             <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Ссылка на домашнее задание</label>
                             <input type="url" id="hw-input" placeholder="https://..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-purple-500 focus:bg-white/[0.08] text-white transition-all shadow-inner">
                         </div>
-                        <button id="lesson-submit-btn" onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2">
+                        <button id="lesson-submit-btn" onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 block text-center">
                             Отправить работу
                         </button>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Модалка просмотра PDF -->
+    <div id="pdf-modal" class="fixed inset-0 z-[70] bg-[#09090b]/95 backdrop-blur-xl hidden flex-col box-border">
+        <div class="flex items-center justify-between p-4 border-b border-white/10 shadow-lg relative z-20" style="padding-top: max(1rem, env(safe-area-inset-top));">
+            <h2 id="pdf-modal-title" class="text-white font-bold text-sm tracking-wide truncate pr-4">Документ</h2>
+            <button onclick="closePdfModal()" class="text-zinc-400 hover:text-white transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-full shrink-0">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="flex-1 w-full relative" style="padding-bottom: env(safe-area-inset-bottom);">
+            <!-- Индикатор загрузки документа -->
+            <div class="absolute inset-0 flex items-center justify-center bg-transparent pointer-events-none">
+                <div class="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin opacity-50"></div>
+            </div>
+            <iframe id="pdf-iframe" src="" class="absolute inset-0 w-full h-full border-none z-10 bg-transparent rounded-b-2xl" allowfullscreen webkitallowfullscreen></iframe>
         </div>
     </div>
 
@@ -329,7 +347,7 @@
                 <p class="text-zinc-300 text-sm">Оставь пару слов о своих эмоциях от обучения. Твой отзыв очень важен для нас! 💖</p>
                 <div class="space-y-4 text-left mt-4">
                     <textarea id="review-input" rows="4" placeholder="Было супер! Мне очень понравилось..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-emerald-500 focus:bg-white/[0.08] transition-all text-white resize-none shadow-inner"></textarea>
-                    <button id="btn-review-submit" onclick="submitReview()" class="w-full box-border bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+                    <button id="btn-review-submit" onclick="submitReview()" class="w-full box-border bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] block text-center">
                         Отправить отзыв
                     </button>
                 </div>
@@ -447,7 +465,7 @@
                 </div>
 
                 <div class="mt-auto pt-6 box-border w-full">
-                    <button id="btn-save-admin" onclick="saveAdminChanges()" class="w-full box-border flex items-center justify-center text-center border border-purple-500/30 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 hover:text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md">
+                    <button id="btn-save-admin" onclick="saveAdminChanges()" class="w-full box-border block text-center border border-purple-500/30 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 hover:text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md">
                         Сохранить изменения
                     </button>
                 </div>
@@ -486,7 +504,7 @@
             </div>
 
             <div class="mt-auto box-border w-full">
-                <button id="btn-save-text-block" onclick="saveAdminTextEdit()" class="w-full box-border flex items-center justify-center text-center border border-purple-500/30 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 hover:text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md">
+                <button id="btn-save-text-block" onclick="saveAdminTextEdit()" class="w-full box-border block text-center border border-purple-500/30 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 hover:text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md">
                     Сохранить текст
                 </button>
             </div>
@@ -522,7 +540,7 @@
             </div>
 
             <div class="mt-auto box-border w-full">
-                <button id="btn-save-faq-block" onclick="saveAdminFaqEdit()" class="w-full box-border flex items-center justify-center text-center border border-purple-500/30 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 hover:text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md">
+                <button id="btn-save-faq-block" onclick="saveAdminFaqEdit()" class="w-full box-border block text-center border border-purple-500/30 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 hover:text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md">
                     Сохранить вопросы
                 </button>
             </div>
@@ -595,7 +613,7 @@
             </div>
 
             <div class="mt-auto box-border w-full">
-                <button id="btn-save-module" onclick="saveAdminModuleEdit()" class="w-full box-border flex items-center justify-center text-center border border-purple-500/30 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 hover:text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md">
+                <button id="btn-save-module" onclick="saveAdminModuleEdit()" class="w-full box-border block text-center border border-purple-500/30 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 hover:text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md">
                     Сохранить урок
                 </button>
             </div>
@@ -704,7 +722,9 @@
             let touchEndY = e.changedTouches[0].screenY;
 
             if (touchEndX - touchStartX > 100 && Math.abs(touchEndY - touchStartY) < 40) {
-                if (!document.getElementById('lesson-modal').classList.contains('hidden')) {
+                if (!document.getElementById('pdf-modal').classList.contains('hidden')) {
+                    closePdfModal();
+                } else if (!document.getElementById('lesson-modal').classList.contains('hidden')) {
                     closeLesson();
                 } else if (!document.getElementById('info-modal').classList.contains('hidden')) {
                     closeInfoModal();
@@ -728,6 +748,14 @@
 
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.expand();
+            
+            // Включаем подтверждение при попытке закрыть мини-апп свайпом или кнопкой
+            window.Telegram.WebApp.enableClosingConfirmation();
+            
+            // Запрещаем вертикальные свайпы для закрытия (работает в новых версиях API Telegram)
+            if (window.Telegram.WebApp.disableVerticalSwipes) {
+                window.Telegram.WebApp.disableVerticalSwipes();
+            }
             
             if (window.Telegram.WebApp.platform === 'unknown') {
                 document.body.innerHTML = `
@@ -959,11 +987,12 @@
                 const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
                 const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
                 
+                // В первую очередь берем Имя и Фамилию пользователя, если нет - берем юзернейм
                 let nickname = "Гость " + uid.substring(0, 4);
-                if (tgUser.username) {
-                    nickname = "@" + tgUser.username;
-                } else if (tgUser.first_name) {
+                if (tgUser.first_name) {
                     nickname = tgUser.first_name + (tgUser.last_name ? " " + tgUser.last_name : "");
+                } else if (tgUser.username) {
+                    nickname = "@" + tgUser.username;
                 }
                 
                 const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
@@ -1123,6 +1152,32 @@
             }
         };
 
+        // --- ЛОГИКА ОТОБРАЖЕНИЯ PDF ВНУТРИ АППКИ ---
+        function openPdfModal(url, title = 'Документ') {
+            haptic('light');
+            document.getElementById('pdf-modal-title').innerText = title;
+            const iframe = document.getElementById('pdf-iframe');
+            
+            // Если ссылка с гугл диска уже с /preview, используем ее, иначе прогоняем через просмотрщик Google
+            if (url.includes('drive.google.com') && url.includes('/preview')) {
+                iframe.src = url;
+            } else {
+                iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+            }
+            
+            document.getElementById('pdf-modal').classList.remove('hidden');
+            document.getElementById('pdf-modal').classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closePdfModal() {
+            haptic('light');
+            document.getElementById('pdf-modal').classList.add('hidden');
+            document.getElementById('pdf-modal').classList.remove('flex');
+            document.getElementById('pdf-iframe').src = '';
+        }
+        // ------------------------------------------
+
         function openLesson(idx) {
             haptic('light');
             if (idx === 0 && !isAccessGranted) {
@@ -1150,7 +1205,7 @@
             let hasMaterials = false;
             
             if (mod.pdfUrl) {
-                pdfBtn.href = mod.pdfUrl;
+                pdfBtn.onclick = () => openPdfModal(mod.pdfUrl, 'Материалы к уроку');
                 pdfBtn.classList.remove('hidden');
                 pdfBtn.classList.add('flex');
                 hasMaterials = true;
@@ -1160,7 +1215,7 @@
             }
 
             if (mod.pdfUrl2) {
-                pdfBtn2.href = mod.pdfUrl2;
+                pdfBtn2.onclick = () => openPdfModal(mod.pdfUrl2, 'Дополнительные материалы');
                 pdfBtn2.classList.remove('hidden');
                 pdfBtn2.classList.add('flex');
                 hasMaterials = true;
@@ -1230,7 +1285,7 @@
                     timerEl.className = "text-lg md:text-xl font-mono tracking-wider font-bold text-white transition-all";
                     if (!hwData || hwData.status === 'rejected' || !hwData.status) {
                         submitBtn.innerText = (hwData && hwData.status === 'rejected') ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
-                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
+                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 block text-center";
                     }
                     return;
                 }
@@ -1243,7 +1298,7 @@
                     
                     if (!hwData || hwData.status === 'rejected' || !hwData.status) {
                         submitBtn.innerText = "СДАТЬ С ОПОЗДАНИЕМ";
-                        submitBtn.className = "w-full box-border glass-card bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 shadow-[0_0_15px_rgba(239,68,68,0.2)]";
+                        submitBtn.className = "w-full box-border glass-card bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 block text-center shadow-[0_0_15px_rgba(239,68,68,0.2)]";
                     }
                     if (deadlineInterval) clearInterval(deadlineInterval);
                 } else {
@@ -1270,7 +1325,7 @@
                     
                     if (!hwData || hwData.status === 'rejected' || !hwData.status) {
                         submitBtn.innerText = (hwData && hwData.status === 'rejected') ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
-                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
+                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 block text-center";
                     }
                 }
             };
@@ -2225,11 +2280,12 @@ ${chatLink}
                         const docSnap = await getDoc(docRef);
                         const platform = window.Telegram?.WebApp?.platform || 'unknown';
                         
+                        // В первую очередь берем Имя и Фамилию пользователя
                         let nickname = "Гость " + stableUid.substring(0, 4);
-                        if (tgUser.username) {
-                            nickname = "@" + tgUser.username;
-                        } else if (tgUser.first_name) {
+                        if (tgUser.first_name) {
                             nickname = tgUser.first_name + (tgUser.last_name ? " " + tgUser.last_name : "");
+                        } else if (tgUser.username) {
+                            nickname = "@" + tgUser.username;
                         }
                         
                         onSnapshot(docRef, async (docSnap) => {
