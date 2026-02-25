@@ -308,9 +308,9 @@
                 <div id="lesson-feedback-container" class="mt-5 flex flex-col items-start gap-3 border-t border-white/10 pt-4 w-full">
                     <span class="text-[10px] uppercase text-zinc-400 font-bold tracking-widest">Оцени урок:</span>
                     <div class="flex items-center gap-4">
-                        <button onclick="submitLessonFeedback('good')" id="btn-fb-good" class="text-3xl grayscale hover:grayscale-0 hover:scale-110 transition-all focus:outline-none drop-shadow-md pb-1">😍</button>
-                        <button onclick="submitLessonFeedback('neutral')" id="btn-fb-neutral" class="text-3xl grayscale hover:grayscale-0 hover:scale-110 transition-all focus:outline-none drop-shadow-md pb-1">😐</button>
-                        <button onclick="submitLessonFeedback('mindblown')" id="btn-fb-mindblown" class="text-3xl grayscale hover:grayscale-0 hover:scale-110 transition-all focus:outline-none drop-shadow-md pb-1">🤯</button>
+                        <button onclick="submitLessonFeedback('good')" id="btn-fb-good" class="text-3xl transition-all duration-300 focus:outline-none pb-1">😍</button>
+                        <button onclick="submitLessonFeedback('neutral')" id="btn-fb-neutral" class="text-3xl transition-all duration-300 focus:outline-none pb-1">😐</button>
+                        <button onclick="submitLessonFeedback('mindblown')" id="btn-fb-mindblown" class="text-3xl transition-all duration-300 focus:outline-none pb-1">🤯</button>
                     </div>
                 </div>
             </div>
@@ -1307,35 +1307,49 @@
             }, 300); 
         }
 
+        // Обновление визуала смайликов
+        window.updateFbUI = function(selectedType) {
+            ['good', 'neutral', 'mindblown'].forEach(k => {
+                const btn = document.getElementById(`btn-fb-${k}`);
+                if (btn) {
+                    btn.className = "text-3xl transition-all duration-300 focus:outline-none pb-1";
+                    if (selectedType) {
+                        if (k === selectedType) {
+                            btn.classList.add('scale-125', 'drop-shadow-[0_0_15px_rgba(236,72,153,0.6)]', 'z-10');
+                        } else {
+                            btn.classList.add('grayscale', 'opacity-30', 'scale-90', 'hover:opacity-60');
+                        }
+                    } else {
+                        btn.classList.add('grayscale', 'hover:grayscale-0', 'hover:scale-110', 'drop-shadow-md', 'opacity-80');
+                    }
+                }
+            });
+        };
+
         window.submitLessonFeedback = async function(type) {
             haptic('light');
             const fbReverseMap = { 'good': '😍', 'neutral': '😐', 'mindblown': '🤯' };
             const emoji = fbReverseMap[type];
             
+            // Мгновенная реакция интерфейса
+            window.updateFbUI(type);
+            showToast('Спасибо за оценку! 💖', 'success');
+            
             if (!window.auth || !window.auth.currentUser || !window.db) return;
             const uid = window.auth.currentUser.uid;
-            
-            ['good', 'neutral', 'mindblown'].forEach(k => {
-                const btn = document.getElementById(`btn-fb-${k}`);
-                if(btn) {
-                    if(k === type) {
-                        btn.classList.remove('grayscale');
-                        btn.classList.add('scale-110');
-                    } else {
-                        btn.classList.add('grayscale');
-                        btn.classList.remove('scale-110');
-                    }
-                }
-            });
+            const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+            const stableUid = tgUser.id ? tgUser.id.toString() : uid;
 
             try {
                 const existingHw = window.currentUserData?.homeworks?.[currentViewedLesson] || {};
-                await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', stableUid), {
                     homeworks: {
                         [currentViewedLesson]: { ...existingHw, feedback: emoji }
                     }
                 }, { merge: true });
-            } catch(e) { console.error("Feedback error", e); }
+            } catch(e) { 
+                console.error("Feedback error", e); 
+            }
         };
 
         window.handleHwFileSelect = function(event) {
@@ -1428,18 +1442,7 @@
             // Восстановление смайлика-отзыва
             const fbMap = { '😍': 'good', '😐': 'neutral', '🤯': 'mindblown' };
             const currentFb = hwData && hwData.feedback ? fbMap[hwData.feedback] : null;
-            ['good', 'neutral', 'mindblown'].forEach(k => {
-                const btn = document.getElementById(`btn-fb-${k}`);
-                if(btn) {
-                    if(k === currentFb) {
-                        btn.classList.remove('grayscale');
-                        btn.classList.add('scale-110');
-                    } else {
-                        btn.classList.add('grayscale');
-                        btn.classList.remove('scale-110');
-                    }
-                }
-            });
+            window.updateFbUI(currentFb);
 
             const hwStatusContainer = document.getElementById('hw-status-container');
             const hwFormWrapper = document.getElementById('hw-form-wrapper');
@@ -1553,7 +1556,6 @@
 
         async function submitHomework() {
             haptic('medium');
-            lockButton('lesson-submit-btn');
             
             const hwInput = safeString(document.getElementById('hw-input').value).trim();
             const hasFile = !!window.currentHwFile;
@@ -1590,50 +1592,49 @@
 
             const submitBtn = document.getElementById('lesson-submit-btn');
             const origBtnText = submitBtn.innerText;
+            
+            // Надежная блокировка кнопки
             submitBtn.innerText = "ЗАГРУЗКА...";
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'pointer-events-none');
 
             let photoUrl = null;
-            if (hasFile) {
-                try {
+
+            try {
+                if (hasFile) {
                     const uid = window.auth.currentUser.uid;
                     const file = window.currentHwFile;
                     const ext = file.name.split('.').pop();
                     const storageRef = window.ref(window.storage, `artifacts/${window.appId}/users/${uid}/homeworks/lesson_${currentViewedLesson}_${Date.now()}.${ext}`);
                     await window.uploadBytes(storageRef, file);
                     photoUrl = await window.getDownloadURL(storageRef);
-                } catch(e) {
-                    console.error("Ошибка загрузки фото", e);
-                    showToast('Ошибка загрузки фото!');
-                    submitBtn.innerText = origBtnText;
-                    return;
-                }
-            }
-
-            if (window.sendToTelegram) {
-                const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-                const firstName = tgUser.first_name || "Неизвестный";
-                const lastName = tgUser.last_name || "";
-                const fullName = escapeHTML(`${firstName} ${lastName}`.trim());
-                const username = escapeHTML(tgUser.username || "");
-                
-                const loginText = username ? `@${username}` : "Скрыт";
-                const chatLink = username ? `<a href="https://t.me/${username}">ОТКРЫТЬ ЧАТ</a>` : "<i>Нет юзернейма</i>";
-                
-                const moduleTitle = escapeHTML(mod.title);
-                const safeHwLink = escapeHTML(hwInput);
-                
-                const submitTime = now.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
-
-                let contentText = "";
-                if (photoUrl && hwInput) {
-                    contentText = `<b>Изображение:</b> Прикреплено\n<b>Текстовая ссылка:</b> <a href="${safeHwLink}">Перейти</a>`;
-                } else if (photoUrl) {
-                    contentText = `<b>Изображение:</b> Прикреплено`;
-                } else {
-                    contentText = `<b>Ссылка на ДЗ:</b> <a href="${safeHwLink}">Перейти к работе</a>`;
                 }
 
-                const tgMessage = `
+                if (window.sendToTelegram) {
+                    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+                    const firstName = tgUser.first_name || "Неизвестный";
+                    const lastName = tgUser.last_name || "";
+                    const fullName = escapeHTML(`${firstName} ${lastName}`.trim());
+                    const username = escapeHTML(tgUser.username || "");
+                    
+                    const loginText = username ? `@${username}` : "Скрыт";
+                    const chatLink = username ? `<a href="https://t.me/${username}">ОТКРЫТЬ ЧАТ</a>` : "<i>Нет юзернейма</i>";
+                    
+                    const moduleTitle = escapeHTML(mod.title);
+                    const safeHwLink = escapeHTML(hwInput);
+                    
+                    const submitTime = now.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
+
+                    let contentText = "";
+                    if (photoUrl && hwInput) {
+                        contentText = `<b>Изображение:</b> Прикреплено\n<b>Текстовая ссылка:</b> <a href="${safeHwLink}">Перейти</a>`;
+                    } else if (photoUrl) {
+                        contentText = `<b>Изображение:</b> Прикреплено`;
+                    } else {
+                        contentText = `<b>Ссылка на ДЗ:</b> <a href="${safeHwLink}">Перейти к работе</a>`;
+                    }
+
+                    const tgMessage = `
 <b>Ученик:</b> ${fullName}
 <b>Контакт:</b> ${loginText}
 ${chatLink}
@@ -1642,67 +1643,55 @@ ${chatLink}
 ${contentText}
 <b>Статус:</b> ${statusText}
 <b>Время и дата сдачи:</b> ${submitTime}
-                `.trim();
+                    `.trim();
 
-                window.sendToTelegram(tgMessage, photoUrl);
-            }
-
-            if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
-                const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-                const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
-                
-                let newProgress = currentLevel;
-                if (currentViewedLesson + 1 === currentLevel) {
-                    newProgress = currentLevel + 1;
-                    currentLevel = newProgress;
+                    window.sendToTelegram(tgMessage, photoUrl);
                 }
 
-                const existingHw = window.currentUserData?.homeworks?.[currentViewedLesson] || {};
-                const updatedHw = { 
-                    ...existingHw,
-                    link: hwInput, 
-                    status: 'pending', 
-                    timestamp: now.toISOString() 
-                };
-
-                if (photoUrl) updatedHw.photoUrl = photoUrl;
-
-                window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
-                    progress: newProgress,
-                    homeworks: {
-                        [currentViewedLesson]: updatedHw
-                    }
-                }, { merge: true });
-            }
-
-            document.getElementById('hw-input').value = '';
-            document.getElementById('hw-file-input').value = '';
-            document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
-            window.currentHwFile = null;
-            submitBtn.innerText = origBtnText;
-
-            if (!isLate) {
-                confetti({
-                    particleCount: 200,
-                    spread: 90,
-                    origin: { y: 0.5 },
-                    zIndex: 99999
-                });
-                
-                setTimeout(() => {
-                    showToast('Отправлено на проверку куратору', 'success');
-                    closeLesson();
-                    renderModules();
+                if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
+                    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+                    const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
                     
-                    if (currentViewedLesson === academyData.modules.length - 1) {
-                        setTimeout(() => {
-                            document.getElementById('congrats-modal').classList.remove('hidden');
-                            confetti({ particleCount: 300, spread: 120, origin: { y: 0.6 }, zIndex: 99999 });
-                        }, 500);
+                    let newProgress = currentLevel;
+                    if (currentViewedLesson + 1 === currentLevel) {
+                        newProgress = currentLevel + 1;
+                        currentLevel = newProgress;
                     }
-                }, 500);
-            } else {
-                showToast('Отправлено с опозданием', 'success');
+
+                    const existingHw = window.currentUserData?.homeworks?.[currentViewedLesson] || {};
+                    const updatedHw = { 
+                        ...existingHw,
+                        link: hwInput, 
+                        status: 'pending', 
+                        timestamp: now.toISOString() 
+                    };
+
+                    if (photoUrl) updatedHw.photoUrl = photoUrl;
+
+                    await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                        progress: newProgress,
+                        homeworks: {
+                            [currentViewedLesson]: updatedHw
+                        }
+                    }, { merge: true });
+                }
+
+                // Очищаем форму только в случае успешной отправки
+                document.getElementById('hw-input').value = '';
+                document.getElementById('hw-file-input').value = '';
+                document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
+                window.currentHwFile = null;
+
+                if (!isLate) {
+                    confetti({
+                        particleCount: 200,
+                        spread: 90,
+                        origin: { y: 0.5 },
+                        zIndex: 99999
+                    });
+                }
+                
+                showToast(isLate ? 'Отправлено с опозданием' : 'Отправлено на проверку куратору', 'success');
                 closeLesson();
                 renderModules();
                 
@@ -1712,6 +1701,15 @@ ${contentText}
                         confetti({ particleCount: 300, spread: 120, origin: { y: 0.6 }, zIndex: 99999 });
                     }, 500);
                 }
+
+            } catch (error) {
+                console.error("Ошибка при отправке ДЗ:", error);
+                showToast('Ошибка! Проверьте интернет или размер фото.');
+            } finally {
+                // В любом случае возвращаем кнопку в рабочее состояние
+                submitBtn.innerText = origBtnText;
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'pointer-events-none');
             }
         }
 
