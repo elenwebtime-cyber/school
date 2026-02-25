@@ -130,7 +130,8 @@
             ADMIN_TELEGRAM_ID: 758556732,
 
             // 3. Telegram ID Куратора (Помощник: Доступ только к урокам, текстам и проверке ДЗ учеников).
-            // Оставьте пустым (например: ""), если куратора пока нет.
+            // ТЕПЕРЬ МОЖНО УКАЗАТЬ ПРЯМО В АДМИНКЕ В ПРИЛОЖЕНИИ! 
+            // Но если хотите, можете оставить по умолчанию здесь:
             CURATOR_TELEGRAM_ID: 123456789,
 
             // 4. Токен вашего Telegram-бота (разделен на две части для защиты от сканеров)
@@ -154,7 +155,7 @@
         window.isCurator = false;
     </script>
     <!-- ============================================================================== -->
-    <!-- ⬆️ КОНЕЦ БЛОКА НАСТРОЕК ⬆️ -->
+    <!-- ⬆️ КОНЕЦ БЛОКА НАСТРОЕК (Больше в коде ничего менять не нужно!) ⬆️ -->
     <!-- ============================================================================== -->
 
     <!-- Красивые Уведомления (Toast) -->
@@ -402,6 +403,10 @@
                         <div class="space-y-1.5 box-border w-full">
                             <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Ссылка на поддержку / чат (🛟)</label>
                             <input type="url" id="admin-support-link" placeholder="https://t.me/..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
+                        </div>
+                        <div class="space-y-1.5 box-border w-full pt-2 border-t border-white/5">
+                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Telegram ID Куратора (можно поменять здесь)</label>
+                            <input type="number" id="admin-curator-id" placeholder="Например: 123456789" class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                         </div>
                     </div>
 
@@ -1649,7 +1654,7 @@ ${chatLink}
 
         function activateCurator() {
             const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-            const curatorId = window.APP_CONFIG.CURATOR_TELEGRAM_ID;
+            const curatorId = parseInt(window.academyData?.curatorId) || window.APP_CONFIG.CURATOR_TELEGRAM_ID;
             
             // Если чужой пользователь или нет айди куратора — игнор
             if (!curatorId || tgUser.id !== curatorId) {
@@ -1704,6 +1709,9 @@ ${chatLink}
                 academyData.name = document.getElementById('admin-academy-name').value;
                 academyData.secretCode = safeString(document.getElementById('admin-secret-code').value).trim();
                 academyData.supportLink = safeString(document.getElementById('admin-support-link').value).trim();
+                
+                const rawCuratorId = document.getElementById('admin-curator-id').value.trim();
+                academyData.curatorId = rawCuratorId ? parseInt(rawCuratorId) : "";
                 
                 if (!academyData.greetingConfig) academyData.greetingConfig = {};
                 academyData.greetingConfig.titleTemplate = safeString(document.getElementById('admin-greeting-title').value).trim();
@@ -1772,10 +1780,13 @@ ${chatLink}
             document.getElementById('admin-support-link').value = academyData.supportLink || '';
             document.getElementById('admin-global-unlock-toggle').checked = (academyData.globalUnlockMode === 'date');
             
+            // Вставляем ID куратора в поле (если он есть в облаке)
+            document.getElementById('admin-curator-id').value = academyData.curatorId || '';
+            
             document.getElementById('admin-greeting-title').value = academyData.greetingConfig?.titleTemplate || '';
             document.getElementById('admin-greeting-subtitle').value = academyData.greetingConfig?.subtitle || '';
             
-            // Скрываем или показываем глобальные настройки в зависимости от роли
+            // Скрываем или показываем глобальные настройки в зависимости от роли (КУРАТОР ИХ НЕ ВИДИТ)
             if (window.isCurator) {
                 document.getElementById('admin-global-settings-block').style.display = 'none';
                 document.getElementById('admin-greeting-block').style.display = 'none';
@@ -2327,8 +2338,11 @@ ${chatLink}
         }
 
         const chatIds = [];
-        if (window.APP_CONFIG.ADMIN_TELEGRAM_ID) chatIds.push(window.APP_CONFIG.ADMIN_TELEGRAM_ID);
-        if (window.APP_CONFIG.CURATOR_TELEGRAM_ID) chatIds.push(window.APP_CONFIG.CURATOR_TELEGRAM_ID);
+        const adminId = window.APP_CONFIG.ADMIN_TELEGRAM_ID;
+        const curatorId = window.academyData?.curatorId || window.APP_CONFIG.CURATOR_TELEGRAM_ID;
+
+        if (adminId) chatIds.push(adminId);
+        if (curatorId) chatIds.push(curatorId);
 
         const uniqueChats = [...new Set(chatIds)];
 
@@ -2406,6 +2420,7 @@ ${chatLink}
                             if (data.secretCode !== undefined) window.academyData.secretCode = data.secretCode;
                             if (data.supportLink !== undefined) window.academyData.supportLink = data.supportLink;
                             if (data.globalUnlockMode) window.academyData.globalUnlockMode = data.globalUnlockMode;
+                            if (data.curatorId !== undefined) window.academyData.curatorId = data.curatorId;
                             
                             if (data.greetingConfig !== undefined) window.academyData.greetingConfig = data.greetingConfig;
                             
