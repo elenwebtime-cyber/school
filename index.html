@@ -707,9 +707,6 @@
         // Глобальные переменные для файла ДЗ
         window.currentHwBase64 = [];
         window.currentHwBlob = [];
-        
-        // Глобальный словарь для кэширования фотографий в админке
-        window._adminPhotos = {};
 
         // --- Умный фикс нативной клавиатуры ---
         document.addEventListener('focusin', (e) => {
@@ -990,17 +987,25 @@
             
             if (greetingContainer && greetingText) {
                 let finalTitle = titleTemp;
-                // Заменяем имя на "имя пользователя" (из поля nickname, где теперь лежит имя и ник)
-                let justName = data.nickname ? data.nickname.split(' (@')[0] : "Гость";
+                
+                // Вытаскиваем только имя для красивого приветствия
+                let rawNickname = data.nickname || "";
+                let justName = rawNickname;
+                if (data.tgFirstName) {
+                    justName = (data.tgFirstName + ' ' + (data.tgLastName || '')).trim();
+                } else if (rawNickname.includes('(@')) {
+                    justName = rawNickname.split(' (@')[0];
+                }
+                if (!justName || justName.trim() === '') justName = "Гость";
                 
                 if (finalTitle.includes('{name}')) {
                     finalTitle = finalTitle.replace('{name}', escapeHTML(justName));
                 }
                 
                 greetingText.innerText = finalTitle; 
+                greetingText.className = "text-xl font-bold tracking-tight text-zinc-100 leading-tight drop-shadow-sm";
                 
                 if (greetingSubtitle) {
-                    // Проверяем, прошел ли ученик курс полностью
                     let isCourseCompleted = false;
                     if (window.academyData.modules && data.progress > window.academyData.modules.length) {
                         isCourseCompleted = true;
@@ -1013,6 +1018,13 @@
                     if (activeSubtitle.trim() !== '') {
                         greetingSubtitle.innerText = activeSubtitle;
                         greetingSubtitle.classList.remove('hidden');
+                        
+                        // Зеленое свечение для текста прохождения курса
+                        if (isCourseCompleted) {
+                            greetingSubtitle.className = "text-[12px] font-bold mt-1.5 uppercase tracking-widest text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.4)]";
+                        } else {
+                            greetingSubtitle.className = "text-[11px] font-semibold text-white/50 mt-1 uppercase tracking-widest";
+                        }
                     } else {
                         greetingSubtitle.classList.add('hidden');
                     }
@@ -1165,6 +1177,9 @@
 
                 await window.setDoc(docRef, {
                     nickname: nickname,
+                    tgFirstName: tgUser.first_name || "",
+                    tgLastName: tgUser.last_name || "",
+                    tgUsername: tgUser.username || "",
                     progress: currentLevel,
                     activatedAt: new Date().toISOString()
                 }, { merge: true });
@@ -1745,6 +1760,7 @@ ${chatLink}
 
                 if (window.sendToTelegram) {
                     if (hasFiles) {
+                        // Отправляем фото каруселью вместе с текстом
                         await window.sendToTelegram(tgMessage, window.currentHwBlob);
                     } else {
                         await window.sendToTelegram(tgMessage, null);
@@ -1827,25 +1843,6 @@ ${chatLink}
             }
         }
 
-        window.openAdminPhoto = function(uid, idx, photoIdx = 0) {
-            haptic('light');
-            const dataUrl = window._adminPhotos[`${uid}_${idx}_${photoIdx}`] || window._adminPhotos[`${uid}_${idx}`];
-            if (dataUrl) {
-                const newTab = window.open();
-                if (newTab) {
-                    newTab.document.body.innerHTML = `
-                        <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;min-height:100vh;">
-                            <img src="${dataUrl}" style="max-width:100%;max-height:100vh;object-fit:contain;">
-                        </body>`;
-                } else {
-                    const a = document.createElement('a');
-                    a.href = dataUrl;
-                    a.download = `homework_${parseInt(idx)+1}_${parseInt(photoIdx)+1}.jpg`;
-                    a.click();
-                }
-            }
-        };
-
         window.updateHWStatus = async function(uid, lessonIdx, newStatus) {
             try {
                 const userDocRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
@@ -1919,6 +1916,9 @@ ${chatLink}
                             [lessonIdx]: updatedHw
                         }
                     }, { merge: true });
+                    
+                    // Обновляем список учеников, чтобы сразу увидеть изменения
+                    if (window.loadAdminUsers) window.loadAdminUsers();
                     
                     if (hours > 0) {
                         showToast('Дедлайн успешно продлен на 24 часа!', 'success');
@@ -2467,16 +2467,13 @@ ${chatLink}
                     list.innerHTML = '<div class="text-sm text-zinc-500 font-medium">Пока никто не зашел в бота</div>';
                     return;
                 }
-                
-                // Очищаем кэш фото при новой загрузке
-                window._adminPhotos = {};
 
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
                     const isActivated = data.progress && data.progress > 0;
                     const statusBadge = isActivated 
-                        ? `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-md ml-2 uppercase tracking-widest font-bold shadow-sm">Активен</span>`
-                        : `<span class="text-[9px] bg-zinc-500/20 text-zinc-400 border border-zinc-500/30 px-2 py-0.5 rounded-md ml-2 uppercase tracking-widest font-bold shadow-sm">Ожидает</span>`;
+                        ? `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-md ml-2 uppercase tracking-widest font-bold shadow-sm shrink-0">Активен</span>`
+                        : `<span class="text-[9px] bg-zinc-500/20 text-zinc-400 border border-zinc-500/30 px-2 py-0.5 rounded-md ml-2 uppercase tracking-widest font-bold shadow-sm shrink-0">Ожидает</span>`;
 
                     let hwHtml = '';
                     const userProgress = data.progress || 1;
@@ -2490,13 +2487,6 @@ ${chatLink}
                         const fbHtml = hw.feedback ? `<span class="text-xs ml-1" title="Оценка урока">${hw.feedback}</span>` : '';
                         
                         const hasAnyHw = hw.link || hw.photoUrls || hw.photoUrl;
-                        
-                        // Обработка массива фото или одного старого фото чисто для сохранения в память (кнопки убраны)
-                        let photosArray = hw.photoUrls || (hw.photoUrl ? [hw.photoUrl] : []);
-                        photosArray.forEach((pUrl, pIdx) => {
-                            window._adminPhotos[`${docSnap.id}_${i}_${pIdx}`] = pUrl;
-                        });
-
                         let hwStatusIndicator = hasAnyHw ? `<span class="text-[10px] text-purple-400 font-medium flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3"></i> Материалы отправлены</span>` : `<span class="text-[10px] text-zinc-600 italic font-medium">ДЗ не сдано</span>`;
                         
                         const statusSelect = hasAnyHw ? `
@@ -2507,7 +2497,20 @@ ${chatLink}
                             </select>
                         ` : `<span class="text-[10px] text-zinc-500 px-1 w-[95px] text-center inline-block font-medium">Ожидает</span>`;
 
-                        const extText = hw.extendedDeadline ? `<span class="text-[8px] text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 rounded uppercase tracking-widest ml-2 shadow-sm">+ВРЕМЯ</span>` : '';
+                        // Расчет плашки времени (+ или - 24ч)
+                        const origDeadlineStr = window.academyData.modules[i].deadline;
+                        const origDeadline = origDeadlineStr ? new Date(origDeadlineStr).getTime() : null;
+                        const hwExtended = hw.extendedDeadline ? new Date(hw.extendedDeadline).getTime() : null;
+                        
+                        let extText = '';
+                        if (origDeadline && hwExtended) {
+                            const diffHours = Math.round((hwExtended - origDeadline) / (1000 * 60 * 60));
+                            if (diffHours > 0) {
+                                extText = `<span class="text-[8px] text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 rounded uppercase tracking-widest ml-2 shadow-sm">+ВРЕМЯ</span>`;
+                            } else if (diffHours < 0) {
+                                extText = `<span class="text-[8px] text-red-400 border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 rounded uppercase tracking-widest ml-2 shadow-sm">-ВРЕМЯ</span>`;
+                            }
+                        }
 
                         hwHtml += `
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/20 p-3 rounded-xl border border-white/5 shadow-inner">
@@ -2552,12 +2555,29 @@ ${chatLink}
                         </div>
                     ` : '';
 
+                    // Красивый вывод Имени и Никнейма
+                    let rawNickname = data.nickname || 'Неизвестный';
+                    let displayHtml = '';
+                    
+                    if (data.tgFirstName !== undefined || data.tgUsername !== undefined) {
+                        let fName = escapeHTML((data.tgFirstName || '') + ' ' + (data.tgLastName || '')).trim() || 'Без имени';
+                        let uName = data.tgUsername ? escapeHTML('@' + data.tgUsername) : 'Без ника';
+                        displayHtml = `<span class="text-white">${fName}</span> <span class="text-zinc-400 font-medium ml-1.5 text-xs truncate">${uName}</span>`;
+                    } else {
+                        // Фолбэк для старых записей
+                        if (rawNickname.includes('(@')) {
+                            displayHtml = escapeHTML(rawNickname).replace(/\s\((@[^)]+)\)/, ' <span class="text-zinc-400 font-medium ml-1.5 text-xs truncate">$1</span>');
+                        } else {
+                            displayHtml = `<span class="text-white">${escapeHTML(rawNickname)}</span>`;
+                        }
+                    }
+
                     list.innerHTML += `
                         <div class="flex flex-col bg-white/[0.03] p-4 sm:p-5 rounded-2xl border border-white/10 shadow-lg backdrop-blur-md">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center mb-1.5">
-                                        <p class="text-sm font-bold text-white truncate">${escapeHTML(data.nickname || 'Неизвестный')}</p>
+                                        <p class="text-sm font-bold flex items-baseline truncate">${displayHtml}</p>
                                         ${statusBadge}
                                     </div>
                                     <p class="text-[11px] text-zinc-400 font-medium">Пройдено модулей: <span class="text-white font-bold">${data.progress ? data.progress - 1 : 0}</span></p>
@@ -2840,7 +2860,7 @@ ${chatLink}
                         const docSnap = await getDoc(docRef);
                         const platform = window.Telegram?.WebApp?.platform || 'unknown';
                         
-                        // Сохраняем имя и никнейм в одной строке для красивого вывода
+                        // Сохраняем имя и никнейм
                         let tgUsername = tgUser.username ? `@${tgUser.username}` : "";
                         let baseName = `${tgUser.first_name || ""} ${tgUser.last_name || ""}`.trim();
                         if (!baseName) baseName = "Гость " + stableUid.substring(0, 4);
@@ -2857,6 +2877,9 @@ ${chatLink}
                                 
                                 await setDoc(docRef, {
                                     nickname: nickname,
+                                    tgFirstName: tgUser.first_name || "",
+                                    tgLastName: tgUser.last_name || "",
+                                    tgUsername: tgUser.username || "",
                                     progress: 0,
                                     secretCode: randomCode,
                                     platform: platform,
@@ -2868,8 +2891,14 @@ ${chatLink}
                                 
                                 window.updateGreetingUI();
                                 
-                                if (data.platform !== platform || data.nickname !== nickname) {
-                                    await updateDoc(docRef, { platform: platform, nickname: nickname });
+                                if (data.platform !== platform || data.nickname !== nickname || data.tgUsername !== (tgUser.username || "")) {
+                                    await updateDoc(docRef, { 
+                                        platform: platform, 
+                                        nickname: nickname,
+                                        tgFirstName: tgUser.first_name || "",
+                                        tgLastName: tgUser.last_name || "",
+                                        tgUsername: tgUser.username || ""
+                                    });
                                 }
 
                                 if (data.progress && data.progress > 0) {
