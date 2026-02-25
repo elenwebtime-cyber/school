@@ -300,8 +300,18 @@
                 </div>
                 <h2 id="lesson-title" class="text-xl font-bold mb-3 break-words text-white"></h2>
                 
-                <div class="pl-3 border-l-2 border-purple-500/50">
+                <div class="pl-3 border-l-2 border-purple-500/50 mb-4">
                     <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed break-words"></p>
+                </div>
+
+                <!-- Блок оценки урока (Смайлики) -->
+                <div id="lesson-feedback-container" class="mt-5 flex flex-col items-start gap-3 border-t border-white/10 pt-4 w-full">
+                    <span class="text-[10px] uppercase text-zinc-400 font-bold tracking-widest">Оцени урок:</span>
+                    <div class="flex items-center gap-4">
+                        <button onclick="submitLessonFeedback('good')" id="btn-fb-good" class="text-3xl grayscale hover:grayscale-0 hover:scale-110 transition-all focus:outline-none drop-shadow-md pb-1">😍</button>
+                        <button onclick="submitLessonFeedback('neutral')" id="btn-fb-neutral" class="text-3xl grayscale hover:grayscale-0 hover:scale-110 transition-all focus:outline-none drop-shadow-md pb-1">😐</button>
+                        <button onclick="submitLessonFeedback('mindblown')" id="btn-fb-mindblown" class="text-3xl grayscale hover:grayscale-0 hover:scale-110 transition-all focus:outline-none drop-shadow-md pb-1">🤯</button>
+                    </div>
                 </div>
             </div>
 
@@ -334,7 +344,17 @@
                             <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Ссылка на домашнее задание</label>
                             <input type="url" id="hw-input" placeholder="https://..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-purple-500 focus:bg-white/[0.08] text-white transition-all shadow-inner">
                         </div>
-                        <button id="lesson-submit-btn" onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 block text-center">
+                        
+                        <!-- Блок загрузки фото -->
+                        <div class="space-y-2 box-border w-full mt-3">
+                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Или загрузите изображение (макс. 5 МБ)</label>
+                            <input type="file" id="hw-file-input" accept="image/*" class="hidden" onchange="handleHwFileSelect(event)">
+                            <button type="button" onclick="document.getElementById('hw-file-input').click()" class="w-full box-border bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 text-sm outline-none focus:border-purple-500 hover:bg-purple-500/20 text-purple-300 transition-all shadow-inner flex items-center justify-center gap-2 font-bold tracking-wide">
+                                <i data-lucide="image" class="w-5 h-5 shrink-0"></i> <span id="hw-file-label" class="truncate max-w-[200px]">Прикрепить фото</span>
+                            </button>
+                        </div>
+
+                        <button id="lesson-submit-btn" onclick="submitHomework()" class="w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-4 block text-center">
                             Отправить работу
                         </button>
                     </div>
@@ -670,6 +690,9 @@
     </div>
 
     <script>
+        // Глобальная переменная для файла ДЗ
+        window.currentHwFile = null;
+
         // --- Утилиты безопасности, Спама и Обратной связи ---
         function escapeHTML(str) {
             if (typeof str !== 'string') return '';
@@ -1141,7 +1164,7 @@
 <i>"${safeReviewText}"</i>
                 `.trim();
 
-                window.sendToTelegram(tgMessage);
+                window.sendToTelegram(tgMessage, null);
             }
 
             showToast('Спасибо большое за твой отзыв! ❤️', 'success');
@@ -1284,6 +1307,57 @@
             }, 300); 
         }
 
+        window.submitLessonFeedback = async function(type) {
+            haptic('light');
+            const fbReverseMap = { 'good': '😍', 'neutral': '😐', 'mindblown': '🤯' };
+            const emoji = fbReverseMap[type];
+            
+            if (!window.auth || !window.auth.currentUser || !window.db) return;
+            const uid = window.auth.currentUser.uid;
+            
+            ['good', 'neutral', 'mindblown'].forEach(k => {
+                const btn = document.getElementById(`btn-fb-${k}`);
+                if(btn) {
+                    if(k === type) {
+                        btn.classList.remove('grayscale');
+                        btn.classList.add('scale-110');
+                    } else {
+                        btn.classList.add('grayscale');
+                        btn.classList.remove('scale-110');
+                    }
+                }
+            });
+
+            try {
+                const existingHw = window.currentUserData?.homeworks?.[currentViewedLesson] || {};
+                await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
+                    homeworks: {
+                        [currentViewedLesson]: { ...existingHw, feedback: emoji }
+                    }
+                }, { merge: true });
+            } catch(e) { console.error("Feedback error", e); }
+        };
+
+        window.handleHwFileSelect = function(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                window.currentHwFile = null;
+                document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Файл слишком большой! (Макс. 5 МБ)');
+                event.target.value = '';
+                window.currentHwFile = null;
+                document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
+                return;
+            }
+            window.currentHwFile = file;
+            let displayName = file.name;
+            if(displayName.length > 20) displayName = displayName.substring(0, 17) + '...';
+            document.getElementById('hw-file-label').innerText = 'Файл: ' + displayName;
+        };
+
         function openLesson(idx) {
             haptic('light');
             if (idx === 0 && !isAccessGranted) {
@@ -1350,6 +1424,23 @@
             }
 
             const hwData = window.currentUserData?.homeworks?.[idx];
+            
+            // Восстановление смайлика-отзыва
+            const fbMap = { '😍': 'good', '😐': 'neutral', '🤯': 'mindblown' };
+            const currentFb = hwData && hwData.feedback ? fbMap[hwData.feedback] : null;
+            ['good', 'neutral', 'mindblown'].forEach(k => {
+                const btn = document.getElementById(`btn-fb-${k}`);
+                if(btn) {
+                    if(k === currentFb) {
+                        btn.classList.remove('grayscale');
+                        btn.classList.add('scale-110');
+                    } else {
+                        btn.classList.add('grayscale');
+                        btn.classList.remove('scale-110');
+                    }
+                }
+            });
+
             const hwStatusContainer = document.getElementById('hw-status-container');
             const hwFormWrapper = document.getElementById('hw-form-wrapper');
             const submitBtn = document.getElementById('lesson-submit-btn');
@@ -1402,7 +1493,7 @@
                     timerEl.className = "text-lg md:text-xl font-mono tracking-wider font-bold text-white transition-all";
                     if (!hwData || hwData.status === 'rejected' || !hwData.status) {
                         submitBtn.innerText = (hwData && hwData.status === 'rejected') ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
-                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 block text-center";
+                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-4 block text-center";
                     }
                     return;
                 }
@@ -1415,7 +1506,7 @@
                     
                     if (!hwData || hwData.status === 'rejected' || !hwData.status) {
                         submitBtn.innerText = "СДАТЬ С ОПОЗДАНИЕМ";
-                        submitBtn.className = "w-full box-border glass-card bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 block text-center shadow-[0_0_15px_rgba(239,68,68,0.2)]";
+                        submitBtn.className = "w-full box-border glass-card bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-4 block text-center shadow-[0_0_15px_rgba(239,68,68,0.2)]";
                     }
                     if (deadlineInterval) clearInterval(deadlineInterval);
                 } else {
@@ -1442,7 +1533,7 @@
                     
                     if (!hwData || hwData.status === 'rejected' || !hwData.status) {
                         submitBtn.innerText = (hwData && hwData.status === 'rejected') ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
-                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 block text-center";
+                        submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-4 block text-center";
                     }
                 }
             };
@@ -1460,18 +1551,19 @@
             if (deadlineInterval) clearInterval(deadlineInterval);
         }
 
-        function submitHomework() {
+        async function submitHomework() {
             haptic('medium');
             lockButton('lesson-submit-btn');
             
             const hwInput = safeString(document.getElementById('hw-input').value).trim();
-            if (!isValidInput(hwInput)) {
-                showToast('Пожалуйста, вставьте ссылку на работу!');
+            const hasFile = !!window.currentHwFile;
+            
+            if (!isValidInput(hwInput) && !hasFile) {
+                showToast('Пожалуйста, вставьте ссылку или прикрепите фото!');
                 return;
             }
 
-            const urlPattern = /^(https?:\/\/)/i;
-            if (!urlPattern.test(hwInput)) {
+            if (hwInput && !/^(https?:\/\/)/i.test(hwInput)) {
                 showToast('Ошибка! Ссылка должна начинаться с http:// или https://');
                 return;
             }
@@ -1496,6 +1588,27 @@
                 }
             }
 
+            const submitBtn = document.getElementById('lesson-submit-btn');
+            const origBtnText = submitBtn.innerText;
+            submitBtn.innerText = "ЗАГРУЗКА...";
+
+            let photoUrl = null;
+            if (hasFile) {
+                try {
+                    const uid = window.auth.currentUser.uid;
+                    const file = window.currentHwFile;
+                    const ext = file.name.split('.').pop();
+                    const storageRef = window.ref(window.storage, `artifacts/${window.appId}/users/${uid}/homeworks/lesson_${currentViewedLesson}_${Date.now()}.${ext}`);
+                    await window.uploadBytes(storageRef, file);
+                    photoUrl = await window.getDownloadURL(storageRef);
+                } catch(e) {
+                    console.error("Ошибка загрузки фото", e);
+                    showToast('Ошибка загрузки фото!');
+                    submitBtn.innerText = origBtnText;
+                    return;
+                }
+            }
+
             if (window.sendToTelegram) {
                 const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
                 const firstName = tgUser.first_name || "Неизвестный";
@@ -1507,9 +1620,18 @@
                 const chatLink = username ? `<a href="https://t.me/${username}">ОТКРЫТЬ ЧАТ</a>` : "<i>Нет юзернейма</i>";
                 
                 const moduleTitle = escapeHTML(mod.title);
-                const hwLink = escapeHTML(hwInput);
+                const safeHwLink = escapeHTML(hwInput);
                 
                 const submitTime = now.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
+
+                let contentText = "";
+                if (photoUrl && hwInput) {
+                    contentText = `<b>Изображение:</b> Прикреплено\n<b>Текстовая ссылка:</b> <a href="${safeHwLink}">Перейти</a>`;
+                } else if (photoUrl) {
+                    contentText = `<b>Изображение:</b> Прикреплено`;
+                } else {
+                    contentText = `<b>Ссылка на ДЗ:</b> <a href="${safeHwLink}">Перейти к работе</a>`;
+                }
 
                 const tgMessage = `
 <b>Ученик:</b> ${fullName}
@@ -1517,12 +1639,12 @@
 ${chatLink}
 
 <b>Модуль:</b> ${moduleTitle}
-<b>Ссылка на ДЗ:</b> <a href="${hwLink}">Перейти к работе</a>
+${contentText}
 <b>Статус:</b> ${statusText}
 <b>Время и дата сдачи:</b> ${submitTime}
                 `.trim();
 
-                window.sendToTelegram(tgMessage);
+                window.sendToTelegram(tgMessage, photoUrl);
             }
 
             if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
@@ -1543,6 +1665,8 @@ ${chatLink}
                     timestamp: now.toISOString() 
                 };
 
+                if (photoUrl) updatedHw.photoUrl = photoUrl;
+
                 window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
                     progress: newProgress,
                     homeworks: {
@@ -1550,6 +1674,12 @@ ${chatLink}
                     }
                 }, { merge: true });
             }
+
+            document.getElementById('hw-input').value = '';
+            document.getElementById('hw-file-input').value = '';
+            document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
+            window.currentHwFile = null;
+            submitBtn.innerText = origBtnText;
 
             if (!isLate) {
                 confetti({
@@ -1561,7 +1691,6 @@ ${chatLink}
                 
                 setTimeout(() => {
                     showToast('Отправлено на проверку куратору', 'success');
-                    document.getElementById('hw-input').value = '';
                     closeLesson();
                     renderModules();
                     
@@ -1574,7 +1703,6 @@ ${chatLink}
                 }, 500);
             } else {
                 showToast('Отправлено с опозданием', 'success');
-                document.getElementById('hw-input').value = '';
                 closeLesson();
                 renderModules();
                 
@@ -2218,10 +2346,21 @@ ${chatLink}
                         
                         const hw = data.homeworks?.[i] || {};
                         const lessonTitle = window.academyData.modules[i].title || `Урок ${i+1}`;
+                        const fbHtml = hw.feedback ? `<span class="text-xs ml-1" title="Оценка урока">${hw.feedback}</span>` : '';
                         
-                        const linkHtml = hw.link ? `<a href="${escapeHTML(hw.link)}" target="_blank" class="text-[11px] text-purple-400 hover:text-purple-300 underline truncate max-w-[160px] inline-block font-medium">${escapeHTML(hw.link)}</a>` : `<span class="text-[10px] text-zinc-600 italic font-medium">ДЗ не сдано</span>`;
+                        const hasAnyHw = hw.link || hw.photoUrl;
+                        let linkHtml = '';
+                        if (hw.link) {
+                            linkHtml += `<a href="${escapeHTML(hw.link)}" target="_blank" class="text-[11px] text-purple-400 hover:text-purple-300 underline truncate max-w-[160px] inline-block font-medium">Ссылка</a> `;
+                        }
+                        if (hw.photoUrl) {
+                            linkHtml += `<a href="${escapeHTML(hw.photoUrl)}" target="_blank" class="text-[11px] text-pink-400 hover:text-pink-300 underline inline-block font-medium ml-2 flex items-center gap-1"><i data-lucide="image" class="w-3 h-3"></i> Фото</a>`;
+                        }
+                        if (!hasAnyHw) {
+                            linkHtml = `<span class="text-[10px] text-zinc-600 italic font-medium">ДЗ не сдано</span>`;
+                        }
                         
-                        const statusSelect = hw.link ? `
+                        const statusSelect = hasAnyHw ? `
                             <select onchange="updateHWStatus('${docSnap.id}', '${i}', this.value)" class="text-[10px] bg-white/[0.05] border border-white/10 text-white rounded-lg px-2 py-1.5 outline-none focus:border-purple-500 cursor-pointer appearance-none text-center font-bold w-[95px] shadow-sm backdrop-blur-md transition-colors hover:bg-white/10">
                                 <option value="pending" class="bg-zinc-900 text-yellow-400 font-bold" ${hw.status === 'pending' ? 'selected' : ''}>👀 Проверка</option>
                                 <option value="accepted" class="bg-zinc-900 text-emerald-400 font-bold" ${hw.status === 'accepted' ? 'selected' : ''}>✅ Принято</option>
@@ -2235,10 +2374,12 @@ ${chatLink}
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/20 p-3 rounded-xl border border-white/5 shadow-inner">
                                 <div class="flex flex-col flex-1 min-w-0 gap-0.5">
                                     <div class="flex items-center">
-                                        <span class="text-[11px] text-zinc-300 font-bold truncate">${escapeHTML(lessonTitle)}</span>
+                                        <span class="text-[11px] text-zinc-300 font-bold truncate">${escapeHTML(lessonTitle)} ${fbHtml}</span>
                                         ${extText}
                                     </div>
-                                    ${linkHtml}
+                                    <div class="flex items-center mt-0.5">
+                                        ${linkHtml}
+                                    </div>
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0 mt-1 sm:mt-0">
                                     <button onclick="extendUserDeadline('${docSnap.id}', ${i})" class="text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 rounded-lg px-2.5 py-1.5 transition-all font-bold shadow-sm" title="Продлить дедлайн на 24 часа">+24ч</button>
@@ -2384,6 +2525,12 @@ ${chatLink}
         onAuthStateChanged, 
         signInWithCustomToken 
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+        getStorage, 
+        ref, 
+        uploadBytes, 
+        getDownloadURL 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
     // Склеиваем ключи из блока настроек (обход сканеров GitHub)
     const firebaseConfig = { ...window.APP_CONFIG.FIREBASE_CONFIG };
@@ -2396,11 +2543,17 @@ ${chatLink}
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
     let currentUser = null;
 
+    window.storage = storage;
+    window.ref = ref;
+    window.uploadBytes = uploadBytes;
+    window.getDownloadURL = getDownloadURL;
+
     // Обновленная функция отправки (Отправляет и Админу, и Куратору)
-    window.sendToTelegram = async function(messageText) {
+    window.sendToTelegram = async function(messageText, photoUrl = null) {
         const botToken = window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P1 + ":" + window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P2;
         if (!botToken || botToken === ":") {
             console.warn("Не задан токен бота");
@@ -2415,18 +2568,28 @@ ${chatLink}
         if (curatorId) chatIds.push(curatorId);
 
         const uniqueChats = [...new Set(chatIds)];
+        const endpoint = photoUrl ? 'sendPhoto' : 'sendMessage';
 
         for (const chatId of uniqueChats) {
             if (!chatId) continue;
+            
+            const body = {
+                chat_id: chatId.toString(),
+                parse_mode: "HTML"
+            };
+            
+            if (photoUrl) {
+                body.photo = photoUrl;
+                body.caption = messageText;
+            } else {
+                body.text = messageText;
+            }
+
             try {
-                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId.toString(),
-                        text: messageText,
-                        parse_mode: "HTML"
-                    })
+                    body: JSON.stringify(body)
                 });
             } catch (error) {
                 console.error(`Ошибка отправки в Telegram (${chatId}):`, error);
