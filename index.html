@@ -195,7 +195,7 @@
 
         <!-- ПЛАШКА ПРИВЕТСТВИЯ -->
         <div id="greeting-container" class="hidden mb-6 px-2 transition-all">
-            <h2 id="greeting-text" class="text-xl font-bold tracking-tight text-lime-400 leading-tight drop-shadow-sm"></h2>
+            <h2 id="greeting-text" class="text-xl font-bold tracking-tight text-zinc-100 leading-tight drop-shadow-sm"></h2>
             <p id="greeting-subtitle" class="text-[11px] font-semibold text-white/50 mt-1 uppercase tracking-widest"></p>
         </div>
 
@@ -332,7 +332,10 @@
                     <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-purple-500/20">
                         <div class="flex items-center gap-2">
                             <i data-lucide="alert-circle" class="text-purple-500 w-5 h-5 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]"></i>
-                            <span class="text-xs text-purple-300 font-bold uppercase tracking-widest">Дедлайн сдачи:</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-purple-300 font-bold uppercase tracking-widest leading-tight">Дедлайн сдачи:</span>
+                                <span id="lesson-deadline-exact" class="text-[10px] text-zinc-400 font-medium mt-0.5"></span>
+                            </div>
                         </div>
                         <p id="lesson-deadline-timer" class="text-lg font-mono tracking-wider font-bold text-white transition-all">00:00:00</p>
                     </div>
@@ -461,8 +464,12 @@
                             <input type="text" id="admin-greeting-title" placeholder="Привет, {name}!" class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                         </div>
                         <div class="space-y-1.5 box-border w-full">
-                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Подзаголовок (оставьте пустым, чтобы скрыть)</label>
+                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Подзаголовок в процессе обучения</label>
                             <textarea id="admin-greeting-subtitle" rows="2" placeholder="У тебя еще есть время до дедлайна, жми на газ! 🏎️" class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner resize-none"></textarea>
+                        </div>
+                        <div class="space-y-1.5 box-border w-full pt-2 border-t border-white/10">
+                            <label class="text-[10px] uppercase text-purple-300 ml-1 font-bold tracking-wide">Подзаголовок после окончания курса</label>
+                            <textarea id="admin-greeting-completion" rows="2" placeholder="Умничка! Горжусь тобой! Курс пройден! 🎓" class="w-full box-border bg-purple-500/5 border border-purple-500/20 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 transition-all shadow-inner resize-none"></textarea>
                         </div>
                     </div>
 
@@ -917,7 +924,8 @@
             homeLayout: ['text', 'faq', 'modules'],
             greetingConfig: {
                 titleTemplate: "Привет, {name}!",
-                subtitle: "У тебя еще есть время до дедлайна, жми на газ! 🏎️"
+                subtitle: "У тебя еще есть время до дедлайна, жми на газ! 🏎️",
+                completionSubtitle: "Умничка! Горжусь тобой! Курс пройден! 🎓"
             },
             textContent: {
                 title: "📖 Важная информация",
@@ -992,8 +1000,18 @@
                 greetingText.innerText = finalTitle; 
                 
                 if (greetingSubtitle) {
-                    if (subtitleText.trim() !== '') {
-                        greetingSubtitle.innerText = subtitleText;
+                    // Проверяем, прошел ли ученик курс полностью
+                    let isCourseCompleted = false;
+                    if (window.academyData.modules && data.progress > window.academyData.modules.length) {
+                        isCourseCompleted = true;
+                    }
+                    
+                    let activeSubtitle = isCourseCompleted 
+                        ? (window.academyData.greetingConfig?.completionSubtitle || "Умничка! Горжусь тобой! Курс пройден! 🎓") 
+                        : subtitleText;
+
+                    if (activeSubtitle.trim() !== '') {
+                        greetingSubtitle.innerText = activeSubtitle;
                         greetingSubtitle.classList.remove('hidden');
                     } else {
                         greetingSubtitle.classList.add('hidden');
@@ -1435,14 +1453,6 @@
                 document.getElementById('hw-file-label').innerText = 'Прикрепить фото (макс. 2)';
                 return;
             }
-
-            for(let i=0; i < files.length; i++) {
-                if (files[i].size > 5 * 1024 * 1024) {
-                    showToast('Каждое фото не должно превышать 5 МБ!');
-                    event.target.value = '';
-                    return;
-                }
-            }
             
             document.getElementById('hw-file-label').innerText = '⏳ Обработка...';
             
@@ -1582,15 +1592,28 @@
                 
                 const d = new Date(targetDeadline);
                 const timerEl = document.getElementById('lesson-deadline-timer');
+                const exactEl = document.getElementById('lesson-deadline-exact');
 
                 if (isNaN(d)) {
                     timerEl.innerText = "Не установлен";
                     timerEl.className = "text-lg md:text-xl font-mono tracking-wider font-bold text-white transition-all";
+                    if (exactEl) exactEl.innerText = "";
+                    
                     if (!hwData || hwData.status === 'rejected' || !hwData.status) {
                         submitBtn.innerText = (hwData && hwData.status === 'rejected') ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
                         submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-4 block text-center";
                     }
                     return;
+                }
+
+                // Форматируем точную дату для отображения мелким шрифтом
+                if (exactEl) {
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const yyyy = d.getFullYear();
+                    const hh = String(d.getHours()).padStart(2, '0');
+                    const min = String(d.getMinutes()).padStart(2, '0');
+                    exactEl.innerText = `${dd}.${mm}.${yyyy} в ${hh}:${min}`;
                 }
 
                 const diff = d - now;
@@ -1678,10 +1701,9 @@
             
             const deadlineDate = new Date(targetDeadline);
             const isLate = !isNaN(deadlineDate) && now > deadlineDate;
-            let statusText = "Вовремя✅";
+            let statusText = isLate ? "После дедлайна❌" : "Вовремя✅";
             
             if (isLate) {
-                statusText = "После дедлайна❌";
                 if (!confirm('Дедлайн пропущен! Сдать с опозданием?')) {
                     return; 
                 }
@@ -1723,12 +1745,7 @@ ${chatLink}
 
                 if (window.sendToTelegram) {
                     if (hasFiles) {
-                        // Отправляем 1 фото вместе с текстом
-                        await window.sendToTelegram(tgMessage, window.currentHwBlob[0]);
-                        // Если есть 2 фото, отправляем его отдельно (без текста, чтобы не дублировать)
-                        if (window.currentHwBlob.length > 1) {
-                            await window.sendToTelegram("", window.currentHwBlob[1]);
-                        }
+                        await window.sendToTelegram(tgMessage, window.currentHwBlob);
                     } else {
                         await window.sendToTelegram(tgMessage, null);
                     }
@@ -1876,7 +1893,7 @@ ${chatLink}
             }
         };
 
-        window.extendUserDeadline = async function(uid, lessonIdx) {
+        window.extendUserDeadline = async function(uid, lessonIdx, hours = 24) {
             try {
                 const userDocRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
                 const userSnap = await window.getDoc(userDocRef);
@@ -1892,7 +1909,7 @@ ${chatLink}
                         return;
                     }
                     
-                    d.setHours(d.getHours() + 24);
+                    d.setHours(d.getHours() + hours);
                     const newDeadline = d.toISOString();
                     
                     const updatedHw = { ...existingHw, extendedDeadline: newDeadline };
@@ -1903,11 +1920,15 @@ ${chatLink}
                         }
                     }, { merge: true });
                     
-                    showToast('Дедлайн успешно продлен на 24 часа!', 'success');
+                    if (hours > 0) {
+                        showToast('Дедлайн успешно продлен на 24 часа!', 'success');
+                    } else {
+                        showToast('Дедлайн уменьшен на 24 часа!', 'success');
+                    }
                 }
             } catch (e) {
-                console.error("Ошибка продления", e);
-                showToast("Произошла ошибка при продлении дедлайна");
+                console.error("Ошибка дедлайна", e);
+                showToast("Произошла ошибка при изменении дедлайна");
             }
         };
 
@@ -2021,6 +2042,7 @@ ${chatLink}
                 if (!academyData.greetingConfig) academyData.greetingConfig = {};
                 academyData.greetingConfig.titleTemplate = safeString(document.getElementById('admin-greeting-title').value).trim();
                 academyData.greetingConfig.subtitle = safeString(document.getElementById('admin-greeting-subtitle').value).trim();
+                academyData.greetingConfig.completionSubtitle = safeString(document.getElementById('admin-greeting-completion').value).trim();
             }
         }
 
@@ -2090,6 +2112,7 @@ ${chatLink}
             
             document.getElementById('admin-greeting-title').value = academyData.greetingConfig?.titleTemplate || '';
             document.getElementById('admin-greeting-subtitle').value = academyData.greetingConfig?.subtitle || '';
+            document.getElementById('admin-greeting-completion').value = academyData.greetingConfig?.completionSubtitle || '';
             
             // Скрываем или показываем глобальные настройки в зависимости от роли (КУРАТОР ИХ НЕ ВИДИТ)
             if (window.isCurator) {
@@ -2467,22 +2490,14 @@ ${chatLink}
                         const fbHtml = hw.feedback ? `<span class="text-xs ml-1" title="Оценка урока">${hw.feedback}</span>` : '';
                         
                         const hasAnyHw = hw.link || hw.photoUrls || hw.photoUrl;
-                        let linkHtml = '';
-                        if (hw.link) {
-                            linkHtml += `<a href="${escapeHTML(hw.link)}" target="_blank" class="text-[11px] text-purple-400 hover:text-purple-300 underline truncate max-w-[160px] inline-block font-medium">Ссылка</a> `;
-                        }
                         
-                        // Обработка массива фото или одного старого фото
+                        // Обработка массива фото или одного старого фото чисто для сохранения в память (кнопки убраны)
                         let photosArray = hw.photoUrls || (hw.photoUrl ? [hw.photoUrl] : []);
-                        
                         photosArray.forEach((pUrl, pIdx) => {
                             window._adminPhotos[`${docSnap.id}_${i}_${pIdx}`] = pUrl;
-                            linkHtml += `<button onclick="openAdminPhoto('${docSnap.id}', ${i}, ${pIdx})" class="text-[11px] text-pink-400 hover:text-pink-300 underline inline-block font-medium ml-2 flex items-center gap-1 cursor-pointer"><i data-lucide="image" class="w-3 h-3"></i> Фото ${pIdx+1}</button>`;
                         });
 
-                        if (!hasAnyHw) {
-                            linkHtml = `<span class="text-[10px] text-zinc-600 italic font-medium">ДЗ не сдано</span>`;
-                        }
+                        let hwStatusIndicator = hasAnyHw ? `<span class="text-[10px] text-purple-400 font-medium flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3"></i> Материалы отправлены</span>` : `<span class="text-[10px] text-zinc-600 italic font-medium">ДЗ не сдано</span>`;
                         
                         const statusSelect = hasAnyHw ? `
                             <select onchange="updateHWStatus('${docSnap.id}', '${i}', this.value)" class="text-[10px] bg-white/[0.05] border border-white/10 text-white rounded-lg px-2 py-1.5 outline-none focus:border-purple-500 cursor-pointer appearance-none text-center font-bold w-[95px] shadow-sm backdrop-blur-md transition-colors hover:bg-white/10">
@@ -2502,11 +2517,12 @@ ${chatLink}
                                         ${extText}
                                     </div>
                                     <div class="flex items-center mt-0.5 flex-wrap">
-                                        ${linkHtml}
+                                        ${hwStatusIndicator}
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-2 shrink-0 mt-1 sm:mt-0">
-                                    <button onclick="extendUserDeadline('${docSnap.id}', ${i})" class="text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 rounded-lg px-2.5 py-1.5 transition-all font-bold shadow-sm" title="Продлить дедлайн на 24 часа">+24ч</button>
+                                <div class="flex items-center gap-1.5 shrink-0 mt-1 sm:mt-0">
+                                    <button onclick="extendUserDeadline('${docSnap.id}', ${i}, -24)" class="text-[10px] bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 rounded-lg px-2 py-1.5 transition-all font-bold shadow-sm" title="Убрать 24 часа">-24ч</button>
+                                    <button onclick="extendUserDeadline('${docSnap.id}', ${i}, 24)" class="text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 rounded-lg px-2 py-1.5 transition-all font-bold shadow-sm" title="Продлить дедлайн на 24 часа">+24ч</button>
                                     ${statusSelect}
                                 </div>
                             </div>
@@ -2665,7 +2681,7 @@ ${chatLink}
     let currentUser = null;
 
     // Обновленная функция отправки (Отправляет и Админу, и Куратору)
-    window.sendToTelegram = async function(messageText, photoBlob = null) {
+    window.sendToTelegram = async function(messageText, photoBlobs = []) {
         const botToken = window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P1 + ":" + window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P2;
         if (!botToken || botToken === ":") {
             console.warn("Не задан токен бота");
@@ -2680,26 +2696,48 @@ ${chatLink}
         if (curatorId) chatIds.push(curatorId);
 
         const uniqueChats = [...new Set(chatIds)];
-        const endpoint = photoBlob ? 'sendPhoto' : 'sendMessage';
 
         for (const chatId of uniqueChats) {
             if (!chatId) continue;
             
             try {
-                if (photoBlob) {
+                if (photoBlobs && photoBlobs.length > 1) {
+                    // Отправка карусели (MediaGroup)
+                    const formData = new FormData();
+                    formData.append("chat_id", chatId.toString());
+                    
+                    const mediaArray = [];
+                    for(let i=0; i<photoBlobs.length; i++) {
+                        mediaArray.push({
+                            type: "photo",
+                            media: "attach://photo" + i,
+                            caption: i === 0 ? messageText : "",
+                            parse_mode: "HTML"
+                        });
+                        formData.append("photo" + i, photoBlobs[i], `photo${i}.jpg`);
+                    }
+                    formData.append("media", JSON.stringify(mediaArray));
+
+                    await fetch(`https://api.telegram.org/bot${botToken}/sendMediaGroup`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else if (photoBlobs && photoBlobs.length === 1) {
+                    // Отправка одного фото
                     const formData = new FormData();
                     formData.append("chat_id", chatId.toString());
                     formData.append("parse_mode", "HTML");
                     if (messageText) {
                         formData.append("caption", messageText);
                     }
-                    formData.append("photo", photoBlob, "homework.jpg");
+                    formData.append("photo", photoBlobs[0], "homework.jpg");
 
                     await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
                         method: 'POST',
                         body: formData
                     });
                 } else {
+                    // Отправка только текста
                     await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
