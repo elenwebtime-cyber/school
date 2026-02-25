@@ -304,13 +304,13 @@
                     <p id="lesson-desc" class="text-zinc-400 text-sm leading-relaxed break-words"></p>
                 </div>
 
-                <!-- Блок оценки урока (Смайлики) -->
+                <!-- Блок оценки урока (Смайлики без квадратов) -->
                 <div id="lesson-feedback-container" class="mt-5 flex flex-col items-start gap-3 border-t border-white/10 pt-4 w-full">
                     <span class="text-[10px] uppercase text-zinc-400 font-bold tracking-widest">Оцени урок:</span>
                     <div class="flex items-center gap-4">
-                        <button onclick="submitLessonFeedback('good')" id="btn-fb-good" class="text-3xl transition-all duration-300 focus:outline-none pb-1">😍</button>
-                        <button onclick="submitLessonFeedback('neutral')" id="btn-fb-neutral" class="text-3xl transition-all duration-300 focus:outline-none pb-1">😐</button>
-                        <button onclick="submitLessonFeedback('mindblown')" id="btn-fb-mindblown" class="text-3xl transition-all duration-300 focus:outline-none pb-1">🤯</button>
+                        <button onclick="submitLessonFeedback('good')" id="btn-fb-good" class="text-3xl transition-all duration-300 focus:outline-none pb-1 bg-transparent border-none appearance-none outline-none cursor-pointer">😍</button>
+                        <button onclick="submitLessonFeedback('neutral')" id="btn-fb-neutral" class="text-3xl transition-all duration-300 focus:outline-none pb-1 bg-transparent border-none appearance-none outline-none cursor-pointer">😐</button>
+                        <button onclick="submitLessonFeedback('mindblown')" id="btn-fb-mindblown" class="text-3xl transition-all duration-300 focus:outline-none pb-1 bg-transparent border-none appearance-none outline-none cursor-pointer">🤯</button>
                     </div>
                 </div>
             </div>
@@ -404,8 +404,15 @@
                 <h2 class="text-2xl font-bold text-white mb-2">Ура! Ты прошла этот путь!</h2>
                 <p class="text-zinc-300 text-sm">Оставь пару слов о своих эмоциях от обучения. Твой отзыв очень важен для нас! 💖</p>
                 <div class="space-y-4 text-left mt-4">
-                    <textarea id="review-input" rows="4" placeholder="Было супер! Мне очень понравилось..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-emerald-500 focus:bg-white/[0.08] transition-all text-white resize-none shadow-inner"></textarea>
-                    <button id="btn-review-submit" onclick="submitReview()" class="w-full box-border bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] block text-center">
+                    <div>
+                        <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Твое имя (можно изменить)</label>
+                        <input type="text" id="review-name-input" class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-emerald-500 focus:bg-white/[0.08] transition-all text-white shadow-inner mt-1">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Твои впечатления</label>
+                        <textarea id="review-input" rows="4" placeholder="Было супер! Мне очень понравилось..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-emerald-500 focus:bg-white/[0.08] transition-all text-white resize-none shadow-inner mt-1"></textarea>
+                    </div>
+                    <button id="btn-review-submit" onclick="submitReview()" class="w-full box-border bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] block text-center mt-2">
                         Отправить отзыв
                     </button>
                 </div>
@@ -690,8 +697,12 @@
     </div>
 
     <script>
-        // Глобальная переменная для файла ДЗ
-        window.currentHwFile = null;
+        // Глобальные переменные для файла ДЗ
+        window.currentHwBase64 = null;
+        window.currentHwBlob = null;
+        
+        // Глобальный словарь для кэширования фотографий в админке
+        window._adminPhotos = {};
 
         // --- Умный фикс нативной клавиатуры ---
         document.addEventListener('focusin', (e) => {
@@ -702,47 +713,44 @@
             }
         });
 
-        document.addEventListener('focusout', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                setTimeout(() => {
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                }, 100);
-            }
-        });
-        // ------------------------------------------
-
-        // --- Функция интеллектуального сжатия изображений ---
-        window.compressImage = function(file) {
-            return new Promise((resolve) => {
+        // --- Функция интеллектуального сжатия изображений (Base64) ---
+        window.compressImageToBase64 = function(file) {
+            return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = (event) => {
+                reader.onload = (e) => {
                     const img = new Image();
-                    img.src = event.target.result;
+                    img.src = e.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        const maxDim = 1200; // Сжимаем до 1200px по большей стороне для скорости
+                        let w = img.width;
+                        let h = img.height;
+                        const maxDim = 800; // Сжимаем до 800px чтобы уложиться в лимиты БД и не висло
 
-                        if (width > height && width > maxDim) {
-                            height *= maxDim / width;
-                            width = maxDim;
-                        } else if (height > maxDim) {
-                            width *= maxDim / height;
-                            height = maxDim;
+                        if (w > h && w > maxDim) {
+                            h *= maxDim / w;
+                            w = maxDim;
+                        } else if (h > maxDim) {
+                            w *= maxDim / h;
+                            h = maxDim;
                         }
 
-                        canvas.width = width;
-                        canvas.height = height;
+                        canvas.width = w;
+                        canvas.height = h;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, w, h);
 
+                        // Получаем Base64 строку для сохранения в Firebase
+                        const base64 = canvas.toDataURL('image/jpeg', 0.6);
+
+                        // Получаем Blob для отправки в Telegram
                         canvas.toBlob((blob) => {
-                            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' }));
-                        }, 'image/jpeg', 0.7); // Качество 70%
+                            resolve({ base64, blob });
+                        }, 'image/jpeg', 0.6);
                     };
+                    img.onerror = reject;
                 };
+                reader.onerror = reject;
             });
         };
         // ----------------------------------------------------
@@ -832,47 +840,6 @@
                 }, 300);
             }, 500);
         }
-
-        let touchStartX = 0;
-        let touchStartY = 0;
-
-        document.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        }, {passive: true});
-
-        document.addEventListener('touchend', e => {
-            if (touchStartX > 30) return; 
-            
-            let touchEndX = e.changedTouches[0].screenX;
-            let touchEndY = e.changedTouches[0].screenY;
-
-            if (touchEndX - touchStartX > 100 && Math.abs(touchEndY - touchStartY) < 40) {
-                if (!document.getElementById('pdf-modal').classList.contains('hidden')) {
-                    closePdfModal();
-                } else if (!document.getElementById('hw-text-modal').classList.contains('hidden')) {
-                    closeHomeworkModal();
-                } else if (!document.getElementById('lesson-modal').classList.contains('hidden')) {
-                    closeLesson();
-                } else if (!document.getElementById('info-modal').classList.contains('hidden')) {
-                    closeInfoModal();
-                } else if (!document.getElementById('admin-module-edit-modal').classList.contains('hidden')) {
-                    closeAdminModuleEdit();
-                } else if (!document.getElementById('admin-text-edit-modal').classList.contains('hidden')) {
-                    closeAdminTextEdit();
-                } else if (!document.getElementById('admin-faq-edit-modal').classList.contains('hidden')) {
-                    closeAdminFaqEdit();
-                } else if (!document.getElementById('admin-users-view').classList.contains('hidden') && !document.getElementById('admin-modal').classList.contains('hidden')) {
-                    closeAdminUsers();
-                } else if (!document.getElementById('admin-modal').classList.contains('hidden')) {
-                    closeAdmin();
-                } else if (!document.getElementById('congrats-modal').classList.contains('hidden')) {
-                    closeCongratsModal();
-                } else if (!document.getElementById('access-modal').classList.contains('hidden') && isAccessGranted) {
-                    closeAccessModal();
-                }
-            }
-        }, {passive: true});
 
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.expand();
@@ -1194,25 +1161,20 @@
             haptic('medium');
             lockButton('btn-review-submit');
             
+            const editedName = safeString(document.getElementById('review-name-input').value).trim() || "Студент";
             const reviewText = safeString(document.getElementById('review-input').value).trim();
+            
             if (!isValidInput(reviewText)) {
                 showToast('Пожалуйста, напиши пару слов 😊');
                 return;
             }
 
             if (window.sendToTelegram) {
-                const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-                const firstName = tgUser.first_name || "Неизвестный";
-                const lastName = tgUser.last_name || "";
-                const fullName = escapeHTML(`${firstName} ${lastName}`.trim());
-                const username = escapeHTML(tgUser.username || "");
-                const loginText = username ? `@${username}` : "Скрыт";
                 const safeReviewText = escapeHTML(reviewText);
 
                 const tgMessage = `
 🌟 <b>НОВЫЙ ОТЗЫВ О КУРСЕ!</b> 🎉
-<b>Ученик:</b> ${fullName}
-<b>Контакт:</b> ${loginText}
+<b>Ученик:</b> ${escapeHTML(editedName)}
 
 <b>Отзыв:</b>
 <i>"${safeReviewText}"</i>
@@ -1361,20 +1323,29 @@
             }, 300); 
         }
 
-        // Обновление визуала смайликов
+        // Обновление визуала смайликов БЕЗ квадратного свечения
         window.updateFbUI = function(selectedType) {
             ['good', 'neutral', 'mindblown'].forEach(k => {
                 const btn = document.getElementById(`btn-fb-${k}`);
                 if (btn) {
-                    btn.className = "text-3xl transition-all duration-300 focus:outline-none pb-1";
+                    btn.className = "text-3xl transition-all duration-300 focus:outline-none pb-1 bg-transparent border-none appearance-none outline-none cursor-pointer";
                     if (selectedType) {
                         if (k === selectedType) {
-                            btn.classList.add('scale-125', 'drop-shadow-[0_0_15px_rgba(236,72,153,0.6)]', 'z-10');
+                            btn.classList.add('scale-125', 'z-10');
+                            btn.style.filter = "none"; 
+                            btn.style.opacity = "1";
+                            btn.style.textShadow = "0 0 15px rgba(236,72,153,0.8)"; // Мягкое свечение по контуру
                         } else {
-                            btn.classList.add('grayscale', 'opacity-30', 'scale-90', 'hover:opacity-60');
+                            btn.classList.add('scale-90');
+                            btn.style.filter = "grayscale(100%)";
+                            btn.style.opacity = "0.3";
+                            btn.style.textShadow = "none";
                         }
                     } else {
-                        btn.classList.add('grayscale', 'hover:grayscale-0', 'hover:scale-110', 'drop-shadow-md', 'opacity-80');
+                        btn.classList.add('hover:scale-110');
+                        btn.style.filter = "grayscale(100%)";
+                        btn.style.opacity = "0.8";
+                        btn.style.textShadow = "none";
                     }
                 }
             });
@@ -1409,16 +1380,19 @@
         window.handleHwFileSelect = async function(event) {
             const file = event.target.files[0];
             if (!file) {
-                window.currentHwFile = null;
+                window.currentHwBase64 = null;
+                window.currentHwBlob = null;
                 document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
                 return;
             }
             
-            document.getElementById('hw-file-label').innerText = '⏳ Сжимаем фото...';
+            document.getElementById('hw-file-label').innerText = '⏳ Обработка...';
             
             try {
-                const compressedFile = await window.compressImage(file);
-                window.currentHwFile = compressedFile;
+                const compressed = await window.compressImageToBase64(file);
+                window.currentHwBase64 = compressed.base64;
+                window.currentHwBlob = compressed.blob;
+                
                 let displayName = file.name;
                 if(displayName.length > 15) displayName = displayName.substring(0, 12) + '...';
                 document.getElementById('hw-file-label').innerText = '✅ ' + displayName;
@@ -1615,7 +1589,7 @@
             haptic('medium');
             
             const hwInput = safeString(document.getElementById('hw-input').value).trim();
-            const hasFile = !!window.currentHwFile;
+            const hasFile = !!window.currentHwBase64;
             
             if (!isValidInput(hwInput) && !hasFile) {
                 showToast('Пожалуйста, вставьте ссылку или прикрепите фото!');
@@ -1660,36 +1634,12 @@
             submitBtn.disabled = true;
             submitBtn.classList.add('opacity-50', 'pointer-events-none');
 
-            let photoUrl = null;
-
             try {
-                if (hasFile) {
-                    if (!window.storage || !window.uploadBytes || !window.ref) {
-                        throw new Error("Сервис загрузки файлов не загружен");
-                    }
-                    const authUid = window.auth.currentUser.uid;
-                    const file = window.currentHwFile;
-                    const ext = 'jpg';
-                    const storageRef = window.ref(window.storage, `artifacts/${window.appId}/users/${authUid}/homeworks/lesson_${currentViewedLesson}_${Date.now()}.${ext}`);
-                    
-                    // Promise.race защищает от бесконечного зависания, если пропал интернет
-                    await Promise.race([
-                        window.uploadBytes(storageRef, file),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error("Таймаут загрузки")), 20000))
-                    ]);
-                    
-                    photoUrl = await window.getDownloadURL(storageRef);
-                }
-
                 if (window.sendToTelegram) {
                     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
                     const firstName = tgUser.first_name || "Неизвестный";
                     const lastName = tgUser.last_name || "";
                     const fullName = escapeHTML(`${firstName} ${lastName}`.trim());
-                    const username = escapeHTML(tgUser.username || "");
-                    
-                    const loginText = username ? `@${username}` : "Скрыт";
-                    const chatLink = username ? `<a href="https://t.me/${username}">ОТКРЫТЬ ЧАТ</a>` : "<i>Нет юзернейма</i>";
                     
                     const moduleTitle = escapeHTML(mod.title);
                     const safeHwLink = escapeHTML(hwInput);
@@ -1697,9 +1647,9 @@
                     const submitTime = now.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
 
                     let contentText = "";
-                    if (photoUrl && hwInput) {
+                    if (hasFile && hwInput) {
                         contentText = `<b>Изображение:</b> Прикреплено\n<b>Текстовая ссылка:</b> <a href="${safeHwLink}">Перейти</a>`;
-                    } else if (photoUrl) {
+                    } else if (hasFile) {
                         contentText = `<b>Изображение:</b> Прикреплено`;
                     } else {
                         contentText = `<b>Ссылка на ДЗ:</b> <a href="${safeHwLink}">Перейти к работе</a>`;
@@ -1707,8 +1657,6 @@
 
                     const tgMessage = `
 <b>Ученик:</b> ${fullName}
-<b>Контакт:</b> ${loginText}
-${chatLink}
 
 <b>Модуль:</b> ${moduleTitle}
 ${contentText}
@@ -1717,7 +1665,7 @@ ${contentText}
                     `.trim();
 
                     // Не блокируем UI ожиданием отправки в телеграм
-                    window.sendToTelegram(tgMessage, photoUrl).catch(e => console.error("Tg fail", e));
+                    window.sendToTelegram(tgMessage, window.currentHwBlob).catch(e => console.error("Tg fail", e));
                 }
 
                 if (window.setDoc && window.doc && window.db) {
@@ -1738,7 +1686,9 @@ ${contentText}
                         timestamp: now.toISOString() 
                     };
 
-                    if (photoUrl) updatedHw.photoUrl = photoUrl;
+                    if (hasFile) {
+                        updatedHw.photoUrl = window.currentHwBase64; // Сохраняем готовую Base64 строку в облако
+                    }
 
                     await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
                         progress: newProgress,
@@ -1752,7 +1702,8 @@ ${contentText}
                 document.getElementById('hw-input').value = '';
                 document.getElementById('hw-file-input').value = '';
                 document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
-                window.currentHwFile = null;
+                window.currentHwBase64 = null;
+                window.currentHwBlob = null;
 
                 if (!isLate) {
                     confetti({
@@ -1771,6 +1722,15 @@ ${contentText}
                     setTimeout(() => {
                         document.getElementById('congrats-modal').classList.remove('hidden');
                         confetti({ particleCount: 300, spread: 120, origin: { y: 0.6 }, zIndex: 99999 });
+                        
+                        // Предзаполняем имя для отзыва
+                        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+                        const fName = tgUser.first_name || "";
+                        const lName = tgUser.last_name || "";
+                        let prefill = `${fName} ${lName}`.trim();
+                        if(!prefill) prefill = "Студент";
+                        document.getElementById('review-name-input').value = prefill;
+
                     }, 500);
                 }
 
@@ -1784,6 +1744,29 @@ ${contentText}
                 submitBtn.classList.remove('opacity-50', 'pointer-events-none');
             }
         }
+
+        window.openAdminPhoto = function(uid, idx) {
+            haptic('light');
+            const dataUrl = window._adminPhotos[`${uid}_${idx}`];
+            if (dataUrl) {
+                if (dataUrl.startsWith('http')) {
+                    window.open(dataUrl, '_blank');
+                } else {
+                    const newTab = window.open();
+                    if (newTab) {
+                        newTab.document.body.innerHTML = `
+                            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;min-height:100vh;">
+                                <img src="${dataUrl}" style="max-width:100%;max-height:100vh;object-fit:contain;">
+                            </body>`;
+                    } else {
+                        const a = document.createElement('a');
+                        a.href = dataUrl;
+                        a.download = `homework_${parseInt(idx)+1}.jpg`;
+                        a.click();
+                    }
+                }
+            }
+        };
 
         window.updateHWStatus = async function(uid, lessonIdx, newStatus) {
             try {
@@ -2400,6 +2383,10 @@ ${contentText}
                     list.innerHTML = '<div class="text-sm text-zinc-500 font-medium">Пока никто не зашел в бота</div>';
                     return;
                 }
+                
+                // Очищаем кэш фото при новой загрузке
+                window._adminPhotos = {};
+
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
                     const isActivated = data.progress && data.progress > 0;
@@ -2424,7 +2411,9 @@ ${contentText}
                             linkHtml += `<a href="${escapeHTML(hw.link)}" target="_blank" class="text-[11px] text-purple-400 hover:text-purple-300 underline truncate max-w-[160px] inline-block font-medium">Ссылка</a> `;
                         }
                         if (hw.photoUrl) {
-                            linkHtml += `<a href="${escapeHTML(hw.photoUrl)}" target="_blank" class="text-[11px] text-pink-400 hover:text-pink-300 underline inline-block font-medium ml-2 flex items-center gap-1"><i data-lucide="image" class="w-3 h-3"></i> Фото</a>`;
+                            // Сохраняем огромную Base64 в кэш, чтобы не вешать DOM
+                            window._adminPhotos[`${docSnap.id}_${i}`] = hw.photoUrl;
+                            linkHtml += `<button onclick="openAdminPhoto('${docSnap.id}', ${i})" class="text-[11px] text-pink-400 hover:text-pink-300 underline inline-block font-medium ml-2 flex items-center gap-1 cursor-pointer"><i data-lucide="image" class="w-3 h-3"></i> Фото</button>`;
                         }
                         if (!hasAnyHw) {
                             linkHtml = `<span class="text-[10px] text-zinc-600 italic font-medium">ДЗ не сдано</span>`;
@@ -2595,12 +2584,6 @@ ${contentText}
         onAuthStateChanged, 
         signInWithCustomToken 
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { 
-        getStorage, 
-        ref, 
-        uploadBytes, 
-        getDownloadURL 
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
     // Склеиваем ключи из блока настроек (обход сканеров GitHub)
     const firebaseConfig = { ...window.APP_CONFIG.FIREBASE_CONFIG };
@@ -2613,17 +2596,11 @@ ${contentText}
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
     let currentUser = null;
 
-    window.storage = storage;
-    window.ref = ref;
-    window.uploadBytes = uploadBytes;
-    window.getDownloadURL = getDownloadURL;
-
     // Обновленная функция отправки (Отправляет и Админу, и Куратору)
-    window.sendToTelegram = async function(messageText, photoUrl = null) {
+    window.sendToTelegram = async function(messageText, photoBlob = null) {
         const botToken = window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P1 + ":" + window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P2;
         if (!botToken || botToken === ":") {
             console.warn("Не задан токен бота");
@@ -2638,29 +2615,33 @@ ${contentText}
         if (curatorId) chatIds.push(curatorId);
 
         const uniqueChats = [...new Set(chatIds)];
-        const endpoint = photoUrl ? 'sendPhoto' : 'sendMessage';
 
         for (const chatId of uniqueChats) {
             if (!chatId) continue;
             
-            const body = {
-                chat_id: chatId.toString(),
-                parse_mode: "HTML"
-            };
-            
-            if (photoUrl) {
-                body.photo = photoUrl;
-                body.caption = messageText;
-            } else {
-                body.text = messageText;
-            }
-
             try {
-                await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
+                if (photoBlob) {
+                    const formData = new FormData();
+                    formData.append("chat_id", chatId.toString());
+                    formData.append("parse_mode", "HTML");
+                    formData.append("caption", messageText);
+                    formData.append("photo", photoBlob, "homework.jpg");
+
+                    await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else {
+                    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: chatId.toString(),
+                            text: messageText,
+                            parse_mode: "HTML"
+                        })
+                    });
+                }
             } catch (error) {
                 console.error(`Ошибка отправки в Telegram (${chatId}):`, error);
             }
