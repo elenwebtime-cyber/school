@@ -122,11 +122,11 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button id="admin-btn" onclick="openAdmin()" class="hidden w-12 h-12 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all backdrop-blur-md shadow-lg hover:bg-white/10">
+                <button id="admin-btn" onclick="openAdmin()" class="hidden w-12 h-12 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all backdrop-blur-md shadow-lg hover:bg-white/10 shrink-0">
                     <i data-lucide="settings" class="text-zinc-300 w-6 h-6"></i>
                 </button>
-                <!-- Идеально круглая плавающая кнопка без квадрата -->
-                <a id="support-link-btn" href="#" target="_blank" class="hidden w-12 h-12 rounded-full bg-white/[0.03] border border-white/10 items-center justify-center hover:bg-white/[0.08] hover:scale-105 active:scale-95 transition-all text-2xl relative shadow-[0_10px_25px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                <!-- Идеально круглая плавающая кнопка (только круг) -->
+                <a id="support-link-btn" href="#" target="_blank" class="hidden w-12 h-12 items-center justify-center hover:scale-105 active:scale-95 transition-all text-2xl relative shadow-[0_5px_20px_rgba(255,255,255,0.15)] bg-white/[0.05] shrink-0" style="border-radius: 50% !important; border: none; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
                     <span class="relative z-10" style="line-height: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));">🛟</span>
                 </a>
             </div>
@@ -138,17 +138,20 @@
             <p class="text-[11px] font-semibold text-white/50 mt-1 uppercase tracking-widest">У тебя еще есть время до дедлайна, жми на газ! 🏎️</p>
         </div>
 
-        <!-- КНОПКА ПРАВИЛА / FAQ -->
+        <!-- КНОПКА ПРАВИЛА / FAQ В ОБЩЕМ ДИЗАЙНЕ КАРТОЧЕК -->
         <div id="user-info-btn-container" class="hidden mb-5 box-border w-full">
-            <button onclick="openInfoModal()" class="w-full glass-card p-4 flex justify-between items-center hover:border-purple-500/50 transition-all group bg-purple-500/5 border-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.05)]">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 text-xl group-hover:scale-110 transition-transform shadow-inner">
-                        <i data-lucide="book-open" class="w-5 h-5 text-purple-400"></i>
+            <div onclick="openInfoModal()" class="glass-card module-card p-6 cursor-pointer flex items-center justify-between group">
+                <div class="flex items-center gap-4 sm:gap-5">
+                    <div class="w-12 h-12 rounded-[20px] bg-white/[0.05] border border-white/10 flex items-center justify-center text-base font-bold shadow-inner text-white transition-all group-hover:scale-105">
+                        <i data-lucide="book-open" class="w-6 h-6 text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]"></i>
                     </div>
-                    <h3 id="user-info-btn-title" class="font-bold text-sm text-white tracking-wide">Важная информация</h3>
+                    <div>
+                        <h3 id="user-info-btn-title" class="font-bold text-base tracking-tight mb-0.5 text-zinc-100">Важная информация</h3>
+                        <p class="text-[10px] text-white/50 uppercase font-bold tracking-wider">Правила и частые вопросы</p>
+                    </div>
                 </div>
                 <i data-lucide="chevron-right" class="w-5 h-5 text-zinc-500 group-hover:text-purple-400 transition-colors"></i>
-            </button>
+            </div>
         </div>
 
         <div id="modules-container" class="space-y-4 flex-1 w-full box-border"></div>
@@ -161,14 +164,14 @@
                 <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад
             </button>
             
-            <div class="glass-card p-5 sm:p-6 mb-6 box-border w-full relative z-40 flex-1">
+            <div class="glass-card p-5 sm:p-6 mb-6 box-border w-full relative z-40 flex-1 flex flex-col">
                 <h2 id="info-modal-title" class="text-xl font-bold mb-6 text-white tracking-wide border-b border-white/10 pb-4">Информация</h2>
                 
-                <!-- Блок для простого текста -->
-                <div id="info-modal-text" class="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap hidden"></div>
+                <!-- Блок для простого текста (Luxury дизайн) -->
+                <div id="info-modal-text" class="bg-white/[0.02] border border-white/5 rounded-2xl p-5 mb-6 text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap hidden shadow-inner font-medium"></div>
                 
                 <!-- Блок для аккордеона FAQ -->
-                <div id="info-modal-faq" class="space-y-3 hidden"></div>
+                <div id="info-modal-faq" class="space-y-3 hidden flex-1"></div>
             </div>
         </div>
     </div>
@@ -315,23 +318,15 @@
                             <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Заголовок кнопки</label>
                             <input type="text" id="admin-info-title" placeholder="Например: 📖 Правила Академии" class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                         </div>
-                        <div class="flex gap-2">
-                            <label class="flex-1 cursor-pointer">
-                                <input type="radio" name="info_type" value="text" class="peer sr-only" onchange="toggleAdminInfoType()">
-                                <div class="text-center text-[10px] sm:text-xs py-2.5 rounded-xl border border-white/10 peer-checked:border-purple-500 peer-checked:bg-purple-500/20 text-zinc-400 peer-checked:text-purple-300 transition-all font-bold uppercase tracking-widest bg-white/[0.02]">📝 Простой текст</div>
-                            </label>
-                            <label class="flex-1 cursor-pointer">
-                                <input type="radio" name="info_type" value="faq" class="peer sr-only" onchange="toggleAdminInfoType()">
-                                <div class="text-center text-[10px] sm:text-xs py-2.5 rounded-xl border border-white/10 peer-checked:border-purple-500 peer-checked:bg-purple-500/20 text-zinc-400 peer-checked:text-purple-300 transition-all font-bold uppercase tracking-widest bg-white/[0.02]">🗂 Частые вопросы</div>
-                            </label>
+                        
+                        <div id="admin-info-text-container" class="space-y-1.5">
+                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Текст страницы (Правила, структура и т.д.)</label>
+                            <textarea id="admin-info-text" rows="4" placeholder="Введите текст или оставьте пустым..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner resize-none"></textarea>
                         </div>
-                        <div id="admin-info-text-container" class="space-y-1.5 hidden">
-                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Текст страницы</label>
-                            <textarea id="admin-info-text" rows="4" placeholder="Введите ваш текст здесь..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner resize-none"></textarea>
-                        </div>
-                        <div id="admin-info-faq-container" class="space-y-3 hidden">
-                            <div class="flex justify-between items-center mt-2">
-                                <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Вопросы и ответы</label>
+                        
+                        <div id="admin-info-faq-container" class="space-y-3">
+                            <div class="flex justify-between items-center mt-2 pt-2 border-t border-white/5">
+                                <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Вопросы и ответы (FAQ)</label>
                                 <button onclick="adminAddFaq()" class="text-[10px] bg-purple-500/10 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-500/20 hover:bg-purple-500/20 transition-all font-bold uppercase tracking-widest flex items-center gap-1 shadow-sm">
                                     <i data-lucide="plus" class="w-3 h-3"></i> Добавить
                                 </button>
@@ -467,7 +462,7 @@
     </div>
 
     <script>
-        // Функция для красивой подсветки кнопки "Сохранить"
+        // Анимация кнопки
         function animateSaveButton(btnId, callback) {
             const btn = document.getElementById(btnId);
             if (!btn) {
@@ -487,6 +482,36 @@
                 }, 300);
             }, 500);
         }
+
+        // Логика свайпа для возврата
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        document.addEventListener('touchend', e => {
+            if (touchStartX > 30) return; // Только левый край (30px)
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+
+            // Меньше чувствительность (длинный свайп, малое отклонение по вертикали)
+            if (touchEndX - touchStartX > 100 && Math.abs(touchEndY - touchStartY) < 40) {
+                if (!document.getElementById('lesson-modal').classList.contains('hidden')) {
+                    closeLesson();
+                } else if (!document.getElementById('info-modal').classList.contains('hidden')) {
+                    closeInfoModal();
+                } else if (!document.getElementById('admin-modal').classList.contains('hidden')) {
+                    closeAdmin();
+                } else if (!document.getElementById('congrats-modal').classList.contains('hidden')) {
+                    closeCongratsModal();
+                } else if (!document.getElementById('access-modal').classList.contains('hidden') && isAccessGranted) {
+                    closeAccessModal();
+                }
+            }
+        }, {passive: true});
 
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.expand();
@@ -514,7 +539,6 @@
             globalUnlockMode: "sequential",
             infoSection: {
                 title: "📖 Важная информация",
-                type: "text",
                 text: "Добро пожаловать на курс!\nЗдесь вы можете описать правила, структуру и всё, что захотите.",
                 faq: [
                     { q: "Как сдать ДЗ?", a: "Вставьте ссылку на выполненную работу в поле под уроком." },
@@ -587,8 +611,12 @@
 
             // Отображение кнопки информации для учеников
             const infoContainer = document.getElementById('user-info-btn-container');
-            if (academyData.infoSection && academyData.infoSection.title) {
-                document.getElementById('user-info-btn-title').innerText = academyData.infoSection.title;
+            const info = academyData.infoSection;
+            const hasText = info && info.text && info.text.trim() !== '';
+            const hasFaq = info && info.faq && info.faq.length > 0;
+
+            if (info && info.title && (hasText || hasFaq)) {
+                document.getElementById('user-info-btn-title').innerText = info.title;
                 infoContainer.classList.remove('hidden');
             } else {
                 infoContainer.classList.add('hidden');
@@ -759,28 +787,32 @@
             const textContainer = document.getElementById('info-modal-text');
             const faqContainer = document.getElementById('info-modal-faq');
             
-            if (info.type === 'text') {
-                textContainer.innerText = info.text || '';
+            if (info.text && info.text.trim() !== '') {
+                textContainer.innerText = info.text;
                 textContainer.classList.remove('hidden');
-                faqContainer.classList.add('hidden');
             } else {
                 textContainer.classList.add('hidden');
+            }
+            
+            if (info.faq && info.faq.length > 0) {
                 faqContainer.classList.remove('hidden');
                 faqContainer.innerHTML = '';
-                (info.faq || []).forEach((item, idx) => {
+                info.faq.forEach((item, idx) => {
                     faqContainer.innerHTML += `
-                        <div class="glass-card p-4 box-border border border-white/10 cursor-pointer hover:bg-white/[0.05] transition-all" onclick="toggleFaq(${idx})">
+                        <div class="glass-card p-5 box-border border border-white/10 rounded-2xl cursor-pointer hover:bg-white/[0.05] transition-all shadow-[0_5px_20px_rgba(0,0,0,0.3)]" onclick="toggleFaq(${idx})">
                             <div class="flex justify-between items-center gap-3">
-                                <h4 class="text-sm font-bold text-white">${item.q || 'Вопрос?'}</h4>
-                                <i data-lucide="chevron-down" id="faq-icon-${idx}" class="w-5 h-5 text-purple-400 transition-transform duration-300 shrink-0"></i>
+                                <h4 class="text-[13px] font-bold text-white tracking-wide">${item.q || 'Вопрос?'}</h4>
+                                <i data-lucide="chevron-down" id="faq-icon-${idx}" class="w-5 h-5 text-purple-400 transition-transform duration-300 shrink-0 drop-shadow-[0_0_5px_rgba(168,85,247,0.5)]"></i>
                             </div>
-                            <div id="faq-answer-${idx}" class="hidden mt-3 pt-3 border-t border-white/10 text-xs text-zinc-300 leading-relaxed">
+                            <div id="faq-answer-${idx}" class="hidden mt-4 pt-4 border-t border-white/10 text-xs text-zinc-300 leading-relaxed font-medium">
                                 ${(item.a || '').replace(/\n/g, '<br>')}
                             </div>
                         </div>
                     `;
                 });
                 lucide.createIcons();
+            } else {
+                faqContainer.classList.add('hidden');
             }
             
             document.getElementById('info-modal').classList.remove('hidden');
@@ -1196,19 +1228,6 @@ ${chatLink}
             }
         }
 
-        function toggleAdminInfoType() {
-            const typeRadio = document.querySelector('input[name="info_type"]:checked');
-            if (!typeRadio) return;
-            const type = typeRadio.value;
-            if (type === 'text') {
-                document.getElementById('admin-info-text-container').classList.remove('hidden');
-                document.getElementById('admin-info-faq-container').classList.add('hidden');
-            } else {
-                document.getElementById('admin-info-text-container').classList.add('hidden');
-                document.getElementById('admin-info-faq-container').classList.remove('hidden');
-            }
-        }
-
         window.updateFaqQ = function(idx, val) { academyData.infoSection.faq[idx].q = val; }
         window.updateFaqA = function(idx, val) { academyData.infoSection.faq[idx].a = val; }
         
@@ -1248,16 +1267,16 @@ ${chatLink}
             
             // Заполнение инфо-раздела
             document.getElementById('admin-info-title').value = academyData.infoSection?.title || '';
-            const type = academyData.infoSection?.type || 'text';
-            const typeInput = document.querySelector(`input[name="info_type"][value="${type}"]`);
-            if(typeInput) typeInput.checked = true;
             document.getElementById('admin-info-text').value = academyData.infoSection?.text || '';
             
             if(!academyData.infoSection?.faq) {
                 academyData.infoSection.faq = [];
             }
+            
+            // Открываем сразу оба блока
+            document.getElementById('admin-info-text-container').classList.remove('hidden');
+            document.getElementById('admin-info-faq-container').classList.remove('hidden');
 
-            toggleAdminInfoType();
             renderAdminFaq();
             renderAdminModules();
             document.getElementById('admin-main-view').classList.remove('hidden');
@@ -1292,7 +1311,7 @@ ${chatLink}
                             <span class="text-zinc-500 text-sm font-bold w-5 group-hover:text-purple-400 transition-colors">${idx + 1}.</span>
                             <span class="flex-1 text-sm font-semibold text-white truncate">${mod.title}</span>
                             ${typeIcon}
-                            <i data-lucide="edit-3" class="w-4 h-4 text-zinc-500 group-hover:text-purple-400 transition-colors"></i>
+                            <i data-lucide="edit-3" class="w-4 h-4 text-zinc-400 group-hover:text-purple-400 transition-colors"></i>
                         </div>
                         <button onclick="adminDeleteModule(${idx})" class="p-2 text-red-500 hover:text-white hover:bg-red-500/80 bg-red-500/10 rounded-lg transition-all border border-transparent hover:border-red-500/50">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -1333,8 +1352,6 @@ ${chatLink}
                 // Сохранение инфо-раздела
                 academyData.infoSection = academyData.infoSection || {};
                 academyData.infoSection.title = document.getElementById('admin-info-title').value.trim();
-                const typeRadio = document.querySelector('input[name="info_type"]:checked');
-                if(typeRadio) academyData.infoSection.type = typeRadio.value;
                 academyData.infoSection.text = document.getElementById('admin-info-text').value;
 
                 updateSupportLinkUI();
@@ -1624,7 +1641,8 @@ ${chatLink}
             if (confirm("Точно сбросить прогресс этому студенту?")) {
                 try {
                     await window.updateDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
-                        progress: 1
+                        progress: 1,
+                        homeworks: {}
                     });
                     
                     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
@@ -1632,6 +1650,7 @@ ${chatLink}
                     
                     if (currentUid === uid) {
                         currentLevel = 1;
+                        if(window.currentUserData) window.currentUserData.homeworks = {};
                         renderModules();
                     }
                     alert("Прогресс сброшен!");
