@@ -1528,10 +1528,12 @@ ${chatLink}
                     const existingHw = data.homeworks?.[lessonIdx] || {};
                     let updatedHw = { ...existingHw, status: newStatus };
                     
+                    let commentStr = '';
                     if (newStatus === 'rejected') {
                         const comment = prompt('Введите комментарий для ученика (что нужно исправить):', existingHw.comment || '');
                         if (comment !== null) {
                             updatedHw.comment = comment;
+                            commentStr = comment;
                         } else {
                             loadAdminUsers(); 
                             return; 
@@ -1543,6 +1545,20 @@ ${chatLink}
                             [lessonIdx]: updatedHw
                         }
                     }, { merge: true });
+
+                    // Отправка СМС ученику в ЛС
+                    if (newStatus === 'accepted' || newStatus === 'rejected') {
+                        const lessonTitle = window.academyData.modules[lessonIdx]?.title || `Урок ${parseInt(lessonIdx) + 1}`;
+                        let msg = '';
+                        if (newStatus === 'accepted') {
+                            msg = `Ура! 🎉\nТвоё домашнее задание по уроку <b>"${lessonTitle}"</b> успешно проверено и принято!\nОтличная работа, так держать! 🚀`;
+                        } else if (newStatus === 'rejected') {
+                            msg = `Привет! 🔄\nКуратор проверил твоё ДЗ по уроку <b>"${lessonTitle}"</b>, но нужно кое-что поправить.\n\n<b>Комментарий куратора:</b>\n<i>${escapeHTML(commentStr)}</i>\n\nЗайди в приложение, чтобы отправить исправленный вариант! 💪`;
+                        }
+                        if (window.sendToStudentTelegram) {
+                            window.sendToStudentTelegram(uid, msg);
+                        }
+                    }
                 }
             } catch(e) {
                 console.error("Ошибка при обновлении статуса ДЗ", e);
@@ -2331,6 +2347,25 @@ ${chatLink}
             } catch (error) {
                 console.error(`Ошибка отправки в Telegram (${chatId}):`, error);
             }
+        }
+    };
+
+    // НОВАЯ ФУНКЦИЯ: Отправка лично студенту
+    window.sendToStudentTelegram = async function(studentId, messageText) {
+        const botToken = window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P1 + ":" + window.APP_CONFIG.TELEGRAM_BOT_TOKEN_P2;
+        if (!botToken || botToken === ":") return;
+        try {
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: studentId.toString(),
+                    text: messageText,
+                    parse_mode: "HTML"
+                })
+            });
+        } catch (error) {
+            console.error(`Ошибка отправки студенту (${studentId}):`, error);
         }
     };
 
