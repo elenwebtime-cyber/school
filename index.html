@@ -347,7 +347,7 @@
                         
                         <!-- Блок загрузки фото -->
                         <div class="space-y-2 box-border w-full mt-3">
-                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Или загрузите изображение (макс. 5 МБ)</label>
+                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Или загрузите изображение</label>
                             <input type="file" id="hw-file-input" accept="image/*" class="hidden" onchange="handleHwFileSelect(event)">
                             <button type="button" onclick="document.getElementById('hw-file-input').click()" class="w-full box-border bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 text-sm outline-none focus:border-purple-500 hover:bg-purple-500/20 text-purple-300 transition-all shadow-inner flex items-center justify-center gap-2 font-bold tracking-wide">
                                 <i data-lucide="image" class="w-5 h-5 shrink-0"></i> <span id="hw-file-label" class="truncate max-w-[200px]">Прикрепить фото</span>
@@ -693,22 +693,59 @@
         // Глобальная переменная для файла ДЗ
         window.currentHwFile = null;
 
-        // --- Глобальный фикс нативной клавиатуры ---
-        document.addEventListener('touchend', (e) => {
-            const active = document.activeElement;
-            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
-                if (e.target !== active && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
-                    active.blur();
-                }
+        // --- Умный фикс нативной клавиатуры ---
+        document.addEventListener('focusin', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                setTimeout(() => {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
             }
-        }, { passive: true });
+        });
 
         document.addEventListener('focusout', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                window.scrollTo({top: 0, behavior: 'smooth'});
+                setTimeout(() => {
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                }, 100);
             }
         });
         // ------------------------------------------
+
+        // --- Функция интеллектуального сжатия изображений ---
+        window.compressImage = function(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDim = 1200; // Сжимаем до 1200px по большей стороне для скорости
+
+                        if (width > height && width > maxDim) {
+                            height *= maxDim / width;
+                            width = maxDim;
+                        } else if (height > maxDim) {
+                            width *= maxDim / height;
+                            height = maxDim;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' }));
+                        }, 'image/jpeg', 0.7); // Качество 70%
+                    };
+                };
+            });
+        };
+        // ----------------------------------------------------
 
         // --- Утилиты безопасности, Спама и Обратной связи ---
         function escapeHTML(str) {
@@ -1369,24 +1406,27 @@
             }
         };
 
-        window.handleHwFileSelect = function(event) {
+        window.handleHwFileSelect = async function(event) {
             const file = event.target.files[0];
             if (!file) {
                 window.currentHwFile = null;
                 document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
                 return;
             }
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('Файл слишком большой! (Макс. 5 МБ)');
-                event.target.value = '';
-                window.currentHwFile = null;
+            
+            document.getElementById('hw-file-label').innerText = '⏳ Сжимаем фото...';
+            
+            try {
+                const compressedFile = await window.compressImage(file);
+                window.currentHwFile = compressedFile;
+                let displayName = file.name;
+                if(displayName.length > 15) displayName = displayName.substring(0, 12) + '...';
+                document.getElementById('hw-file-label').innerText = '✅ ' + displayName;
+            } catch (e) {
+                console.error(e);
+                showToast('Ошибка при обработке фото!');
                 document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
-                return;
             }
-            window.currentHwFile = file;
-            let displayName = file.name;
-            if(displayName.length > 20) displayName = displayName.substring(0, 17) + '...';
-            document.getElementById('hw-file-label').innerText = 'Файл: ' + displayName;
         };
 
         function openLesson(idx) {
@@ -1629,7 +1669,7 @@
                     }
                     const authUid = window.auth.currentUser.uid;
                     const file = window.currentHwFile;
-                    const ext = file.name.split('.').pop();
+                    const ext = 'jpg';
                     const storageRef = window.ref(window.storage, `artifacts/${window.appId}/users/${authUid}/homeworks/lesson_${currentViewedLesson}_${Date.now()}.${ext}`);
                     
                     // Promise.race защищает от бесконечного зависания, если пропал интернет
