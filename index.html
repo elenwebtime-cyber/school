@@ -124,7 +124,39 @@
             <p class="text-xs font-serif italic text-zinc-500 mt-1">У тебя еще есть время до дедлайна, жми на газ! 🏎️</p>
         </div>
 
+        <!-- КНОПКА ПРАВИЛА / FAQ -->
+        <div id="user-info-btn-container" class="hidden mb-5 box-border w-full">
+            <button onclick="openInfoModal()" class="w-full glass-card p-4 flex justify-between items-center hover:border-purple-500/50 transition-all group bg-purple-500/5 border-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.05)]">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 text-xl group-hover:scale-110 transition-transform">
+                        <i data-lucide="book-open" class="w-5 h-5 text-purple-400"></i>
+                    </div>
+                    <h3 id="user-info-btn-title" class="font-bold text-sm text-white tracking-wide">Важная информация</h3>
+                </div>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-zinc-500 group-hover:text-purple-400 transition-colors"></i>
+            </button>
+        </div>
+
         <div id="modules-container" class="space-y-4 flex-1 w-full box-border"></div>
+    </div>
+
+    <!-- Модалка Правил / FAQ -->
+    <div id="info-modal" class="fixed inset-0 z-[55] bg-black/95 hidden overflow-y-auto overflow-x-hidden">
+        <div class="p-4 sm:p-6 min-h-screen flex flex-col max-w-2xl mx-auto w-full relative box-border">
+            <button onclick="closeInfoModal()" class="flex items-center gap-2 text-zinc-400 mb-6 text-sm w-fit mt-4 hover:text-white transition-colors relative z-40">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i> Назад
+            </button>
+            
+            <div class="glass-card p-5 sm:p-6 mb-6 box-border w-full relative z-40 flex-1">
+                <h2 id="info-modal-title" class="text-xl font-bold mb-6 text-white tracking-wide border-b border-purple-500/20 pb-4">Информация</h2>
+                
+                <!-- Блок для простого текста -->
+                <div id="info-modal-text" class="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap hidden"></div>
+                
+                <!-- Блок для аккордеона FAQ -->
+                <div id="info-modal-faq" class="space-y-3 hidden"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Модалка доступа -->
@@ -259,6 +291,38 @@
                         <div class="space-y-1.5 box-border w-full mt-2">
                             <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Ссылка на поддержку / чат (🛟)</label>
                             <input type="url" id="admin-support-link" placeholder="https://t.me/..." class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500 transition-all">
+                        </div>
+                    </div>
+
+                    <!-- ПЛАШКА НАСТРОЙКИ INFO / FAQ -->
+                    <div class="glass-card p-4 space-y-3 box-border w-full" style="border-radius: 16px;">
+                        <h3 class="font-bold text-xs text-purple-400 uppercase tracking-widest mb-1">Инфо-раздел (Правила / FAQ)</h3>
+                        <div class="space-y-1.5 box-border w-full">
+                            <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Заголовок кнопки</label>
+                            <input type="text" id="admin-info-title" placeholder="Например: 📖 Правила Академии" class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500 transition-all">
+                        </div>
+                        <div class="flex gap-2">
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="info_type" value="text" class="peer sr-only" onchange="toggleAdminInfoType()">
+                                <div class="text-center text-[10px] sm:text-xs py-2 rounded-lg border border-zinc-800 peer-checked:border-purple-500 peer-checked:bg-purple-500/20 text-zinc-400 peer-checked:text-purple-300 transition-all font-bold uppercase tracking-widest">📝 Простой текст</div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="info_type" value="faq" class="peer sr-only" onchange="toggleAdminInfoType()">
+                                <div class="text-center text-[10px] sm:text-xs py-2 rounded-lg border border-zinc-800 peer-checked:border-purple-500 peer-checked:bg-purple-500/20 text-zinc-400 peer-checked:text-purple-300 transition-all font-bold uppercase tracking-widest">🗂 Частые вопросы</div>
+                            </label>
+                        </div>
+                        <div id="admin-info-text-container" class="space-y-1.5 hidden">
+                            <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Текст страницы</label>
+                            <textarea id="admin-info-text" rows="4" placeholder="Введите ваш текст здесь..." class="w-full box-border bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500 transition-all"></textarea>
+                        </div>
+                        <div id="admin-info-faq-container" class="space-y-2 hidden">
+                            <div class="flex justify-between items-center mt-2">
+                                <label class="text-[10px] uppercase text-zinc-500 ml-1 font-bold">Вопросы и ответы</label>
+                                <button onclick="adminAddFaq()" class="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-1.5 rounded-md border border-purple-500/20 hover:bg-purple-500/20 transition-all font-bold uppercase tracking-widest flex items-center gap-1">
+                                    <i data-lucide="plus" class="w-3 h-3"></i> Добавить
+                                </button>
+                            </div>
+                            <div id="admin-faq-list" class="space-y-2 box-border w-full"></div>
                         </div>
                     </div>
 
@@ -434,6 +498,15 @@
             secretCode: "VIP2026",
             supportLink: "",
             globalUnlockMode: "sequential",
+            infoSection: {
+                title: "📖 Важная информация",
+                type: "text",
+                text: "Добро пожаловать на курс!\nЗдесь вы можете описать правила, структуру и всё, что захотите.",
+                faq: [
+                    { q: "Как сдать ДЗ?", a: "Вставьте ссылку на выполненную работу в поле под уроком." },
+                    { q: "Что если я не успеваю?", a: "Напишите куратору, возможно продление дедлайна." }
+                ]
+            },
             modules: [
                 { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" },
                 { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" },
@@ -497,6 +570,15 @@
             const progress = ((currentLevel - 1) / academyData.modules.length) * 100;
             document.getElementById('progress-bar').style.width = `${progress}%`;
             document.getElementById('progress-text').innerText = `${Math.round(progress)}% Пройдено`;
+
+            // Отображение кнопки информации для учеников
+            const infoContainer = document.getElementById('user-info-btn-container');
+            if (academyData.infoSection && academyData.infoSection.title) {
+                document.getElementById('user-info-btn-title').innerText = academyData.infoSection.title;
+                infoContainer.classList.remove('hidden');
+            } else {
+                infoContainer.classList.add('hidden');
+            }
 
             const isGlobalDateMode = academyData.globalUnlockMode === 'date';
 
@@ -654,6 +736,58 @@
             document.getElementById('review-input').value = '';
             closeCongratsModal();
         }
+
+        // --- ЛОГИКА ИНФО-МОДАЛКИ ---
+        function openInfoModal() {
+            const info = academyData.infoSection;
+            document.getElementById('info-modal-title').innerText = info.title || 'Информация';
+            
+            const textContainer = document.getElementById('info-modal-text');
+            const faqContainer = document.getElementById('info-modal-faq');
+            
+            if (info.type === 'text') {
+                textContainer.innerText = info.text || '';
+                textContainer.classList.remove('hidden');
+                faqContainer.classList.add('hidden');
+            } else {
+                textContainer.classList.add('hidden');
+                faqContainer.classList.remove('hidden');
+                faqContainer.innerHTML = '';
+                (info.faq || []).forEach((item, idx) => {
+                    faqContainer.innerHTML += `
+                        <div class="glass-card p-4 box-border border border-purple-500/10 cursor-pointer" onclick="toggleFaq(${idx})">
+                            <div class="flex justify-between items-center gap-3">
+                                <h4 class="text-sm font-bold text-white">${item.q || 'Вопрос?'}</h4>
+                                <i data-lucide="chevron-down" id="faq-icon-${idx}" class="w-5 h-5 text-purple-400 transition-transform duration-300 shrink-0"></i>
+                            </div>
+                            <div id="faq-answer-${idx}" class="hidden mt-3 pt-3 border-t border-purple-500/10 text-xs text-zinc-300 leading-relaxed">
+                                ${(item.a || '').replace(/\n/g, '<br>')}
+                            </div>
+                        </div>
+                    `;
+                });
+                lucide.createIcons();
+            }
+            
+            document.getElementById('info-modal').classList.remove('hidden');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('info-modal').classList.add('hidden');
+        }
+
+        window.toggleFaq = function(idx) {
+            const answer = document.getElementById('faq-answer-' + idx);
+            const icon = document.getElementById('faq-icon-' + idx);
+            if (answer.classList.contains('hidden')) {
+                answer.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                answer.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        };
+        // ---------------------------
 
         function openLesson(idx) {
             if (idx === 0 && !isAccessGranted) {
@@ -1048,11 +1182,69 @@ ${chatLink}
             }
         }
 
+        function toggleAdminInfoType() {
+            const typeRadio = document.querySelector('input[name="info_type"]:checked');
+            if (!typeRadio) return;
+            const type = typeRadio.value;
+            if (type === 'text') {
+                document.getElementById('admin-info-text-container').classList.remove('hidden');
+                document.getElementById('admin-info-faq-container').classList.add('hidden');
+            } else {
+                document.getElementById('admin-info-text-container').classList.add('hidden');
+                document.getElementById('admin-info-faq-container').classList.remove('hidden');
+            }
+        }
+
+        window.updateFaqQ = function(idx, val) { academyData.infoSection.faq[idx].q = val; }
+        window.updateFaqA = function(idx, val) { academyData.infoSection.faq[idx].a = val; }
+        
+        window.adminRemoveFaq = function(idx) { 
+            academyData.infoSection.faq.splice(idx, 1); 
+            renderAdminFaq(); 
+        }
+        
+        window.adminAddFaq = function() { 
+            if(!academyData.infoSection.faq) academyData.infoSection.faq = [];
+            academyData.infoSection.faq.push({q:'', a:''}); 
+            renderAdminFaq(); 
+        }
+
+        function renderAdminFaq() {
+            const list = document.getElementById('admin-faq-list');
+            list.innerHTML = '';
+            if(academyData.infoSection && academyData.infoSection.faq) {
+                academyData.infoSection.faq.forEach((item, idx) => {
+                    list.innerHTML += `
+                        <div class="p-3 border border-zinc-800 rounded-lg bg-zinc-900/50 relative group">
+                            <button onclick="adminRemoveFaq(${idx})" class="absolute top-3 right-3 text-red-500 hover:text-red-400 p-1 bg-red-500/10 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            <input type="text" placeholder="Вопрос" value="${item.q}" onchange="updateFaqQ(${idx}, this.value)" class="w-full box-border bg-transparent border-b border-zinc-800 text-sm font-bold text-white p-1 outline-none mb-2 focus:border-purple-500 pr-10">
+                            <textarea placeholder="Ответ" onchange="updateFaqA(${idx}, this.value)" rows="2" class="w-full box-border bg-transparent text-xs text-zinc-400 p-1 outline-none resize-none focus:border-purple-500">${item.a}</textarea>
+                        </div>
+                    `;
+                });
+            }
+            lucide.createIcons();
+        }
+
         function openAdmin() {
             document.getElementById('admin-academy-name').value = academyData.name;
             document.getElementById('admin-secret-code').value = academyData.secretCode || '';
             document.getElementById('admin-support-link').value = academyData.supportLink || '';
             document.getElementById('admin-global-unlock-toggle').checked = (academyData.globalUnlockMode === 'date');
+            
+            // Заполнение инфо-раздела
+            document.getElementById('admin-info-title').value = academyData.infoSection?.title || '';
+            const type = academyData.infoSection?.type || 'text';
+            const typeInput = document.querySelector(`input[name="info_type"][value="${type}"]`);
+            if(typeInput) typeInput.checked = true;
+            document.getElementById('admin-info-text').value = academyData.infoSection?.text || '';
+            
+            if(!academyData.infoSection?.faq) {
+                academyData.infoSection.faq = [];
+            }
+
+            toggleAdminInfoType();
+            renderAdminFaq();
             renderAdminModules();
             document.getElementById('admin-main-view').classList.remove('hidden');
             document.getElementById('admin-users-view').classList.add('hidden');
@@ -1123,6 +1315,13 @@ ${chatLink}
 
                 academyData.secretCode = document.getElementById('admin-secret-code').value.trim();
                 academyData.supportLink = document.getElementById('admin-support-link').value.trim();
+
+                // Сохранение инфо-раздела
+                academyData.infoSection = academyData.infoSection || {};
+                academyData.infoSection.title = document.getElementById('admin-info-title').value.trim();
+                const typeRadio = document.querySelector('input[name="info_type"]:checked');
+                if(typeRadio) academyData.infoSection.type = typeRadio.value;
+                academyData.infoSection.text = document.getElementById('admin-info-text').value;
 
                 updateSupportLinkUI();
                 renderModules();
@@ -1549,6 +1748,10 @@ ${chatLink}
                             if (data.secretCode !== undefined) window.academyData.secretCode = data.secretCode;
                             if (data.supportLink !== undefined) window.academyData.supportLink = data.supportLink;
                             if (data.globalUnlockMode) window.academyData.globalUnlockMode = data.globalUnlockMode;
+                            
+                            // Загружаем инфо-раздел
+                            if (data.infoSection !== undefined) window.academyData.infoSection = data.infoSection;
+                            
                             if (data.modules && Array.isArray(data.modules)) window.academyData.modules = data.modules;
                             
                             if (typeof window.init === 'function') window.init();
