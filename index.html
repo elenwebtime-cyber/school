@@ -9,17 +9,18 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Скрипт для виртуального конфетти -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Премиальный шрифт Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --accent: #a855f7;
             --bg: #09090b;
-            --card-bg: rgba(24, 24, 27, 0.6); 
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-            letter-spacing: 0.015em; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            letter-spacing: -0.01em; 
             background-color: var(--bg);
             background-image: 
                 radial-gradient(circle at 0% 0%, rgba(168, 85, 247, 0.15) 0%, transparent 25%),
@@ -29,17 +30,34 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Luxury Glassmorphism */
         .glass-card {
-            background: var(--card-bg);
+            background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* Анимация карточек */
+        .module-card {
+            transition: transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        @media (hover: hover) {
+            .module-card:hover {
+                transform: scale(0.99);
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            }
+        }
+        .module-card:active {
+            transform: scale(0.98);
+        }
+
         .step-active {
-            border: 1px solid var(--accent);
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(236, 72, 153, 0.5);
+            box-shadow: 0 10px 40px rgba(236, 72, 153, 0.15), inset 0 0 20px rgba(236, 72, 153, 0.05);
         }
 
         .step-locked {
@@ -77,11 +95,6 @@
             transform: translateY(-1px);
         }
 
-        h1, h2, h3, .tracking-tight {
-            letter-spacing: 0.03em !important;
-            font-weight: 600;
-        }
-
         ::-webkit-scrollbar { width: 0px; }
         
         /* Фикс для iOS полей даты */
@@ -98,12 +111,12 @@
         <header class="flex justify-between items-center mb-8 pt-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <h1 id="academy-name" class="text-2xl font-extrabold tracking-tight" onclick="handleAdminTrigger()">Cyber Academy</h1>
+                    <h1 id="academy-name" class="text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-500 to-pink-500 drop-shadow-sm cursor-pointer" onclick="handleAdminTrigger()">Cyber Academy</h1>
                     <div id="cloud-indicator" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-colors duration-500" title="Нет связи с облаком"></div>
                 </div>
-                <div class="flex items-center gap-2 mt-1">
+                <div class="flex items-center gap-2 mt-2">
                     <div class="h-1.5 w-24 bg-zinc-800 rounded-full overflow-hidden">
-                        <div id="progress-bar" class="h-full bg-purple-500 transition-all duration-500" style="width: 0%"></div>
+                        <div id="progress-bar" class="h-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.8)] transition-all duration-500" style="width: 0%"></div>
                     </div>
                     <span id="progress-text" class="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">0% Пройдено</span>
                 </div>
@@ -112,16 +125,16 @@
                 <button id="admin-btn" onclick="openAdmin()" class="hidden w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center transition-all">
                     <i data-lucide="settings" class="text-zinc-400 w-6 h-6"></i>
                 </button>
-                <a id="support-link-btn" href="#" target="_blank" class="hidden w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 items-center justify-center hover:bg-purple-500/20 transition-all shadow-[0_0_15px_rgba(168,85,247,0.15)]">
-                    <span class="text-2xl" style="line-height: 1;">🛟</span>
+                <a id="support-link-btn" href="#" target="_blank" class="hidden w-12 h-12 glass-card items-center justify-center hover:scale-105 active:scale-95 transition-all text-2xl relative" style="border-radius: 24px;">
+                    <span class="relative z-10" style="line-height: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));">🛟</span>
                 </a>
             </div>
         </header>
 
         <!-- ПЛАШКА ПРИВЕТСТВИЯ -->
         <div id="greeting-container" class="hidden mb-6 px-2 transition-all">
-            <h2 id="greeting-text" class="text-lg font-serif italic text-zinc-300 tracking-wide"></h2>
-            <p class="text-xs font-serif italic text-zinc-500 mt-1">У тебя еще есть время до дедлайна, жми на газ! 🏎️</p>
+            <h2 id="greeting-text" class="text-xl font-bold tracking-tight text-zinc-100 leading-tight"></h2>
+            <p class="text-[11px] font-semibold text-white/50 mt-1 uppercase tracking-widest">У тебя еще есть время до дедлайна, жми на газ! 🏎️</p>
         </div>
 
         <!-- КНОПКА ПРАВИЛА / FAQ -->
@@ -613,20 +626,20 @@
                     : `<span class="text-sm font-bold">${idx + 1}</span>`;
 
                 container.innerHTML += `
-                    <div class="glass-card p-5 flex items-center justify-between ${isActive ? 'step-active' : ''} ${isLocked ? 'step-locked' : ''}" 
+                    <div class="glass-card module-card p-6 cursor-pointer flex items-center justify-between ${isActive ? 'step-active' : ''} ${isLocked ? 'step-locked' : ''}" 
                          onclick="${!isLocked ? `openLesson(${idx})` : ''}">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl ${isDone ? 'bg-emerald-500/10' : 'bg-zinc-800'} flex items-center justify-center text-sm font-bold">
+                        <div class="flex items-center gap-4 sm:gap-5">
+                            <div class="w-12 h-12 rounded-[20px] ${isDone ? 'bg-emerald-500/10' : 'bg-zinc-800/80'} flex items-center justify-center text-base font-bold shadow-inner">
                                 ${iconHtml}
                             </div>
                             <div>
-                                <h3 class="font-bold text-sm">${mod.title}</h3>
-                                <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">
+                                <h3 class="font-bold text-base tracking-tight mb-0.5 text-zinc-100">${mod.title}</h3>
+                                <p class="text-[10px] text-white/50 uppercase font-bold tracking-wider">
                                     ${lockedText}
                                 </p>
                             </div>
                         </div>
-                        ${isActive ? '<div class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>' : ''}
+                        ${isActive ? '<div class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.8)] animate-pulse"></div>' : ''}
                     </div>
                 `;
             });
@@ -1797,7 +1810,7 @@ ${chatLink}
                                 const greetingContainer = document.getElementById('greeting-container');
                                 const greetingText = document.getElementById('greeting-text');
                                 if (greetingContainer && greetingText) {
-                                    greetingText.innerText = `Привет, ${data.nickname}! Рада тебя видеть.`;
+                                    greetingText.innerText = `Привет, ${data.nickname}!`;
                                     greetingContainer.classList.remove('hidden');
                                 }
                                 
