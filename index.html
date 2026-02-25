@@ -195,7 +195,7 @@
 
         <!-- ПЛАШКА ПРИВЕТСТВИЯ -->
         <div id="greeting-container" class="hidden mb-6 px-2 transition-all">
-            <h2 id="greeting-text" class="text-xl font-bold tracking-tight text-zinc-100 leading-tight"></h2>
+            <h2 id="greeting-text" class="text-xl font-bold tracking-tight text-lime-400 leading-tight drop-shadow-sm"></h2>
             <p id="greeting-subtitle" class="text-[11px] font-semibold text-white/50 mt-1 uppercase tracking-widest"></p>
         </div>
 
@@ -345,10 +345,10 @@
                             <input type="url" id="hw-input" placeholder="https://..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-purple-500 focus:bg-white/[0.08] text-white transition-all shadow-inner">
                         </div>
                         
-                        <!-- Блок загрузки фото -->
+                        <!-- Блок загрузки фото (до 2-х штук) -->
                         <div class="space-y-2 box-border w-full mt-3">
-                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Или загрузите изображение</label>
-                            <input type="file" id="hw-file-input" accept="image/*" class="hidden" onchange="handleHwFileSelect(event)">
+                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold">Или загрузите фото (макс. 2 шт)</label>
+                            <input type="file" id="hw-file-input" accept="image/*" multiple class="hidden" onchange="handleHwFileSelect(event)">
                             <button type="button" onclick="document.getElementById('hw-file-input').click()" class="w-full box-border bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 text-sm outline-none focus:border-purple-500 hover:bg-purple-500/20 text-purple-300 transition-all shadow-inner flex items-center justify-center gap-2 font-bold tracking-wide">
                                 <i data-lucide="image" class="w-5 h-5 shrink-0"></i> <span id="hw-file-label" class="truncate max-w-[200px]">Прикрепить фото</span>
                             </button>
@@ -698,8 +698,8 @@
 
     <script>
         // Глобальные переменные для файла ДЗ
-        window.currentHwBase64 = null;
-        window.currentHwBlob = null;
+        window.currentHwBase64 = [];
+        window.currentHwBlob = [];
         
         // Глобальный словарь для кэширования фотографий в админке
         window._adminPhotos = {};
@@ -841,6 +841,47 @@
             }, 500);
         }
 
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        document.addEventListener('touchend', e => {
+            if (touchStartX > 30) return; 
+            
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+
+            if (touchEndX - touchStartX > 100 && Math.abs(touchEndY - touchStartY) < 40) {
+                if (!document.getElementById('pdf-modal').classList.contains('hidden')) {
+                    closePdfModal();
+                } else if (!document.getElementById('hw-text-modal').classList.contains('hidden')) {
+                    closeHomeworkModal();
+                } else if (!document.getElementById('lesson-modal').classList.contains('hidden')) {
+                    closeLesson();
+                } else if (!document.getElementById('info-modal').classList.contains('hidden')) {
+                    closeInfoModal();
+                } else if (!document.getElementById('admin-module-edit-modal').classList.contains('hidden')) {
+                    closeAdminModuleEdit();
+                } else if (!document.getElementById('admin-text-edit-modal').classList.contains('hidden')) {
+                    closeAdminTextEdit();
+                } else if (!document.getElementById('admin-faq-edit-modal').classList.contains('hidden')) {
+                    closeAdminFaqEdit();
+                } else if (!document.getElementById('admin-users-view').classList.contains('hidden') && !document.getElementById('admin-modal').classList.contains('hidden')) {
+                    closeAdminUsers();
+                } else if (!document.getElementById('admin-modal').classList.contains('hidden')) {
+                    closeAdmin();
+                } else if (!document.getElementById('congrats-modal').classList.contains('hidden')) {
+                    closeCongratsModal();
+                } else if (!document.getElementById('access-modal').classList.contains('hidden') && isAccessGranted) {
+                    closeAccessModal();
+                }
+            }
+        }, {passive: true});
+
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.expand();
             
@@ -941,8 +982,11 @@
             
             if (greetingContainer && greetingText) {
                 let finalTitle = titleTemp;
+                // Заменяем имя на "имя пользователя" (из поля nickname, где теперь лежит имя и ник)
+                let justName = data.nickname ? data.nickname.split(' (@')[0] : "Гость";
+                
                 if (finalTitle.includes('{name}')) {
-                    finalTitle = finalTitle.replace('{name}', escapeHTML(data.nickname || "Гость"));
+                    finalTitle = finalTitle.replace('{name}', escapeHTML(justName));
                 }
                 
                 greetingText.innerText = finalTitle; 
@@ -1083,13 +1127,10 @@
                 const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
                 const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
                 
-                // В первую очередь берем Имя и Фамилию пользователя, если нет - берем юзернейм
-                let nickname = "Гость " + uid.substring(0, 4);
-                if (tgUser.first_name) {
-                    nickname = tgUser.first_name + (tgUser.last_name ? " " + tgUser.last_name : "");
-                } else if (tgUser.username) {
-                    nickname = "@" + tgUser.username;
-                }
+                let tgUsername = tgUser.username ? `@${tgUser.username}` : "";
+                let baseName = `${tgUser.first_name || ""} ${tgUser.last_name || ""}`.trim();
+                if (!baseName) baseName = "Гость " + uid.substring(0, 4);
+                let nickname = tgUsername ? `${baseName} (${tgUsername})` : baseName;
                 
                 const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid);
                 
@@ -1378,28 +1419,48 @@
         };
 
         window.handleHwFileSelect = async function(event) {
-            const file = event.target.files[0];
-            if (!file) {
-                window.currentHwBase64 = null;
-                window.currentHwBlob = null;
-                document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
+            const files = event.target.files;
+            if (!files || files.length === 0) {
+                window.currentHwBase64 = [];
+                window.currentHwBlob = [];
+                document.getElementById('hw-file-label').innerText = 'Прикрепить фото (макс. 2)';
                 return;
+            }
+
+            if (files.length > 2) {
+                showToast('Можно прикрепить максимум 2 фото!');
+                event.target.value = '';
+                window.currentHwBase64 = [];
+                window.currentHwBlob = [];
+                document.getElementById('hw-file-label').innerText = 'Прикрепить фото (макс. 2)';
+                return;
+            }
+
+            for(let i=0; i < files.length; i++) {
+                if (files[i].size > 5 * 1024 * 1024) {
+                    showToast('Каждое фото не должно превышать 5 МБ!');
+                    event.target.value = '';
+                    return;
+                }
             }
             
             document.getElementById('hw-file-label').innerText = '⏳ Обработка...';
             
             try {
-                const compressed = await window.compressImageToBase64(file);
-                window.currentHwBase64 = compressed.base64;
-                window.currentHwBlob = compressed.blob;
+                window.currentHwBase64 = [];
+                window.currentHwBlob = [];
+
+                for(let i=0; i < files.length; i++) {
+                    const compressed = await window.compressImageToBase64(files[i]);
+                    window.currentHwBase64.push(compressed.base64);
+                    window.currentHwBlob.push(compressed.blob);
+                }
                 
-                let displayName = file.name;
-                if(displayName.length > 15) displayName = displayName.substring(0, 12) + '...';
-                document.getElementById('hw-file-label').innerText = '✅ ' + displayName;
+                document.getElementById('hw-file-label').innerText = '✅ Фото (' + files.length + ' шт.)';
             } catch (e) {
                 console.error(e);
                 showToast('Ошибка при обработке фото!');
-                document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
+                document.getElementById('hw-file-label').innerText = 'Прикрепить фото (макс. 2)';
             }
         };
 
@@ -1589,9 +1650,9 @@
             haptic('medium');
             
             const hwInput = safeString(document.getElementById('hw-input').value).trim();
-            const hasFile = !!window.currentHwBase64;
+            const hasFiles = window.currentHwBase64 && window.currentHwBase64.length > 0;
             
-            if (!isValidInput(hwInput) && !hasFile) {
+            if (!isValidInput(hwInput) && !hasFiles) {
                 showToast('Пожалуйста, вставьте ссылку или прикрепите фото!');
                 return;
             }
@@ -1617,10 +1678,10 @@
             
             const deadlineDate = new Date(targetDeadline);
             const isLate = !isNaN(deadlineDate) && now > deadlineDate;
-            let statusText = "Вовремя ✅";
+            let statusText = "Вовремя✅";
             
             if (isLate) {
-                statusText = "После дедлайна 🚩";
+                statusText = "После дедлайна❌";
                 if (!confirm('Дедлайн пропущен! Сдать с опозданием?')) {
                     return; 
                 }
@@ -1635,41 +1696,45 @@
             submitBtn.classList.add('opacity-50', 'pointer-events-none');
 
             try {
-                if (window.sendToTelegram) {
-                    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-                    const firstName = tgUser.first_name || "Неизвестный";
-                    const lastName = tgUser.last_name || "";
-                    const fullName = escapeHTML(`${firstName} ${lastName}`.trim());
-                    
-                    const moduleTitle = escapeHTML(mod.title);
-                    const safeHwLink = escapeHTML(hwInput);
-                    
-                    const submitTime = now.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
+                const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+                const firstName = tgUser.first_name || "Неизвестный";
+                const lastName = tgUser.last_name || "";
+                const fullName = escapeHTML(`${firstName} ${lastName}`.trim());
+                const username = escapeHTML(tgUser.username || "");
+                
+                const loginText = username ? `@${username}` : "Скрыт";
+                const chatLink = username ? `<a href="https://t.me/${username}">ОТКРЫТЬ ЧАТ С УЧЕНИКОМ</a>` : "<i>Нет юзернейма</i>";
+                const moduleTitle = escapeHTML(mod.title);
+                const safeHwLink = escapeHTML(hwInput);
+                const submitTime = now.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
 
-                    let contentText = "";
-                    if (hasFile && hwInput) {
-                        contentText = `<b>Изображение:</b> Прикреплено\n<b>Текстовая ссылка:</b> <a href="${safeHwLink}">Перейти</a>`;
-                    } else if (hasFile) {
-                        contentText = `<b>Изображение:</b> Прикреплено`;
-                    } else {
-                        contentText = `<b>Ссылка на ДЗ:</b> <a href="${safeHwLink}">Перейти к работе</a>`;
-                    }
+                const hwLinkStr = hwInput ? `<a href="${safeHwLink}">${safeHwLink}</a>` : "Нет ссылки (только фото)";
 
-                    const tgMessage = `
+                const tgMessage = `
 <b>Ученик:</b> ${fullName}
+<b>Контакт:</b> ${loginText}
+${chatLink}
 
 <b>Модуль:</b> ${moduleTitle}
-${contentText}
+<b>Ссылка на ДЗ:</b> ${hwLinkStr}
 <b>Статус:</b> ${statusText}
 <b>Время и дата сдачи:</b> ${submitTime}
-                    `.trim();
+                `.trim();
 
-                    // Не блокируем UI ожиданием отправки в телеграм
-                    window.sendToTelegram(tgMessage, window.currentHwBlob).catch(e => console.error("Tg fail", e));
+                if (window.sendToTelegram) {
+                    if (hasFiles) {
+                        // Отправляем 1 фото вместе с текстом
+                        await window.sendToTelegram(tgMessage, window.currentHwBlob[0]);
+                        // Если есть 2 фото, отправляем его отдельно (без текста, чтобы не дублировать)
+                        if (window.currentHwBlob.length > 1) {
+                            await window.sendToTelegram("", window.currentHwBlob[1]);
+                        }
+                    } else {
+                        await window.sendToTelegram(tgMessage, null);
+                    }
                 }
 
                 if (window.setDoc && window.doc && window.db) {
-                    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
                     const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
                     
                     let newProgress = currentLevel;
@@ -1686,8 +1751,8 @@ ${contentText}
                         timestamp: now.toISOString() 
                     };
 
-                    if (hasFile) {
-                        updatedHw.photoUrl = window.currentHwBase64; // Сохраняем готовую Base64 строку в облако
+                    if (hasFiles) {
+                        updatedHw.photoUrls = window.currentHwBase64; // Массив из 1 или 2 Base64 строк
                     }
 
                     await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
@@ -1701,9 +1766,9 @@ ${contentText}
                 // Очищаем форму только в случае успешной отправки
                 document.getElementById('hw-input').value = '';
                 document.getElementById('hw-file-input').value = '';
-                document.getElementById('hw-file-label').innerText = 'Прикрепить фото';
-                window.currentHwBase64 = null;
-                window.currentHwBlob = null;
+                document.getElementById('hw-file-label').innerText = 'Прикрепить фото (макс. 2)';
+                window.currentHwBase64 = [];
+                window.currentHwBlob = [];
 
                 if (!isLate) {
                     confetti({
@@ -1745,25 +1810,21 @@ ${contentText}
             }
         }
 
-        window.openAdminPhoto = function(uid, idx) {
+        window.openAdminPhoto = function(uid, idx, photoIdx = 0) {
             haptic('light');
-            const dataUrl = window._adminPhotos[`${uid}_${idx}`];
+            const dataUrl = window._adminPhotos[`${uid}_${idx}_${photoIdx}`] || window._adminPhotos[`${uid}_${idx}`];
             if (dataUrl) {
-                if (dataUrl.startsWith('http')) {
-                    window.open(dataUrl, '_blank');
+                const newTab = window.open();
+                if (newTab) {
+                    newTab.document.body.innerHTML = `
+                        <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;min-height:100vh;">
+                            <img src="${dataUrl}" style="max-width:100%;max-height:100vh;object-fit:contain;">
+                        </body>`;
                 } else {
-                    const newTab = window.open();
-                    if (newTab) {
-                        newTab.document.body.innerHTML = `
-                            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;min-height:100vh;">
-                                <img src="${dataUrl}" style="max-width:100%;max-height:100vh;object-fit:contain;">
-                            </body>`;
-                    } else {
-                        const a = document.createElement('a');
-                        a.href = dataUrl;
-                        a.download = `homework_${parseInt(idx)+1}.jpg`;
-                        a.click();
-                    }
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = `homework_${parseInt(idx)+1}_${parseInt(photoIdx)+1}.jpg`;
+                    a.click();
                 }
             }
         };
@@ -2405,16 +2466,20 @@ ${contentText}
                         const lessonTitle = window.academyData.modules[i].title || `Урок ${i+1}`;
                         const fbHtml = hw.feedback ? `<span class="text-xs ml-1" title="Оценка урока">${hw.feedback}</span>` : '';
                         
-                        const hasAnyHw = hw.link || hw.photoUrl;
+                        const hasAnyHw = hw.link || hw.photoUrls || hw.photoUrl;
                         let linkHtml = '';
                         if (hw.link) {
                             linkHtml += `<a href="${escapeHTML(hw.link)}" target="_blank" class="text-[11px] text-purple-400 hover:text-purple-300 underline truncate max-w-[160px] inline-block font-medium">Ссылка</a> `;
                         }
-                        if (hw.photoUrl) {
-                            // Сохраняем огромную Base64 в кэш, чтобы не вешать DOM
-                            window._adminPhotos[`${docSnap.id}_${i}`] = hw.photoUrl;
-                            linkHtml += `<button onclick="openAdminPhoto('${docSnap.id}', ${i})" class="text-[11px] text-pink-400 hover:text-pink-300 underline inline-block font-medium ml-2 flex items-center gap-1 cursor-pointer"><i data-lucide="image" class="w-3 h-3"></i> Фото</button>`;
-                        }
+                        
+                        // Обработка массива фото или одного старого фото
+                        let photosArray = hw.photoUrls || (hw.photoUrl ? [hw.photoUrl] : []);
+                        
+                        photosArray.forEach((pUrl, pIdx) => {
+                            window._adminPhotos[`${docSnap.id}_${i}_${pIdx}`] = pUrl;
+                            linkHtml += `<button onclick="openAdminPhoto('${docSnap.id}', ${i}, ${pIdx})" class="text-[11px] text-pink-400 hover:text-pink-300 underline inline-block font-medium ml-2 flex items-center gap-1 cursor-pointer"><i data-lucide="image" class="w-3 h-3"></i> Фото ${pIdx+1}</button>`;
+                        });
+
                         if (!hasAnyHw) {
                             linkHtml = `<span class="text-[10px] text-zinc-600 italic font-medium">ДЗ не сдано</span>`;
                         }
@@ -2436,7 +2501,7 @@ ${contentText}
                                         <span class="text-[11px] text-zinc-300 font-bold truncate">${escapeHTML(lessonTitle)} ${fbHtml}</span>
                                         ${extText}
                                     </div>
-                                    <div class="flex items-center mt-0.5">
+                                    <div class="flex items-center mt-0.5 flex-wrap">
                                         ${linkHtml}
                                     </div>
                                 </div>
@@ -2615,6 +2680,7 @@ ${contentText}
         if (curatorId) chatIds.push(curatorId);
 
         const uniqueChats = [...new Set(chatIds)];
+        const endpoint = photoBlob ? 'sendPhoto' : 'sendMessage';
 
         for (const chatId of uniqueChats) {
             if (!chatId) continue;
@@ -2624,7 +2690,9 @@ ${contentText}
                     const formData = new FormData();
                     formData.append("chat_id", chatId.toString());
                     formData.append("parse_mode", "HTML");
-                    formData.append("caption", messageText);
+                    if (messageText) {
+                        formData.append("caption", messageText);
+                    }
                     formData.append("photo", photoBlob, "homework.jpg");
 
                     await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
@@ -2734,13 +2802,11 @@ ${contentText}
                         const docSnap = await getDoc(docRef);
                         const platform = window.Telegram?.WebApp?.platform || 'unknown';
                         
-                        // В первую очередь берем Имя и Фамилию пользователя
-                        let nickname = "Гость " + stableUid.substring(0, 4);
-                        if (tgUser.first_name) {
-                            nickname = tgUser.first_name + (tgUser.last_name ? " " + tgUser.last_name : "");
-                        } else if (tgUser.username) {
-                            nickname = "@" + tgUser.username;
-                        }
+                        // Сохраняем имя и никнейм в одной строке для красивого вывода
+                        let tgUsername = tgUser.username ? `@${tgUser.username}` : "";
+                        let baseName = `${tgUser.first_name || ""} ${tgUser.last_name || ""}`.trim();
+                        if (!baseName) baseName = "Гость " + stableUid.substring(0, 4);
+                        let nickname = tgUsername ? `${baseName} (${tgUsername})` : baseName;
                         
                         onSnapshot(docRef, async (docSnap) => {
                             if (!docSnap.exists()) {
