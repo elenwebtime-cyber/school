@@ -693,6 +693,23 @@
         // Глобальная переменная для файла ДЗ
         window.currentHwFile = null;
 
+        // --- Глобальный фикс нативной клавиатуры ---
+        document.addEventListener('touchend', (e) => {
+            const active = document.activeElement;
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+                if (e.target !== active && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
+                    active.blur();
+                }
+            }
+        }, { passive: true });
+
+        document.addEventListener('focusout', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            }
+        });
+        // ------------------------------------------
+
         // --- Утилиты безопасности, Спама и Обратной связи ---
         function escapeHTML(str) {
             if (typeof str !== 'string') return '';
@@ -1570,6 +1587,11 @@
                 return;
             }
 
+            if (!window.auth || !window.auth.currentUser) {
+                showToast('Ошибка авторизации. Перезапустите приложение.');
+                return;
+            }
+
             const mod = academyData.modules[currentViewedLesson];
             const now = new Date();
             
@@ -1602,11 +1624,20 @@
 
             try {
                 if (hasFile) {
-                    const uid = window.auth.currentUser.uid;
+                    if (!window.storage || !window.uploadBytes || !window.ref) {
+                        throw new Error("Сервис загрузки файлов не загружен");
+                    }
+                    const authUid = window.auth.currentUser.uid;
                     const file = window.currentHwFile;
                     const ext = file.name.split('.').pop();
-                    const storageRef = window.ref(window.storage, `artifacts/${window.appId}/users/${uid}/homeworks/lesson_${currentViewedLesson}_${Date.now()}.${ext}`);
-                    await window.uploadBytes(storageRef, file);
+                    const storageRef = window.ref(window.storage, `artifacts/${window.appId}/users/${authUid}/homeworks/lesson_${currentViewedLesson}_${Date.now()}.${ext}`);
+                    
+                    // Promise.race защищает от бесконечного зависания, если пропал интернет
+                    await Promise.race([
+                        window.uploadBytes(storageRef, file),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("Таймаут загрузки")), 20000))
+                    ]);
+                    
                     photoUrl = await window.getDownloadURL(storageRef);
                 }
 
@@ -1645,10 +1676,11 @@ ${contentText}
 <b>Время и дата сдачи:</b> ${submitTime}
                     `.trim();
 
-                    window.sendToTelegram(tgMessage, photoUrl);
+                    // Не блокируем UI ожиданием отправки в телеграм
+                    window.sendToTelegram(tgMessage, photoUrl).catch(e => console.error("Tg fail", e));
                 }
 
-                if (window.auth && window.auth.currentUser && window.setDoc && window.doc && window.db) {
+                if (window.setDoc && window.doc && window.db) {
                     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
                     const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
                     
@@ -1704,7 +1736,7 @@ ${contentText}
 
             } catch (error) {
                 console.error("Ошибка при отправке ДЗ:", error);
-                showToast('Ошибка! Проверьте интернет или размер фото.');
+                showToast('Ошибка отправки! Попробуйте еще раз.');
             } finally {
                 // В любом случае возвращаем кнопку в рабочее состояние
                 submitBtn.innerText = origBtnText;
