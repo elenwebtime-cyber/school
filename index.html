@@ -313,7 +313,7 @@
                     <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Дополнительные материалы (PDF)
                 </button>
                 <button type="button" id="lesson-hw-text-btn" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
-                    <i data-lucide="edit-3" class="w-5 h-5 text-purple-400"></i> Домашнее задание
+                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Домашнее задание
                 </button>
             </div>
 
@@ -1980,7 +1980,7 @@ ${chatLink}
                                 <span class="text-zinc-500 text-sm font-bold w-5 group-hover:text-purple-400 transition-colors">${idx + 1}.</span>
                                 <span class="flex-1 text-sm font-semibold text-white truncate">${escapeHTML(mod.title)}</span>
                                 ${typeIcon}
-                                <i data-lucide="edit-3" class="w-4 h-4 text-zinc-400 group-hover:text-purple-400 transition-colors"></i>
+                                <i data-lucide="settings" class="w-4 h-4 text-zinc-400 group-hover:text-purple-400 transition-colors"></i>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
                                 <button onclick="moveModuleUp(${idx}); event.stopPropagation();" class="p-2 text-zinc-400 hover:text-white hover:bg-white/10 bg-white/[0.05] rounded-lg transition-all ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}" ${idx === 0 ? 'disabled' : ''}>
