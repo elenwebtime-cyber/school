@@ -125,8 +125,8 @@
                 <button id="admin-btn" onclick="openAdmin()" class="hidden w-12 h-12 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all backdrop-blur-md shadow-lg hover:bg-white/10 shrink-0">
                     <i data-lucide="settings" class="text-zinc-300 w-6 h-6"></i>
                 </button>
-                <!-- Идеально круглая плавающая кнопка (только круг) -->
-                <a id="support-link-btn" href="#" target="_blank" class="hidden w-12 h-12 items-center justify-center hover:scale-105 active:scale-95 transition-all text-2xl relative shadow-[0_5px_20px_rgba(255,255,255,0.15)] bg-white/[0.05] shrink-0" style="border-radius: 50% !important; border: none; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+                <!-- Идеально круглая плавающая кнопка без квадрата -->
+                <a id="support-link-btn" href="#" target="_blank" class="hidden w-12 h-12 rounded-full bg-white/[0.05] border border-white/10 items-center justify-center hover:bg-white/[0.1] hover:scale-105 active:scale-95 transition-all text-2xl relative shadow-lg backdrop-blur-md shrink-0">
                     <span class="relative z-10" style="line-height: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));">🛟</span>
                 </a>
             </div>
@@ -315,18 +315,18 @@
                     <div class="glass-card p-5 space-y-4 box-border w-full" style="border-radius: 20px;">
                         <h3 class="font-bold text-xs text-purple-400 uppercase tracking-widest mb-1">Инфо-раздел (Правила / FAQ)</h3>
                         <div class="space-y-1.5 box-border w-full">
-                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Заголовок кнопки</label>
-                            <input type="text" id="admin-info-title" placeholder="Например: 📖 Правила Академии" class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
+                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Заголовок кнопки на главной</label>
+                            <input type="text" id="admin-info-title" placeholder="Например: 📖 Важная информация" class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                         </div>
                         
-                        <div id="admin-info-text-container" class="space-y-1.5">
-                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Текст страницы (Правила, структура и т.д.)</label>
+                        <div id="admin-info-text-container" class="pt-4 border-t border-white/10 space-y-1.5">
+                            <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">БЛОК 1: Текст страницы (Правила, структура и т.д.)</label>
                             <textarea id="admin-info-text" rows="4" placeholder="Введите текст или оставьте пустым..." class="w-full box-border bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner resize-none"></textarea>
                         </div>
                         
-                        <div id="admin-info-faq-container" class="space-y-3">
-                            <div class="flex justify-between items-center mt-2 pt-2 border-t border-white/5">
-                                <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Вопросы и ответы (FAQ)</label>
+                        <div id="admin-info-faq-container" class="pt-4 border-t border-white/10 space-y-3">
+                            <div class="flex justify-between items-center mt-2">
+                                <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">БЛОК 2: Вопросы и ответы (FAQ)</label>
                                 <button onclick="adminAddFaq()" class="text-[10px] bg-purple-500/10 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-500/20 hover:bg-purple-500/20 transition-all font-bold uppercase tracking-widest flex items-center gap-1 shadow-sm">
                                     <i data-lucide="plus" class="w-3 h-3"></i> Добавить
                                 </button>
@@ -483,7 +483,7 @@
             }, 500);
         }
 
-        // Логика свайпа для возврата
+        // Логика свайпа для возврата (строго от левого края, менее чувствительный)
         let touchStartX = 0;
         let touchStartY = 0;
 
@@ -493,16 +493,22 @@
         }, {passive: true});
 
         document.addEventListener('touchend', e => {
-            if (touchStartX > 30) return; // Только левый край (30px)
+            // Реагируем только если свайп начался в левых 30 пикселях экрана
+            if (touchStartX > 30) return; 
+            
             let touchEndX = e.changedTouches[0].screenX;
             let touchEndY = e.changedTouches[0].screenY;
 
-            // Меньше чувствительность (длинный свайп, малое отклонение по вертикали)
+            // Длина свайпа минимум 100px, отклонение по вертикали не больше 40px
             if (touchEndX - touchStartX > 100 && Math.abs(touchEndY - touchStartY) < 40) {
                 if (!document.getElementById('lesson-modal').classList.contains('hidden')) {
                     closeLesson();
                 } else if (!document.getElementById('info-modal').classList.contains('hidden')) {
                     closeInfoModal();
+                } else if (!document.getElementById('admin-module-edit-modal').classList.contains('hidden')) {
+                    closeAdminModuleEdit();
+                } else if (!document.getElementById('admin-users-view').classList.contains('hidden') && !document.getElementById('admin-modal').classList.contains('hidden')) {
+                    closeAdminUsers();
                 } else if (!document.getElementById('admin-modal').classList.contains('hidden')) {
                     closeAdmin();
                 } else if (!document.getElementById('congrats-modal').classList.contains('hidden')) {
@@ -573,7 +579,7 @@
         function updateSupportLinkUI() {
             const btn = document.getElementById('support-link-btn');
             if (!btn) return;
-            if (window.academyData.supportLink) {
+            if (window.academyData.supportLink && window.academyData.supportLink.trim() !== '') {
                 btn.href = window.academyData.supportLink;
                 btn.classList.remove('hidden');
                 btn.classList.add('flex');
@@ -609,11 +615,11 @@
             document.getElementById('progress-bar').style.width = `${progress}%`;
             document.getElementById('progress-text').innerText = `${Math.round(progress)}% Пройдено`;
 
-            // Отображение кнопки информации для учеников
+            // Отображение кнопки информации для учеников (если заполнен текст ИЛИ faq)
             const infoContainer = document.getElementById('user-info-btn-container');
             const info = academyData.infoSection;
             const hasText = info && info.text && info.text.trim() !== '';
-            const hasFaq = info && info.faq && info.faq.length > 0;
+            const hasFaq = info && info.faq && info.faq.length > 0 && info.faq.some(f => f.q.trim() !== '' || f.a.trim() !== '');
 
             if (info && info.title && (hasText || hasFaq)) {
                 document.getElementById('user-info-btn-title').innerText = info.title;
@@ -794,10 +800,11 @@
                 textContainer.classList.add('hidden');
             }
             
-            if (info.faq && info.faq.length > 0) {
+            if (info.faq && info.faq.length > 0 && info.faq.some(f => f.q.trim() !== '' || f.a.trim() !== '')) {
                 faqContainer.classList.remove('hidden');
                 faqContainer.innerHTML = '';
                 info.faq.forEach((item, idx) => {
+                    if (item.q.trim() === '' && item.a.trim() === '') return;
                     faqContainer.innerHTML += `
                         <div class="glass-card p-5 box-border border border-white/10 rounded-2xl cursor-pointer hover:bg-white/[0.05] transition-all shadow-[0_5px_20px_rgba(0,0,0,0.3)]" onclick="toggleFaq(${idx})">
                             <div class="flex justify-between items-center gap-3">
@@ -899,7 +906,7 @@
             const hwFormWrapper = document.getElementById('hw-form-wrapper');
             const submitBtn = document.getElementById('lesson-submit-btn');
 
-            if (hwData) {
+            if (hwData && hwData.status) {
                 hwStatusContainer.classList.remove('hidden');
                 let statusText = '';
                 let statusClass = '';
@@ -947,8 +954,8 @@
                 if (isNaN(d)) {
                     timerEl.innerText = "Не установлен";
                     timerEl.className = "text-lg md:text-xl font-mono tracking-wider font-bold text-white transition-all";
-                    if (!hwData || hwData.status === 'rejected') {
-                        submitBtn.innerText = hwData && hwData.status === 'rejected' ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
+                    if (!hwData || hwData.status === 'rejected' || !hwData.status) {
+                        submitBtn.innerText = (hwData && hwData.status === 'rejected') ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
                         submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
                     }
                     return;
@@ -961,7 +968,7 @@
                     timerEl.innerText = "00:00:00";
                     timerEl.className = "text-2xl md:text-3xl font-mono tracking-widest font-black text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,1)] transition-all";
                     
-                    if (!hwData || hwData.status === 'rejected') {
+                    if (!hwData || hwData.status === 'rejected' || !hwData.status) {
                         submitBtn.innerText = "СДАТЬ С ОПОЗДАНИЕМ";
                         submitBtn.className = "w-full box-border glass-card bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2 shadow-[0_0_15px_rgba(239,68,68,0.2)]";
                     }
@@ -990,8 +997,8 @@
                     timerEl.innerText = timeStr;
                     timerEl.className = `text-lg md:text-xl font-mono tracking-wider font-bold ${colorClass} transition-all`;
                     
-                    if (!hwData || hwData.status === 'rejected') {
-                        submitBtn.innerText = hwData && hwData.status === 'rejected' ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
+                    if (!hwData || hwData.status === 'rejected' || !hwData.status) {
+                        submitBtn.innerText = (hwData && hwData.status === 'rejected') ? "ОТПРАВИТЬ ИСПРАВЛЕННОЕ" : "ОТПРАВИТЬ РАБОТУ";
                         submitBtn.className = "w-full box-border btn-primary py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all mt-2";
                     }
                 }
@@ -1273,10 +1280,6 @@ ${chatLink}
                 academyData.infoSection.faq = [];
             }
             
-            // Открываем сразу оба блока
-            document.getElementById('admin-info-text-container').classList.remove('hidden');
-            document.getElementById('admin-info-faq-container').classList.remove('hidden');
-
             renderAdminFaq();
             renderAdminModules();
             document.getElementById('admin-main-view').classList.remove('hidden');
@@ -1300,22 +1303,52 @@ ${chatLink}
             }
         };
 
+        window.moveModuleUp = function(idx) {
+            if (idx > 0) {
+                const temp = academyData.modules[idx];
+                academyData.modules[idx] = academyData.modules[idx - 1];
+                academyData.modules[idx - 1] = temp;
+                renderAdminModules();
+                window.saveAcademyDataToCloud();
+                renderModules();
+            }
+        };
+
+        window.moveModuleDown = function(idx) {
+            if (idx < academyData.modules.length - 1) {
+                const temp = academyData.modules[idx];
+                academyData.modules[idx] = academyData.modules[idx + 1];
+                academyData.modules[idx + 1] = temp;
+                renderAdminModules();
+                window.saveAcademyDataToCloud();
+                renderModules();
+            }
+        };
+
         function renderAdminModules() {
             const list = document.getElementById('admin-modules-list');
             list.innerHTML = '';
             academyData.modules.forEach((mod, idx) => {
                 const typeIcon = academyData.globalUnlockMode === 'date' ? '<i data-lucide="calendar" class="w-4 h-4 text-purple-400" title="По дате"></i>' : '<i data-lucide="link" class="w-4 h-4 text-emerald-400" title="Последовательно"></i>';
                 list.innerHTML += `
-                    <div class="flex items-center gap-3 bg-white/[0.03] p-3.5 rounded-xl border border-white/10 shadow-lg hover:border-purple-500/50 transition-all backdrop-blur-sm group">
+                    <div class="flex items-center gap-2 bg-white/[0.03] p-3.5 rounded-xl border border-white/10 shadow-lg hover:border-purple-500/50 transition-all backdrop-blur-sm group">
                         <div onclick="openAdminModuleEdit(${idx})" class="flex-1 flex items-center gap-3 cursor-pointer truncate">
                             <span class="text-zinc-500 text-sm font-bold w-5 group-hover:text-purple-400 transition-colors">${idx + 1}.</span>
                             <span class="flex-1 text-sm font-semibold text-white truncate">${mod.title}</span>
                             ${typeIcon}
                             <i data-lucide="edit-3" class="w-4 h-4 text-zinc-400 group-hover:text-purple-400 transition-colors"></i>
                         </div>
-                        <button onclick="adminDeleteModule(${idx})" class="p-2 text-red-500 hover:text-white hover:bg-red-500/80 bg-red-500/10 rounded-lg transition-all border border-transparent hover:border-red-500/50">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="moveModuleUp(${idx}); event.stopPropagation();" class="p-2 text-zinc-400 hover:text-white hover:bg-white/10 bg-white/[0.05] rounded-lg transition-all ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}" ${idx === 0 ? 'disabled' : ''}>
+                                <i data-lucide="chevron-up" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="moveModuleDown(${idx}); event.stopPropagation();" class="p-2 text-zinc-400 hover:text-white hover:bg-white/10 bg-white/[0.05] rounded-lg transition-all ${idx === academyData.modules.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}" ${idx === academyData.modules.length - 1 ? 'disabled' : ''}>
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="adminDeleteModule(${idx}); event.stopPropagation();" class="p-2 text-red-500 hover:text-white hover:bg-red-500/80 bg-red-500/10 rounded-lg transition-all border border-transparent hover:border-red-500/50 ml-1">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
             });
@@ -1638,7 +1671,7 @@ ${chatLink}
         };
 
         window.resetUserProgress = async function(uid) {
-            if (confirm("Точно сбросить прогресс этому студенту?")) {
+            if (confirm("Точно сбросить прогресс этому студенту? Это также удалит все его сданные работы.")) {
                 try {
                     await window.updateDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
                         progress: 1,
@@ -1653,7 +1686,7 @@ ${chatLink}
                         if(window.currentUserData) window.currentUserData.homeworks = {};
                         renderModules();
                     }
-                    alert("Прогресс сброшен!");
+                    alert("Прогресс и домашние задания сброшены!");
                 } catch(e) {
                     console.error("Ошибка при сбросе", e);
                     alert("Произошла ошибка при сбросе");
