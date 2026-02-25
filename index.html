@@ -312,6 +312,9 @@
                 <button type="button" id="lesson-pdf-btn2" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
                     <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Дополнительные материалы (PDF)
                 </button>
+                <button type="button" id="lesson-hw-text-btn" class="hidden flex items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
+                    <i data-lucide="edit-3" class="w-5 h-5 text-purple-400"></i> Домашнее задание
+                </button>
             </div>
 
             <div class="mt-auto pt-2 pb-6 box-border w-full relative z-40">
@@ -340,7 +343,7 @@
         </div>
     </div>
 
-    <!-- Модалка просмотра PDF (Добавлены классы для плавного появления opacity) -->
+    <!-- Модалка просмотра PDF -->
     <div id="pdf-modal" class="fixed inset-0 z-[70] bg-[#09090b]/95 backdrop-blur-xl hidden flex-col box-border transition-opacity duration-300 opacity-0">
         <div class="flex items-center justify-between p-4 border-b border-white/10 shadow-lg relative z-20" style="padding-top: max(1rem, env(safe-area-inset-top));">
             <h2 id="pdf-modal-title" class="text-white font-bold text-sm tracking-wide truncate pr-4">Документ</h2>
@@ -354,6 +357,19 @@
                 <div class="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin opacity-50"></div>
             </div>
             <iframe id="pdf-iframe" src="" class="absolute inset-0 w-full h-full border-none z-10 bg-transparent rounded-b-2xl" allowfullscreen webkitallowfullscreen></iframe>
+        </div>
+    </div>
+
+    <!-- Модалка текста ДЗ -->
+    <div id="hw-text-modal" class="fixed inset-0 z-[75] bg-[#09090b]/95 backdrop-blur-xl hidden flex-col box-border transition-opacity duration-300 opacity-0 overflow-y-auto">
+        <div class="flex items-center justify-between p-4 border-b border-white/10 shadow-lg relative z-20" style="padding-top: max(1rem, env(safe-area-inset-top));">
+            <h2 class="text-white font-bold text-base tracking-wide truncate pr-4">Домашнее задание</h2>
+            <button onclick="closeHomeworkModal()" class="text-zinc-400 hover:text-white transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-full shrink-0">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="flex-1 w-full p-4 sm:p-6 pb-12" style="padding-bottom: max(3rem, env(safe-area-inset-bottom));">
+            <div class="glass-card p-5 sm:p-6 w-full text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap font-medium shadow-inner" id="hw-text-content"></div>
         </div>
     </div>
 
@@ -599,6 +615,11 @@
                         <textarea id="edit-mod-desc" rows="3" class="w-full box-border block bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner resize-none"></textarea>
                     </div>
 
+                    <div class="space-y-1.5 box-border w-full">
+                        <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Текст домашнего задания</label>
+                        <textarea id="edit-mod-homework" rows="4" placeholder="Опишите задание для ученика..." class="w-full box-border block bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner resize-none"></textarea>
+                    </div>
+
                     <div class="space-y-1.5 p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl box-border w-full overflow-hidden shadow-inner" id="unlock-date-container" style="display: none;">
                         <label class="text-[10px] uppercase text-purple-300 font-bold block mb-2 tracking-wide">Время для открытия урока</label>
                         <input type="datetime-local" id="edit-mod-unlock-date" class="block w-full min-w-0 max-w-full box-border bg-white/[0.05] border border-white/10 rounded-lg px-2 sm:px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 transition-all [color-scheme:dark]">
@@ -752,6 +773,8 @@
             if (touchEndX - touchStartX > 100 && Math.abs(touchEndY - touchStartY) < 40) {
                 if (!document.getElementById('pdf-modal').classList.contains('hidden')) {
                     closePdfModal();
+                } else if (!document.getElementById('hw-text-modal').classList.contains('hidden')) {
+                    closeHomeworkModal();
                 } else if (!document.getElementById('lesson-modal').classList.contains('hidden')) {
                     closeLesson();
                 } else if (!document.getElementById('info-modal').classList.contains('hidden')) {
@@ -823,10 +846,10 @@
                 ]
             },
             modules: [
-                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" },
-                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" },
-                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" },
-                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "" }
+                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "" },
+                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "" },
+                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "" },
+                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "" }
             ]
         };
 
@@ -1233,6 +1256,34 @@
         }
         // ------------------------------------------
 
+        function openHomeworkModal(text) {
+            haptic('light');
+            document.getElementById('hw-text-content').innerText = text;
+            const modal = document.getElementById('hw-text-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+            }, 10);
+            lucide.createIcons();
+        }
+
+        function closeHomeworkModal() {
+            haptic('light');
+            const modal = document.getElementById('hw-text-modal');
+            
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.getElementById('hw-text-content').innerText = '';
+            }, 300); 
+        }
+
         function openLesson(idx) {
             haptic('light');
             if (idx === 0 && !isAccessGranted) {
@@ -1256,6 +1307,7 @@
             const materialsContainer = document.getElementById('lesson-materials-container');
             const pdfBtn = document.getElementById('lesson-pdf-btn');
             const pdfBtn2 = document.getElementById('lesson-pdf-btn2');
+            const hwTextBtn = document.getElementById('lesson-hw-text-btn');
 
             let hasMaterials = false;
             
@@ -1277,6 +1329,16 @@
             } else {
                 pdfBtn2.classList.add('hidden');
                 pdfBtn2.classList.remove('flex');
+            }
+
+            if (mod.homework_text && mod.homework_text.trim() !== '') {
+                hwTextBtn.onclick = () => openHomeworkModal(mod.homework_text);
+                hwTextBtn.classList.remove('hidden');
+                hwTextBtn.classList.add('flex');
+                hasMaterials = true;
+            } else {
+                hwTextBtn.classList.add('hidden');
+                hwTextBtn.classList.remove('flex');
             }
 
             if (hasMaterials) {
@@ -1950,7 +2012,8 @@ ${chatLink}
                 deadline: "2026-12-31T23:59",
                 pdfUrl: "",
                 pdfUrl2: "",
-                unlockDate: ""
+                unlockDate: "",
+                homework_text: ""
             });
             renderAdminModules();
             window.saveAcademyDataToCloud();
@@ -2048,6 +2111,9 @@ ${chatLink}
             document.getElementById('edit-mod-deadline').value = mod.deadline || '';
             document.getElementById('edit-mod-unlock-date').value = mod.unlockDate || '';
             
+            // Вставляем текст домашнего задания
+            document.getElementById('edit-mod-homework').value = mod.homework_text || '';
+            
             document.getElementById('unlock-date-container').style.display = academyData.globalUnlockMode === 'date' ? 'block' : 'none';
             
             updateAdminVideoPreview();
@@ -2080,6 +2146,9 @@ ${chatLink}
                 mod.pdfUrl2 = document.getElementById('edit-mod-pdf2').value;
                 mod.deadline = document.getElementById('edit-mod-deadline').value;
                 mod.unlockDate = document.getElementById('edit-mod-unlock-date').value;
+                
+                // Сохраняем текст домашнего задания
+                mod.homework_text = document.getElementById('edit-mod-homework').value;
 
                 closeAdminModuleEdit();
                 window.saveAcademyDataToCloud();
