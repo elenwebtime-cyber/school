@@ -802,7 +802,7 @@
         }
 
         const academyData = {
-            name: "Нейросети: Мастер",
+            name: localStorage.getItem('cached_academy_name_' + window.APP_CONFIG.APP_ID) || "Cyber Academy",
             secretCode: "VIP2026",
             supportLink: "",
             globalUnlockMode: "sequential",
@@ -835,6 +835,7 @@
         window.saveAcademyDataToCloud = async function() {
             if (window.db && window.setDoc && window.doc) {
                 try {
+                    localStorage.setItem('cached_academy_name_' + window.APP_CONFIG.APP_ID, window.academyData.name);
                     await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'config', 'academy_info'), window.academyData);
                 } catch(e) {
                     console.error("Ошибка сохранения данных", e);
@@ -2416,7 +2417,10 @@ ${chatLink}
                         const configSnap = await getDoc(configRef);
                         if (configSnap.exists()) {
                             const data = configSnap.data();
-                            if (data.name) window.academyData.name = data.name;
+                            if (data.name) {
+                                window.academyData.name = data.name;
+                                localStorage.setItem('cached_academy_name_' + window.APP_CONFIG.APP_ID, data.name);
+                            }
                             if (data.secretCode !== undefined) window.academyData.secretCode = data.secretCode;
                             if (data.supportLink !== undefined) window.academyData.supportLink = data.supportLink;
                             if (data.globalUnlockMode) window.academyData.globalUnlockMode = data.globalUnlockMode;
