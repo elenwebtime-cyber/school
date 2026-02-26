@@ -916,7 +916,7 @@
                     <div class="min-h-screen flex items-center justify-center p-6 text-center bg-black">
                         <div class="glass-card p-8 max-w-sm w-full space-y-4">
                             <div class="w-16 h-16 bg-red-500/10 rounded-2xl mx-auto flex items-center justify-center border border-red-500/20">
-                                <svg class="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77-1.333.192 3 1.732 3z"></path></svg>
+                                <svg class="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                             </div>
                             <h2 class="text-xl font-bold text-white">Доступ запрещен</h2>
                             <p class="text-sm text-zinc-400">Пожалуйста, откройте это приложение через официального Telegram-бота.</p>
@@ -1191,6 +1191,9 @@
 
                 await window.setDoc(docRef, {
                     nickname: nickname,
+                    tgFirstName: tgUser.first_name || "",
+                    tgLastName: tgUser.last_name || "",
+                    tgUsername: tgUser.username || "",
                     progress: currentLevel,
                     activatedAt: new Date().toISOString()
                 }, { merge: true });
@@ -1326,7 +1329,7 @@
                 answer.classList.add('hidden');
                 icon.style.transform = 'rotate(0deg)';
             }
-        };
+        }
 
         // --- ЛОГИКА ОТОБРАЖЕНИЯ PDF ВНУТРИ АППКИ ---
         function openPdfModal(url, title = 'Документ') {
@@ -1434,7 +1437,7 @@
                     }
                 }
             });
-        };
+        }
 
         window.submitLessonFeedback = async function(type) {
             haptic('light');
@@ -1897,7 +1900,7 @@ ${chatLink}
                             updatedHw.comment = comment;
                             commentStr = comment;
                         } else {
-                            loadAdminUsers(); 
+                            if (window.loadAdminUsers) window.loadAdminUsers();
                             return; 
                         }
                     }
@@ -1955,7 +1958,7 @@ ${chatLink}
                         }
                     }, { merge: true });
                     
-                    // Обновляем список учеников, чтобы сразу увидеть изменения
+                    // Обновляем список учеников, чтобы сразу увидеть изменения БЕЗ прыжка экрана
                     if (window.loadAdminUsers) window.loadAdminUsers();
                     
                     if (hours > 0) {
@@ -2620,21 +2623,24 @@ ${chatLink}
                     let rawNickname = data.nickname || 'Неизвестный';
                     let displayHtml = '';
                     
-                    if (data.tgFirstName !== undefined || data.tgUsername !== undefined) {
-                        let fName = escapeHTML((data.tgFirstName || '') + ' ' + (data.tgLastName || '')).trim() || 'Без имени';
-                        let uName = data.tgUsername ? escapeHTML('@' + data.tgUsername) : 'Без ника';
-                        displayHtml = `<div class="flex flex-col min-w-0"><span class="text-white text-sm font-bold truncate">${fName}</span><span class="text-zinc-400 font-medium text-xs truncate mt-0.5">${uName}</span></div>`;
+                    let fName = rawNickname;
+                    let uName = 'ID: ' + docSnap.id; // Фолбэк: если ника нет, покажем ID
+
+                    if (data.tgUsername && data.tgUsername.trim() !== '') {
+                        fName = escapeHTML((data.tgFirstName || '') + ' ' + (data.tgLastName || '')).trim() || 'Без имени';
+                        uName = escapeHTML('@' + data.tgUsername);
+                    } else if (rawNickname.includes(' (@')) {
+                        let parts = rawNickname.split(' (@');
+                        fName = escapeHTML(parts[0]);
+                        uName = escapeHTML('@' + parts[1].replace(')', ''));
+                    } else if (rawNickname.startsWith('@')) {
+                        fName = 'Без имени';
+                        uName = escapeHTML(rawNickname);
                     } else {
-                        // Фолбэк для старых записей
-                        if (rawNickname.includes('(@')) {
-                            let parts = rawNickname.split(' (@');
-                            let fName = escapeHTML(parts[0]);
-                            let uName = escapeHTML('@' + parts[1].replace(')', ''));
-                            displayHtml = `<div class="flex flex-col min-w-0"><span class="text-white text-sm font-bold truncate">${fName}</span><span class="text-zinc-400 font-medium text-xs truncate mt-0.5">${uName}</span></div>`;
-                        } else {
-                            displayHtml = `<div class="flex flex-col min-w-0"><span class="text-white text-sm font-bold truncate">${escapeHTML(rawNickname)}</span><span class="text-zinc-400 font-medium text-xs truncate mt-0.5">Без ника</span></div>`;
-                        }
+                        fName = escapeHTML(rawNickname);
                     }
+
+                    displayHtml = `<div class="flex flex-col min-w-0"><span class="text-white text-sm font-bold truncate">${fName}</span><span class="text-zinc-400 font-medium text-[11px] font-mono truncate mt-0.5 tracking-wide">${uName}</span></div>`;
 
                     list.innerHTML += `
                         <div class="flex flex-col bg-white/[0.03] p-4 sm:p-5 rounded-2xl border border-white/10 shadow-lg backdrop-blur-md">
