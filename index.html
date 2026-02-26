@@ -118,9 +118,6 @@
 </head>
 <body class="overflow-x-hidden" oncontextmenu="return false;" oncopy="return false;" oncut="return false;" ondragstart="return false;">
 
-    <!-- ВОДЯНОЙ ЗНАК (Поверх всего, не кликабельный) -->
-    <div id="global-watermark" class="fixed inset-0 pointer-events-none z-[9998] hidden opacity-0 transition-opacity duration-700 bg-repeat"></div>
-
     <!-- ============================================================================== -->
     <!-- ⬇️ НАСТРОЙКИ КУРСА (ИЗМЕНИТЕ ЭТИ ДАННЫЕ ПЕРЕД ЗАПУСКОМ ИЛИ ПРИ ПРОДАЖЕ) ⬇️ -->
     <!-- ============================================================================== -->
@@ -694,24 +691,28 @@
 
                 <div class="glass-card p-5 box-border w-full space-y-4" style="border-radius: 20px;">
                     <div class="space-y-1.5 box-border w-full">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[10px] uppercase text-zinc-400 font-bold tracking-wide">Ссылка на документ 1 (PDF)</label>
-                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                                <span class="text-[9px] uppercase text-zinc-500 font-bold tracking-tight pr-2" id="edit-mod-pdf-mode-label">Внутри аппки</span>
-                                <input type="checkbox" id="edit-mod-pdf-external" class="sr-only peer" onchange="document.getElementById('edit-mod-pdf-mode-label').innerText = this.checked ? 'По ссылке' : 'Внутри аппки'">
-                                <div class="w-8 h-4 bg-white/10 border border-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500 shadow-inner"></div>
-                            </label>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-[10px] uppercase text-zinc-400 font-bold tracking-wide">Документ 1 (PDF)</label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] uppercase text-zinc-500 font-bold tracking-tight">Внутри / Ссылка</span>
+                                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                    <input type="checkbox" id="edit-mod-pdf-external" class="sr-only peer">
+                                    <div class="w-8 h-4 bg-white/10 border border-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500 shadow-inner"></div>
+                                </label>
+                            </div>
                         </div>
                         <input type="url" id="edit-mod-pdf" placeholder="https://..." class="w-full box-border block bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                     </div>
                     <div class="space-y-1.5 box-border w-full pt-2 border-t border-white/5">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[10px] uppercase text-zinc-400 font-bold tracking-wide">Ссылка на документ 2 (дополнительно)</label>
-                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                                <span class="text-[9px] uppercase text-zinc-500 font-bold tracking-tight pr-2" id="edit-mod-pdf2-mode-label">Внутри аппки</span>
-                                <input type="checkbox" id="edit-mod-pdf2-external" class="sr-only peer" onchange="document.getElementById('edit-mod-pdf2-mode-label').innerText = this.checked ? 'По ссылке' : 'Внутри аппки'">
-                                <div class="w-8 h-4 bg-white/10 border border-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500 shadow-inner"></div>
-                            </label>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-[10px] uppercase text-zinc-400 font-bold tracking-wide">Документ 2 (доп.)</label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] uppercase text-zinc-500 font-bold tracking-tight">Внутри / Ссылка</span>
+                                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                    <input type="checkbox" id="edit-mod-pdf2-external" class="sr-only peer">
+                                    <div class="w-8 h-4 bg-white/10 border border-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500 shadow-inner"></div>
+                                </label>
+                            </div>
                         </div>
                         <input type="url" id="edit-mod-pdf2" placeholder="https://..." class="w-full box-border block bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                     </div>
@@ -747,59 +748,6 @@
                 }, 300);
             }
         });
-
-        // --- Функция генерации водяного знака ---
-        function updateWatermark() {
-            const wm = document.getElementById('global-watermark');
-            if (!wm) return;
-            const data = window.currentUserData;
-            
-            let name = "Гость";
-            if (data) {
-                if (data.tgUsername && data.tgUsername.trim() !== '') {
-                    name = "@" + data.tgUsername;
-                } else if (data.tgFirstName) {
-                    name = data.tgFirstName;
-                } else if (data.nickname) {
-                    name = data.nickname.split(' (@')[0];
-                }
-            }
-            
-            const text = `${name} • SEA.AI By Elena Sotnikova`;
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = 450;
-            canvas.height = 250;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(-25 * Math.PI / 180);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.04)'; 
-            ctx.font = 'bold 14px Inter, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, 0, 0);
-            
-            wm.style.backgroundImage = `url(${canvas.toDataURL()})`;
-        }
-
-        function showWatermark() {
-            updateWatermark();
-            const wm = document.getElementById('global-watermark');
-            if(wm) {
-                wm.classList.remove('hidden');
-                setTimeout(() => wm.classList.remove('opacity-0'), 10);
-            }
-        }
-
-        function hideWatermark() {
-            const wm = document.getElementById('global-watermark');
-            if(wm) {
-                wm.classList.add('opacity-0');
-                setTimeout(() => wm.classList.add('hidden'), 500);
-            }
-        }
-        // ----------------------------------------
 
         // --- Функция интеллектуального сжатия изображений (Base64) ---
         window.compressImageToBase64 = function(file) {
@@ -1345,7 +1293,6 @@
 
         function openInfoModal(type) {
             haptic('light');
-            showWatermark();
             
             const titleEl = document.getElementById('info-modal-title');
             const textContainer = document.getElementById('info-modal-text');
@@ -1384,7 +1331,6 @@
 
         function closeInfoModal() {
             haptic('light');
-            hideWatermark();
             document.getElementById('info-modal').classList.add('hidden');
         }
 
@@ -1581,7 +1527,6 @@
                 return;
             }
 
-            showWatermark();
             currentViewedLesson = idx;
             
             const mod = academyData.modules[idx];
@@ -1609,7 +1554,7 @@
 
             let hasMaterials = false;
             
-            if (mod.pdfUrl) {
+            if (mod.pdfUrl && mod.pdfUrl.trim() !== '') {
                 if (mod.pdf1External) {
                     pdfBtn.onclick = () => window.open(mod.pdfUrl, '_blank');
                 } else {
@@ -1623,7 +1568,7 @@
                 pdfBtn.classList.remove('flex');
             }
 
-            if (mod.pdfUrl2) {
+            if (mod.pdfUrl2 && mod.pdfUrl2.trim() !== '') {
                 if (mod.pdf2External) {
                     pdfBtn2.onclick = () => window.open(mod.pdfUrl2, '_blank');
                 } else {
@@ -1780,7 +1725,6 @@
 
         function closeLesson() {
             haptic('light');
-            hideWatermark();
             document.getElementById('lesson-modal').classList.add('hidden');
             document.getElementById('lesson-video').src = '';
             if (deadlineInterval) clearInterval(deadlineInterval);
@@ -2037,6 +1981,9 @@ ${chatLink}
                             [lessonIdx]: updatedHw
                         }
                     }, { merge: true });
+                    
+                    // Обновляем список учеников, чтобы сразу увидеть изменения БЕЗ прыжка экрана
+                    if (window.loadAdminUsers) window.loadAdminUsers();
                     
                     if (hours > 0) {
                         showToast('Дедлайн успешно продлен на 24 часа!', 'success');
@@ -2501,10 +2448,8 @@ ${chatLink}
             
             // Восстанавливаем состояние тумблеров
             document.getElementById('edit-mod-pdf-external').checked = !!mod.pdf1External;
-            document.getElementById('edit-mod-pdf-mode-label').innerText = mod.pdf1External ? 'По ссылке' : 'Внутри аппки';
             
             document.getElementById('edit-mod-pdf2-external').checked = !!mod.pdf2External;
-            document.getElementById('edit-mod-pdf2-mode-label').innerText = mod.pdf2External ? 'По ссылке' : 'Внутри аппки';
             
             document.getElementById('unlock-date-container').style.display = academyData.globalUnlockMode === 'date' ? 'block' : 'none';
             
