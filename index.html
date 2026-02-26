@@ -118,6 +118,9 @@
 </head>
 <body class="overflow-x-hidden" oncontextmenu="return false;" oncopy="return false;" oncut="return false;" ondragstart="return false;">
 
+    <!-- ВОДЯНОЙ ЗНАК (Поверх всего, не кликабельный) -->
+    <div id="global-watermark" class="fixed inset-0 pointer-events-none z-[9998] hidden opacity-0 transition-opacity duration-700 bg-repeat"></div>
+
     <!-- ============================================================================== -->
     <!-- ⬇️ НАСТРОЙКИ КУРСА (ИЗМЕНИТЕ ЭТИ ДАННЫЕ ПЕРЕД ЗАПУСКОМ ИЛИ ПРИ ПРОДАЖЕ) ⬇️ -->
     <!-- ============================================================================== -->
@@ -691,11 +694,25 @@
 
                 <div class="glass-card p-5 box-border w-full space-y-4" style="border-radius: 20px;">
                     <div class="space-y-1.5 box-border w-full">
-                        <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Ссылка на документ 1 (PDF)</label>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[10px] uppercase text-zinc-400 font-bold tracking-wide">Ссылка на документ 1 (PDF)</label>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                <span class="text-[9px] uppercase text-zinc-500 font-bold tracking-tight pr-2" id="edit-mod-pdf-mode-label">Внутри аппки</span>
+                                <input type="checkbox" id="edit-mod-pdf-external" class="sr-only peer" onchange="document.getElementById('edit-mod-pdf-mode-label').innerText = this.checked ? 'По ссылке' : 'Внутри аппки'">
+                                <div class="w-8 h-4 bg-white/10 border border-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500 shadow-inner"></div>
+                            </label>
+                        </div>
                         <input type="url" id="edit-mod-pdf" placeholder="https://..." class="w-full box-border block bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                     </div>
-                    <div class="space-y-1.5 box-border w-full">
-                        <label class="text-[10px] uppercase text-zinc-400 ml-1 font-bold tracking-wide">Ссылка на документ 2 (дополнительно)</label>
+                    <div class="space-y-1.5 box-border w-full pt-2 border-t border-white/5">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[10px] uppercase text-zinc-400 font-bold tracking-wide">Ссылка на документ 2 (дополнительно)</label>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                <span class="text-[9px] uppercase text-zinc-500 font-bold tracking-tight pr-2" id="edit-mod-pdf2-mode-label">Внутри аппки</span>
+                                <input type="checkbox" id="edit-mod-pdf2-external" class="sr-only peer" onchange="document.getElementById('edit-mod-pdf2-mode-label').innerText = this.checked ? 'По ссылке' : 'Внутри аппки'">
+                                <div class="w-8 h-4 bg-white/10 border border-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500 shadow-inner"></div>
+                            </label>
+                        </div>
                         <input type="url" id="edit-mod-pdf2" placeholder="https://..." class="w-full box-border block bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                     </div>
                 </div>
@@ -730,6 +747,59 @@
                 }, 300);
             }
         });
+
+        // --- Функция генерации водяного знака ---
+        function updateWatermark() {
+            const wm = document.getElementById('global-watermark');
+            if (!wm) return;
+            const data = window.currentUserData;
+            
+            let name = "Гость";
+            if (data) {
+                if (data.tgUsername && data.tgUsername.trim() !== '') {
+                    name = "@" + data.tgUsername;
+                } else if (data.tgFirstName) {
+                    name = data.tgFirstName;
+                } else if (data.nickname) {
+                    name = data.nickname.split(' (@')[0];
+                }
+            }
+            
+            const text = `${name} • SEA.AI By Elena Sotnikova`;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 450;
+            canvas.height = 250;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(-25 * Math.PI / 180);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.04)'; 
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 0, 0);
+            
+            wm.style.backgroundImage = `url(${canvas.toDataURL()})`;
+        }
+
+        function showWatermark() {
+            updateWatermark();
+            const wm = document.getElementById('global-watermark');
+            if(wm) {
+                wm.classList.remove('hidden');
+                setTimeout(() => wm.classList.remove('opacity-0'), 10);
+            }
+        }
+
+        function hideWatermark() {
+            const wm = document.getElementById('global-watermark');
+            if(wm) {
+                wm.classList.add('opacity-0');
+                setTimeout(() => wm.classList.add('hidden'), 500);
+            }
+        }
+        // ----------------------------------------
 
         // --- Функция интеллектуального сжатия изображений (Base64) ---
         window.compressImageToBase64 = function(file) {
@@ -950,10 +1020,10 @@
                 ]
             },
             modules: [
-                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "" },
-                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "" },
-                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "" },
-                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "" }
+                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false },
+                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false },
+                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false },
+                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false }
             ]
         };
 
@@ -1191,9 +1261,6 @@
 
                 await window.setDoc(docRef, {
                     nickname: nickname,
-                    tgFirstName: tgUser.first_name || "",
-                    tgLastName: tgUser.last_name || "",
-                    tgUsername: tgUser.username || "",
                     progress: currentLevel,
                     activatedAt: new Date().toISOString()
                 }, { merge: true });
@@ -1278,6 +1345,8 @@
 
         function openInfoModal(type) {
             haptic('light');
+            showWatermark();
+            
             const titleEl = document.getElementById('info-modal-title');
             const textContainer = document.getElementById('info-modal-text');
             const faqContainer = document.getElementById('info-modal-faq');
@@ -1315,6 +1384,7 @@
 
         function closeInfoModal() {
             haptic('light');
+            hideWatermark();
             document.getElementById('info-modal').classList.add('hidden');
         }
 
@@ -1329,7 +1399,7 @@
                 answer.classList.add('hidden');
                 icon.style.transform = 'rotate(0deg)';
             }
-        }
+        };
 
         // --- ЛОГИКА ОТОБРАЖЕНИЯ PDF ВНУТРИ АППКИ ---
         function openPdfModal(url, title = 'Документ') {
@@ -1437,7 +1507,7 @@
                     }
                 }
             });
-        }
+        };
 
         window.submitLessonFeedback = async function(type) {
             haptic('light');
@@ -1511,6 +1581,7 @@
                 return;
             }
 
+            showWatermark();
             currentViewedLesson = idx;
             
             const mod = academyData.modules[idx];
@@ -1539,7 +1610,11 @@
             let hasMaterials = false;
             
             if (mod.pdfUrl) {
-                pdfBtn.onclick = () => openPdfModal(mod.pdfUrl, 'Материалы урока (PDF)');
+                if (mod.pdf1External) {
+                    pdfBtn.onclick = () => window.open(mod.pdfUrl, '_blank');
+                } else {
+                    pdfBtn.onclick = () => openPdfModal(mod.pdfUrl, 'Материалы урока (PDF)');
+                }
                 pdfBtn.classList.remove('hidden');
                 pdfBtn.classList.add('flex');
                 hasMaterials = true;
@@ -1549,7 +1624,11 @@
             }
 
             if (mod.pdfUrl2) {
-                pdfBtn2.onclick = () => openPdfModal(mod.pdfUrl2, 'Дополнительные материалы (PDF)');
+                if (mod.pdf2External) {
+                    pdfBtn2.onclick = () => window.open(mod.pdfUrl2, '_blank');
+                } else {
+                    pdfBtn2.onclick = () => openPdfModal(mod.pdfUrl2, 'Дополнительные материалы (PDF)');
+                }
                 pdfBtn2.classList.remove('hidden');
                 pdfBtn2.classList.add('flex');
                 hasMaterials = true;
@@ -1701,6 +1780,7 @@
 
         function closeLesson() {
             haptic('light');
+            hideWatermark();
             document.getElementById('lesson-modal').classList.add('hidden');
             document.getElementById('lesson-video').src = '';
             if (deadlineInterval) clearInterval(deadlineInterval);
@@ -1900,7 +1980,7 @@ ${chatLink}
                             updatedHw.comment = comment;
                             commentStr = comment;
                         } else {
-                            if (window.loadAdminUsers) window.loadAdminUsers();
+                            if (window.loadAdminUsers) window.loadAdminUsers(); 
                             return; 
                         }
                     }
@@ -1957,9 +2037,6 @@ ${chatLink}
                             [lessonIdx]: updatedHw
                         }
                     }, { merge: true });
-                    
-                    // Обновляем список учеников, чтобы сразу увидеть изменения БЕЗ прыжка экрана
-                    if (window.loadAdminUsers) window.loadAdminUsers();
                     
                     if (hours > 0) {
                         showToast('Дедлайн успешно продлен на 24 часа!', 'success');
@@ -2319,7 +2396,9 @@ ${chatLink}
                 pdfUrl: "",
                 pdfUrl2: "",
                 unlockDate: "",
-                homework_text: ""
+                homework_text: "",
+                pdf1External: false,
+                pdf2External: false
             });
             renderAdminModules();
             window.saveAcademyDataToCloud();
@@ -2420,6 +2499,13 @@ ${chatLink}
             // Вставляем текст домашнего задания
             document.getElementById('edit-mod-homework').value = mod.homework_text || '';
             
+            // Восстанавливаем состояние тумблеров
+            document.getElementById('edit-mod-pdf-external').checked = !!mod.pdf1External;
+            document.getElementById('edit-mod-pdf-mode-label').innerText = mod.pdf1External ? 'По ссылке' : 'Внутри аппки';
+            
+            document.getElementById('edit-mod-pdf2-external').checked = !!mod.pdf2External;
+            document.getElementById('edit-mod-pdf2-mode-label').innerText = mod.pdf2External ? 'По ссылке' : 'Внутри аппки';
+            
             document.getElementById('unlock-date-container').style.display = academyData.globalUnlockMode === 'date' ? 'block' : 'none';
             
             updateAdminVideoPreview();
@@ -2461,7 +2547,9 @@ ${chatLink}
                 mod.deadline = document.getElementById('edit-mod-deadline').value;
                 mod.unlockDate = document.getElementById('edit-mod-unlock-date').value;
                 
-                // Сохраняем текст домашнего задания
+                // Сохраняем состояние тумблеров и текст ДЗ
+                mod.pdf1External = document.getElementById('edit-mod-pdf-external').checked;
+                mod.pdf2External = document.getElementById('edit-mod-pdf2-external').checked;
                 mod.homework_text = document.getElementById('edit-mod-homework').value;
 
                 closeAdminModuleEdit();
@@ -2545,12 +2633,6 @@ ${chatLink}
                         
                         const hasAnyHw = hw.link || hw.photoUrls || hw.photoUrl;
                         
-                        // Обработка массива фото или одного старого фото чисто для сохранения в память (кнопки убраны)
-                        let photosArray = hw.photoUrls || (hw.photoUrl ? [hw.photoUrl] : []);
-                        photosArray.forEach((pUrl, pIdx) => {
-                            window._adminPhotos[`${docSnap.id}_${i}_${pIdx}`] = pUrl;
-                        });
-
                         let hwStatusIndicator = hasAnyHw ? `<span class="text-[10px] text-purple-400 font-medium flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3"></i> Материалы отправлены</span>` : `<span class="text-[10px] text-zinc-600 italic font-medium">ДЗ не сдано</span>`;
                         
                         const statusSelect = hasAnyHw ? `
