@@ -176,7 +176,7 @@
                 <button id="admin-btn" onclick="openAdmin()" class="hidden w-12 h-12 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all backdrop-blur-md shadow-lg hover:bg-white/10 shrink-0">
                     <i data-lucide="settings" class="text-zinc-300 w-6 h-6"></i>
                 </button>
-                <a id="support-link-btn" href="#" target="_blank" onclick="haptic('light')" class="hidden w-12 h-12 rounded-full bg-white/[0.05] border border-white/10 items-center justify-center hover:bg-white/[0.1] hover:scale-105 active:scale-95 transition-all text-2xl relative shadow-lg backdrop-blur-md shrink-0">
+                <a id="support-link-btn" href="#" target="_blank" onclick="haptic('light')" style="display: none;" class="w-12 h-12 rounded-full bg-white/[0.05] border border-white/10 items-center justify-center hover:bg-white/[0.1] hover:scale-105 active:scale-95 transition-all text-2xl relative shadow-lg backdrop-blur-md shrink-0">
                     <span class="relative z-10" style="line-height: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));">🛟</span>
                 </a>
             </div>
@@ -299,15 +299,22 @@
                 </div>
             </div>
 
-            <!-- ИСПРАВЛЕНА ОШИБКА ОТОБРАЖЕНИЯ КНОПОК МАТЕРИАЛОВ -->
-            <div id="lesson-materials-container" class="hidden flex-col gap-2 w-full mb-6 relative z-40 box-border">
-                <button type="button" id="lesson-pdf-btn" class="hidden items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
-                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Материалы урока (PDF)
+            <!-- ИСПРАВЛЕНА ЛОГИКА ОТОБРАЖЕНИЯ ДОКУМЕНТОВ: жестко вшитые кнопки, скрываются через display:none -->
+            <div id="lesson-materials-container" style="display: none;" class="flex-col gap-2 w-full mb-6 relative z-40 box-border">
+                
+                <button type="button" id="lesson-pdf-btn-1" style="display: none;" class="items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
+                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> <span id="lesson-pdf-btn-1-text">Материалы урока (PDF)</span>
                 </button>
-                <button type="button" id="lesson-pdf-btn2" class="hidden items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
-                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Дополнительные материалы (PDF)
+                
+                <button type="button" id="lesson-pdf-btn-2" style="display: none;" class="items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
+                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> <span id="lesson-pdf-btn-2-text">Дополнительные материалы 1</span>
                 </button>
-                <button type="button" id="lesson-hw-text-btn" class="hidden items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
+                
+                <button type="button" id="lesson-pdf-btn-3" style="display: none;" class="items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
+                    <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> <span id="lesson-pdf-btn-3-text">Дополнительные материалы 2</span>
+                </button>
+
+                <button type="button" id="lesson-hw-text-btn" style="display: none;" class="items-center justify-center gap-2 w-full box-border glass-card p-4 hover:border-purple-500 text-sm font-bold transition-all text-white">
                     <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i> Домашнее задание
                 </button>
             </div>
@@ -666,6 +673,7 @@
                         </div>
                         <input type="url" id="edit-mod-pdf" placeholder="https://..." class="w-full box-border block bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                     </div>
+                    
                     <div class="space-y-1.5 box-border w-full pt-2 border-t border-white/5">
                         <div class="flex justify-between items-center mb-2">
                             <label class="text-[10px] uppercase text-zinc-400 font-bold tracking-wide">Документ 2 (доп.)</label>
@@ -678,6 +686,21 @@
                             </div>
                         </div>
                         <input type="url" id="edit-mod-pdf2" placeholder="https://..." class="w-full box-border block bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
+                    </div>
+
+                    <!-- ДОКУМЕНТ 3 -->
+                    <div class="space-y-1.5 box-border w-full pt-2 border-t border-white/5">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-[10px] uppercase text-zinc-400 font-bold tracking-wide">Документ 3 (доп.)</label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] uppercase text-zinc-500 font-bold tracking-tight">Внутри / Ссылка</span>
+                                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                    <input type="checkbox" id="edit-mod-pdf3-external" class="sr-only peer">
+                                    <div class="w-8 h-4 bg-white/10 border border-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500 shadow-inner"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <input type="url" id="edit-mod-pdf3" placeholder="https://..." class="w-full box-border block bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500 focus:bg-white/[0.08] transition-all shadow-inner">
                     </div>
                 </div>
 
@@ -855,48 +878,19 @@
             }, 500);
         }
 
-        let touchStartX = 0;
-        let touchStartY = 0;
+        /* УДАЛЕН ГЛОБАЛЬНЫЙ ОБРАБОТЧИК СВАЙПОВ ТАК КАК ОН БЛОКИРОВАЛ КНОПКИ НА IOS/ANDROID */
 
-        document.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        }, {passive: true});
-
-        document.addEventListener('touchend', e => {
-            // ИСПРАВЛЕНИЕ: Блокируем свайп-назад, если палец не от самого левого края экрана (< 20px)
-            // Это исключает случайные закрытия модалок и "глюки" кнопок при неровном нажатии
-            if (touchStartX > 20) return; 
-            
-            let touchEndX = e.changedTouches[0].screenX;
-            let touchEndY = e.changedTouches[0].screenY;
-
-            if (touchEndX - touchStartX > 150 && Math.abs(touchEndY - touchStartY) < 40) {
-                if (!document.getElementById('pdf-modal').classList.contains('hidden')) {
-                    closePdfModal();
-                } else if (!document.getElementById('hw-text-modal').classList.contains('hidden')) {
-                    closeHomeworkModal();
-                } else if (!document.getElementById('lesson-modal').classList.contains('hidden')) {
-                    closeLesson();
-                } else if (!document.getElementById('info-modal').classList.contains('hidden')) {
-                    closeInfoModal();
-                } else if (!document.getElementById('admin-module-edit-modal').classList.contains('hidden')) {
-                    closeAdminModuleEdit();
-                } else if (!document.getElementById('admin-text-edit-modal').classList.contains('hidden')) {
-                    closeAdminTextEdit();
-                } else if (!document.getElementById('admin-faq-edit-modal').classList.contains('hidden')) {
-                    closeAdminFaqEdit();
-                } else if (!document.getElementById('admin-users-view').classList.contains('hidden') && !document.getElementById('admin-modal').classList.contains('hidden')) {
-                    closeAdminUsers();
-                } else if (!document.getElementById('admin-modal').classList.contains('hidden')) {
-                    closeAdmin();
-                } else if (!document.getElementById('congrats-modal').classList.contains('hidden')) {
-                    closeCongratsModal();
-                } else if (!document.getElementById('access-modal').classList.contains('hidden') && isAccessGranted) {
-                    closeAccessModal();
+        function openExternalLink(url) {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+                try {
+                    window.Telegram.WebApp.openLink(url, {try_instant_view: false});
+                } catch(e) {
+                    window.open(url, '_blank');
                 }
+            } else {
+                window.open(url, '_blank');
             }
-        }, {passive: true});
+        }
 
         const academyData = {
             name: localStorage.getItem('cached_academy_name_' + window.APP_CONFIG.APP_ID) || "Cyber Academy",
@@ -921,10 +915,10 @@
                 ]
             },
             modules: [
-                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false },
-                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false },
-                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false },
-                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "", pdfUrl2: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false }
+                { id: 1, title: "Основы генерации", video: "", desc: "Узнаем как писать первые промпты.", deadline: "2026-03-01T12:00", pdfUrl: "", pdfUrl2: "", pdfUrl3: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false, pdf3External: false },
+                { id: 2, title: "Работа с цветом", video: "", desc: "Глубокое погружение в колористику ИИ.", deadline: "2026-03-05T12:00", pdfUrl: "", pdfUrl2: "", pdfUrl3: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false, pdf3External: false },
+                { id: 3, title: "Финальный проект", video: "", desc: "Создаем полноценный кейс для портфолио.", deadline: "2026-03-10T12:00", pdfUrl: "", pdfUrl2: "", pdfUrl3: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false, pdf3External: false },
+                { id: 4, title: "Монетизация навыков", video: "", desc: "Учимся искать клиентов и продавать свои работы.", deadline: "2026-03-15T12:00", pdfUrl: "", pdfUrl2: "", pdfUrl3: "", unlockDate: "", homework_text: "", pdf1External: false, pdf2External: false, pdf3External: false }
             ]
         };
 
@@ -951,11 +945,9 @@
             if (!btn) return;
             if (safeString(window.academyData.supportLink).trim() !== '') {
                 btn.href = window.academyData.supportLink;
-                btn.classList.remove('hidden');
-                btn.classList.add('flex');
+                btn.style.display = 'flex';
             } else {
-                btn.classList.add('hidden');
-                btn.classList.remove('flex');
+                btn.style.display = 'none';
             }
         }
         
@@ -1059,16 +1051,16 @@
 
             if (textContent && safeString(textContent.text).trim() !== '') {
                 document.getElementById('user-text-btn-title').innerText = textContent.title || 'Информация';
-                textBlock.classList.remove('hidden');
+                textBlock.style.display = 'block';
             } else {
-                textBlock.classList.add('hidden');
+                textBlock.style.display = 'none';
             }
 
             if (faqContent && faqContent.faq && faqContent.faq.length > 0 && faqContent.faq.some(f => safeString(f.q).trim() !== '' || safeString(f.a).trim() !== '')) {
                 document.getElementById('user-faq-btn-title').innerText = faqContent.title || 'Частые вопросы';
-                faqBlock.classList.remove('hidden');
+                faqBlock.style.display = 'block';
             } else {
-                faqBlock.classList.add('hidden');
+                faqBlock.style.display = 'none';
             }
 
             const layout = academyData.homeLayout || ['text', 'faq', 'modules'];
@@ -1490,59 +1482,51 @@
                 if(videoPlaceholder) videoPlaceholder.classList.remove('hidden');
             }
             
+            // ЖЕЛЕЗОБЕТОННАЯ ЛОГИКА ОТОБРАЖЕНИЯ ДОКУМЕНТОВ
             const materialsContainer = document.getElementById('lesson-materials-container');
-            const pdfBtn = document.getElementById('lesson-pdf-btn');
-            const pdfBtn2 = document.getElementById('lesson-pdf-btn2');
+            const btn1 = document.getElementById('lesson-pdf-btn-1');
+            const btn2 = document.getElementById('lesson-pdf-btn-2');
+            const btn3 = document.getElementById('lesson-pdf-btn-3');
             const hwTextBtn = document.getElementById('lesson-hw-text-btn');
 
             let hasMaterials = false;
-            
-            // ИСПРАВЛЕНА ЛОГИКА ОТОБРАЖЕНИЯ КНОПОК
+
             if (mod.pdfUrl && mod.pdfUrl.trim() !== '') {
-                if (mod.pdf1External) {
-                    pdfBtn.onclick = () => window.open(mod.pdfUrl, '_blank');
-                } else {
-                    pdfBtn.onclick = () => openPdfModal(mod.pdfUrl, 'Материалы урока (PDF)');
-                }
-                pdfBtn.classList.remove('hidden');
-                pdfBtn.classList.add('flex');
+                btn1.onclick = () => { mod.pdf1External ? openExternalLink(mod.pdfUrl) : openPdfModal(mod.pdfUrl, 'Материалы урока (PDF)'); };
+                btn1.style.display = 'flex';
                 hasMaterials = true;
             } else {
-                pdfBtn.classList.add('hidden');
-                pdfBtn.classList.remove('flex');
+                btn1.style.display = 'none';
             }
 
-            // ПРОВЕРКА ДЛЯ ВТОРОГО ДОКУМЕНТА (ИСПРАВЛЕНА!)
             if (mod.pdfUrl2 && mod.pdfUrl2.trim() !== '') {
-                if (mod.pdf2External) {
-                    pdfBtn2.onclick = () => window.open(mod.pdfUrl2, '_blank');
-                } else {
-                    pdfBtn2.onclick = () => openPdfModal(mod.pdfUrl2, 'Дополнительные материалы (PDF)');
-                }
-                pdfBtn2.classList.remove('hidden');
-                pdfBtn2.classList.add('flex');
+                btn2.onclick = () => { mod.pdf2External ? openExternalLink(mod.pdfUrl2) : openPdfModal(mod.pdfUrl2, 'Дополнительные материалы 1'); };
+                btn2.style.display = 'flex';
                 hasMaterials = true;
             } else {
-                pdfBtn2.classList.add('hidden');
-                pdfBtn2.classList.remove('flex');
+                btn2.style.display = 'none';
+            }
+
+            if (mod.pdfUrl3 && mod.pdfUrl3.trim() !== '') {
+                btn3.onclick = () => { mod.pdf3External ? openExternalLink(mod.pdfUrl3) : openPdfModal(mod.pdfUrl3, 'Дополнительные материалы 2'); };
+                btn3.style.display = 'flex';
+                hasMaterials = true;
+            } else {
+                btn3.style.display = 'none';
             }
 
             if (mod.homework_text && mod.homework_text.trim() !== '') {
                 hwTextBtn.onclick = () => openHomeworkModal(mod.homework_text);
-                hwTextBtn.classList.remove('hidden');
-                hwTextBtn.classList.add('flex');
+                hwTextBtn.style.display = 'flex';
                 hasMaterials = true;
             } else {
-                hwTextBtn.classList.add('hidden');
-                hwTextBtn.classList.remove('flex');
+                hwTextBtn.style.display = 'none';
             }
 
             if (hasMaterials) {
-                materialsContainer.classList.remove('hidden');
-                materialsContainer.classList.add('flex');
+                materialsContainer.style.display = 'flex';
             } else {
-                materialsContainer.classList.add('hidden');
-                materialsContainer.classList.remove('flex');
+                materialsContainer.style.display = 'none';
             }
 
             const hwData = window.currentUserData?.homeworks?.[idx];
@@ -2271,10 +2255,12 @@ ${chatLink}
                 deadline: "2026-12-31T23:59",
                 pdfUrl: "",
                 pdfUrl2: "",
+                pdfUrl3: "",
                 unlockDate: "",
                 homework_text: "",
                 pdf1External: false,
-                pdf2External: false
+                pdf2External: false,
+                pdf3External: false
             });
             renderAdminModules();
             window.saveAcademyDataToCloud();
@@ -2369,6 +2355,7 @@ ${chatLink}
             document.getElementById('edit-mod-video').value = mod.video || '';
             document.getElementById('edit-mod-pdf').value = mod.pdfUrl || '';
             document.getElementById('edit-mod-pdf2').value = mod.pdfUrl2 || '';
+            document.getElementById('edit-mod-pdf3').value = mod.pdfUrl3 || '';
             document.getElementById('edit-mod-deadline').value = mod.deadline || '';
             document.getElementById('edit-mod-unlock-date').value = mod.unlockDate || '';
             
@@ -2376,6 +2363,7 @@ ${chatLink}
             
             document.getElementById('edit-mod-pdf-external').checked = !!mod.pdf1External;
             document.getElementById('edit-mod-pdf2-external').checked = !!mod.pdf2External;
+            document.getElementById('edit-mod-pdf3-external').checked = !!mod.pdf3External;
             
             document.getElementById('unlock-date-container').style.display = academyData.globalUnlockMode === 'date' ? 'block' : 'none';
             
@@ -2415,11 +2403,13 @@ ${chatLink}
                 mod.video = formatVideoUrl(rawVideo);
                 mod.pdfUrl = document.getElementById('edit-mod-pdf').value;
                 mod.pdfUrl2 = document.getElementById('edit-mod-pdf2').value;
+                mod.pdfUrl3 = document.getElementById('edit-mod-pdf3').value;
                 mod.deadline = document.getElementById('edit-mod-deadline').value;
                 mod.unlockDate = document.getElementById('edit-mod-unlock-date').value;
                 
                 mod.pdf1External = document.getElementById('edit-mod-pdf-external').checked;
                 mod.pdf2External = document.getElementById('edit-mod-pdf2-external').checked;
+                mod.pdf3External = document.getElementById('edit-mod-pdf3-external').checked;
                 mod.homework_text = document.getElementById('edit-mod-homework').value;
 
                 closeAdminModuleEdit();
