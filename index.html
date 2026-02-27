@@ -722,9 +722,8 @@
     </div>
 
     <script>
-        // ИСПРАВЛЕНИЕ ЗАГРУЗКИ (УСКОРЕНИЕ ОТОБРАЖЕНИЯ МИНИ-АППЫ)
         if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.ready(); // Сообщаем Telegram, что интерфейс готов СРАЗУ!
+            window.Telegram.WebApp.ready(); 
             window.Telegram.WebApp.expand();
             window.Telegram.WebApp.enableClosingConfirmation();
             if (window.Telegram.WebApp.disableVerticalSwipes) {
@@ -878,7 +877,6 @@
             }, 500);
         }
 
-        // ВОЗВРАЩЕН СТРОГИЙ ОБРАБОТЧИК СВАЙПОВ ОТ ЛЕВОГО КРАЯ ЭКРАНА
         let touchStartX = 0;
         let touchStartY = 0;
 
@@ -888,7 +886,6 @@
         }, {passive: true});
 
         document.addEventListener('touchend', e => {
-            // ЖЕСТКОЕ УСЛОВИЕ 1: Нажатие должно начаться строго от левого края (максимум 30 пикселей)
             if (touchStartX > 30) return; 
             
             let touchEndX = e.changedTouches[0].screenX;
@@ -897,8 +894,6 @@
             let deltaX = touchEndX - touchStartX;
             let deltaY = Math.abs(touchEndY - touchStartY);
 
-            // ЖЕСТКОЕ УСЛОВИЕ 2: Свайп должен быть достаточно длинным вправо (>100px) 
-            // и с минимальным отклонением вверх/вниз (<50px)
             if (deltaX > 100 && deltaY < 50) {
                 if (!document.getElementById('pdf-modal').classList.contains('hidden')) {
                     closePdfModal();
@@ -1084,11 +1079,18 @@
             const container = document.getElementById('modules-container');
             container.innerHTML = '';
             
+            // НОВАЯ ЛОГИКА ПРОГРЕСС-БАРА: считаем только принятые ДЗ
+            let completedCount = 0;
+            if (window.currentUserData && window.currentUserData.homeworks) {
+                Object.values(window.currentUserData.homeworks).forEach(hw => {
+                    if (hw && hw.status === 'accepted') completedCount++;
+                });
+            }
             const total = academyData.modules ? academyData.modules.length : 0;
-            const progress = total > 0 ? ((currentLevel - 1) / total) * 100 : 0;
+            const progressPercent = total > 0 ? (completedCount / total) * 100 : 0;
             
-            document.getElementById('progress-bar').style.width = `${progress}%`;
-            document.getElementById('progress-text').innerText = `${Math.round(progress)}% Пройдено`;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+            document.getElementById('progress-text').innerText = `${Math.round(progressPercent)}% Пройдено`;
 
             window.updateGreetingUI();
 
@@ -1118,7 +1120,10 @@
 
             if (academyData.modules) {
                 academyData.modules.forEach((mod, idx) => {
+                    const hwData = window.currentUserData?.homeworks?.[idx];
+                    const isDone = hwData && hwData.status === 'accepted';
                     let isLocked = false;
+                    let isActive = false;
                     
                     if (isGlobalDateMode) {
                         if (mod.unlockDate) {
@@ -1126,21 +1131,28 @@
                         } else {
                             isLocked = true;
                         }
+                        if (!isAccessGranted && idx !== 0) isLocked = true;
+                        isActive = !isLocked && !isDone;
                     } else {
                         isLocked = (idx + 1) > currentLevel;
+                        if (!isAccessGranted && idx !== 0) isLocked = true;
+                        isActive = (idx + 1) === currentLevel;
                     }
-
-                    if (!isAccessGranted && idx !== 0) {
-                        isLocked = true;
-                    }
-
-                    const isDone = (idx + 1) < currentLevel;
-                    const isActive = isGlobalDateMode ? (!isLocked && !isDone) : ((idx + 1) === currentLevel);
 
                     let lockedText = isLocked ? 'Доступ закрыт' : 'Нажми, чтобы войти';
+                    
                     if (isGlobalDateMode && isLocked && mod.unlockDate) {
                         const d = new Date(mod.unlockDate);
-                        lockedText = 'Откроется ' + d.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'});
+                        lockedText = `Откроется ${d.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'})} в ${d.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})}`;
+                    } else if (!isGlobalDateMode && isLocked && idx > 0) {
+                        const prevHw = window.currentUserData?.homeworks?.[idx - 1];
+                        if (prevHw && prevHw.status === 'pending') {
+                            lockedText = 'Дождись проверки ДЗ';
+                        } else if (prevHw && prevHw.status === 'rejected') {
+                            lockedText = 'Исправь предыдущее ДЗ';
+                        } else {
+                            lockedText = 'Требуется сдать предыдущее ДЗ';
+                        }
                     }
 
                     const iconHtml = isDone 
@@ -1787,12 +1799,6 @@ ${chatLink}
                 if (window.setDoc && window.doc && window.db) {
                     const uid = tgUser.id ? tgUser.id.toString() : window.auth.currentUser.uid;
                     
-                    let newProgress = currentLevel;
-                    if (currentViewedLesson + 1 === currentLevel) {
-                        newProgress = currentLevel + 1;
-                        currentLevel = newProgress;
-                    }
-
                     const existingHw = window.currentUserData?.homeworks?.[currentViewedLesson] || {};
                     const updatedHw = { 
                         ...existingHw,
@@ -1806,7 +1812,6 @@ ${chatLink}
                     }
 
                     await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activated_users', uid), {
-                        progress: newProgress,
                         homeworks: {
                             [currentViewedLesson]: updatedHw
                         }
@@ -1897,11 +1902,18 @@ ${chatLink}
                         }
                     }
 
-                    await window.setDoc(userDocRef, {
+                    let updatePayload = {
                         homeworks: {
                             [lessonIdx]: updatedHw
                         }
-                    }, { merge: true });
+                    };
+
+                    if (newStatus === 'accepted') {
+                        const currentProg = data.progress || 1;
+                        updatePayload.progress = Math.max(currentProg, parseInt(lessonIdx) + 2);
+                    }
+
+                    await window.setDoc(userDocRef, updatePayload, { merge: true });
 
                     if (newStatus === 'accepted' || newStatus === 'rejected') {
                         const lessonTitle = window.academyData.modules[lessonIdx]?.title || `Урок ${parseInt(lessonIdx) + 1}`;
